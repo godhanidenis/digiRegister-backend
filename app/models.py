@@ -128,7 +128,15 @@ class Quotation(models.Model):
     event_id = models.ForeignKey(Event, null=True, blank=True, on_delete=models.CASCADE)
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
+    # due_date = models.DateField(null=True, blank=True)
+    # is_converted = models.BooleanField(default=False)
 
+
+# class Transaction(models.Model):
+#     quotation_id = models.ForeignKey(Quotation, null=True, blank=True, on_delete=models.CASCADE)
+#     nots = models.CharField(max_length=250, null=True, blank=True)
+#     date = models.DateField(null=True, blank=True)
+#     amount = models.IntegerField(null=True, blank=True)
 
 
 

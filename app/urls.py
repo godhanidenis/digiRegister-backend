@@ -13,6 +13,7 @@ router.register(r'skill',views.SkillViewSet)
 router.register(r'staff',views.StaffViewSet)
 router.register(r'event',views.EventViewSet)
 router.register(r'quotation',views.QuotationViewSet)
+# router.register(r'transaction',views.TransactionViewSet)
 
 
 urlpatterns =[

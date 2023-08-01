@@ -29,7 +29,7 @@ class SkillSerializer(serializers.ModelSerializer):
 
 
 class StaffSerializer(serializers.ModelSerializer):
-    user = UserSerializer(source="user_id", read_only=True)
+    # user = UserSerializer(source="user_id", read_only=True)
     skill = SkillSerializer(source="skill_id", read_only=True)
     class Meta:
         model = Staff
@@ -44,7 +44,7 @@ class EventSerializer(serializers.ModelSerializer):
 
 
 class QuotationSerializer(serializers.ModelSerializer):
-    user = UserSerializer(source="user_id", read_only=True)
+    # user = UserSerializer(source="user_id", read_only=True)
     customer = CustomerSerializer(source="customer_id", read_only=True)
     event = EventSerializer(source="event_id", read_only=True)
     class Meta:
@@ -52,3 +52,8 @@ class QuotationSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+# class TransactionSerializer(serializers.ModelSerializer):
+#     quotation = QuotationSerializer(source="quotation_id", read_only=True)
+#     class Meta:
+#         model = Transaction
+#         fields = "__all__"

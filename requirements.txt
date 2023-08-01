@@ -1,4 +1,5 @@
 Django
+django-filter
 djangorestframework
 djangorestframework-simplejwt
 python-decouple
