@@ -88,3 +88,47 @@ class RefreshTokenView(APIView):
                 "access_token":str(token.generate_access_token(email, True))
             })
 
+
+class RegisterView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        shop_name = request.data.get('shop_name')
+        print("SHOP NAME :: ",shop_name)
+        full_name = request.data.get('full_name')
+        print("FULL NAME :: ",full_name)
+        mobile_no = request.data.get('mobile_no')
+        print("MOBILE NO :: ",mobile_no)
+        email = request.data.get('email')
+        print("EMAIL :: ",email)
+        password = request.data.get('password')
+        print("PASSWORD :: ",password)
+
+        if not shop_name:
+            return Response("Please provide your Shop Name !!",status=status.HTTP_401_UNAUTHORIZED)
+        elif not full_name:
+            return Response("Please provide Full Name !!",status=status.HTTP_401_UNAUTHORIZED)
+        elif not mobile_no:
+            return Response("Please provide Mobile Number !!",status=status.HTTP_401_UNAUTHORIZED)
+        elif not email:
+            return Response("Please provide Email !!",status=status.HTTP_401_UNAUTHORIZED)
+        elif not password:
+            return Response("Please provide Password !!",status=status.HTTP_401_UNAUTHORIZED)
+        else:
+
+            try:
+                user = User.objects.get(email = email)
+                return Response("Email is Already Exiest !!",status=status.HTTP_401_UNAUTHORIZED)
+            except:
+                User.objects.create(
+                    shop_name=shop_name,
+                    full_name=full_name,
+                    mobile_no=mobile_no,
+                    email=email,
+                    type_of_user = 'company_owner',
+                    password=password
+                )
+
+                return Response({
+                    "message": "User Created Successfully !!!"
+                })

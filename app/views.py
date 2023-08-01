@@ -8,7 +8,7 @@ from .serializers import *
 # Create your views here.
 
 class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
+    queryset = User.objects.all().order_by('-id').distinct()
     serializer_class = UserSerializer
 
 class CustomerViewSet(viewsets.ModelViewSet):
