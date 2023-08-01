@@ -118,7 +118,7 @@ class RegisterView(APIView):
 
             try:
                 user = User.objects.get(email = email)
-                return Response("Email is Already Exiest !!",status=status.HTTP_401_UNAUTHORIZED)
+                return Response("Email is Already Exist !!",status=status.HTTP_401_UNAUTHORIZED)
             except:
                 User.objects.create(
                     shop_name=shop_name,
