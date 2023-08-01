@@ -89,8 +89,8 @@ class Inventory(models.Model):
     type = models.CharField(choices=TYPE, default="service", max_length=20)
     name = models.CharField(max_length=100)
     qty = models.IntegerField(null=True, blank=True)
-    base_price = models.FloatField(max_length=10)
-    sell_price = models.FloatField(max_length=10)
+    base_price = models.FloatField(max_length=10, null=True, blank=True)
+    sell_price = models.FloatField(max_length=10, null=True, blank=True)
     
 
 class Skill(models.Model):
@@ -105,7 +105,7 @@ class Staff(models.Model):
     email = models.EmailField(max_length=100, null=True, blank=True)
     address = models.CharField(max_length=200, null=True, blank=True)
     studio_name = models.CharField(max_length=150, null=True, blank=True)
-    skills = models.ForeignKey(Skill, null=True, blank=True, on_delete=models.CASCADE)
+    skill_id = models.ForeignKey(Skill, null=True, blank=True, on_delete=models.CASCADE)
 
     def _str__(self):
         return self.full_name

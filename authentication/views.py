@@ -33,9 +33,9 @@ class LoginView(APIView):
             except:
                 return Response("Please provide Email ID!",status=status.HTTP_401_UNAUTHORIZED)
 
-            if user.password != password:
-            # check_pass = check_password(password,user.password)
-            # if not check_pass:
+            # if user.password != password:
+            check_pass = check_password(password,user.password)
+            if not check_pass:
                 return Response("Invalid Credentials!",status=status.HTTP_401_UNAUTHORIZED)
             else:
                 if user is not None:
