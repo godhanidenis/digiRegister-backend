@@ -66,6 +66,12 @@ class User(AbstractUser):
         verbose_name = 'User'
         verbose_name_plural = 'Users'
 
+    def save(self, *args, **kwargs):
+        if not self.id:
+            if self.type_of_user != 'super_admin':
+                self.set_password(self.password)
+        super().save(*args, **kwargs)
+
 
 class Customer(models.Model):
     user_id = models.ForeignKey(User,null=True, blank=True, on_delete=models.CASCADE)

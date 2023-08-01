@@ -31,7 +31,7 @@ class LoginView(APIView):
             try:
                 user = User.objects.get(email__exact = email)
             except:
-                return Response("Please provide Email ID!",status=status.HTTP_401_UNAUTHORIZED)
+                return Response("User Not Exist!",status=status.HTTP_401_UNAUTHORIZED)
 
             # if user.password != password:
             check_pass = check_password(password,user.password)
@@ -105,20 +105,20 @@ class RegisterView(APIView):
         print("PASSWORD :: ",password)
 
         if not shop_name:
-            return Response("Please provide your Shop Name !!",status=status.HTTP_401_UNAUTHORIZED)
+            return Response("Please provide your Shop Name !!")
         elif not full_name:
-            return Response("Please provide Full Name !!",status=status.HTTP_401_UNAUTHORIZED)
+            return Response("Please provide Full Name !!")
         elif not mobile_no:
-            return Response("Please provide Mobile Number !!",status=status.HTTP_401_UNAUTHORIZED)
+            return Response("Please provide Mobile Number !!")
         elif not email:
-            return Response("Please provide Email !!",status=status.HTTP_401_UNAUTHORIZED)
+            return Response("Please provide Email !!")
         elif not password:
-            return Response("Please provide Password !!",status=status.HTTP_401_UNAUTHORIZED)
+            return Response("Please provide Password !!")
         else:
 
             try:
                 user = User.objects.get(email = email)
-                return Response("Email is Already Exist !!",status=status.HTTP_401_UNAUTHORIZED)
+                return Response("Email is Already Exist !!",status=status.HTTP_400_BAD_REQUEST)
             except:
                 User.objects.create(
                     shop_name=shop_name,
