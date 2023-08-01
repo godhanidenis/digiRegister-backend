@@ -1,0 +1,33 @@
+from django.contrib import admin
+from .models import*
+# Register your models here.
+
+
+class UserAdmin(admin.ModelAdmin):
+    list_display = ['email', 'type_of_user']
+admin.site.register(User, UserAdmin)
+
+class CustomerAdmin(admin.ModelAdmin):
+    list_display = ['email', 'full_name']
+admin.site.register(Customer, CustomerAdmin)
+
+# class SkillAdmin(admin.ModelAdmin):
+#     list_display = ['email', 'type_of_user']
+# admin.site.register(Skill, SkillAdmin)
+admin.site.register(Skill)
+
+class StaffAdmin(admin.ModelAdmin):
+    list_display = ['email', 'full_name']
+admin.site.register(Staff, StaffAdmin)
+
+class EventAdmin(admin.ModelAdmin):
+    list_display = ['event_name']
+admin.site.register(Event, EventAdmin)
+
+class QuotationAdmin(admin.ModelAdmin):
+    list_display = ['event_id', 'start_date', 'end_date']
+admin.site.register(Quotation, QuotationAdmin)
+
+class InventoryAdmin(admin.ModelAdmin):
+    list_display = ['name', 'type', 'base_price', 'sell_price']
+admin.site.register(Inventory, InventoryAdmin)
