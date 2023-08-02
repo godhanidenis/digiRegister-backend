@@ -28,7 +28,7 @@ class CustomerViewSet(viewsets.ModelViewSet):
         'full_name':['icontains'],
         'mobile_no':['icontains'],
         'email':['icontains'],
-        # 'address':['icontains']
+        'address':['icontains']
     }
 
 class InventoryViewSet(viewsets.ModelViewSet):
