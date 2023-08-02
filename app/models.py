@@ -113,12 +113,13 @@ class Staff(models.Model):
     address = models.CharField(max_length=200, null=True, blank=True)
     studio_name = models.CharField(max_length=150, null=True, blank=True)
     skill_id = models.ForeignKey(Skill, null=True, blank=True, on_delete=models.CASCADE)
+    charges = models.IntegerField(null=True, blank=True)
 
     def _str__(self):
         return self.full_name
     
     class Meta:
-        unique_together = ['user_id', 'mobile_no']
+        unique_together = ['user_id', 'mobile_no', 'skill_id']
     
 
 class Event(models.Model):
@@ -140,6 +141,7 @@ class Quotation(models.Model):
     json_data = models.JSONField(blank=True, null=True)
     created_on = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     converted_on = models.DateTimeField(null=True, blank=True)
+    final_amount = models.IntegerField(null=True, blank=True)
 
 
 class Transaction(models.Model):

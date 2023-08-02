@@ -18,4 +18,5 @@ router.register(r'transaction',views.TransactionViewSet)
 
 urlpatterns =[
     path('',include(router.urls)),
+    path('report/',views.Report, name='report'),
 ]
