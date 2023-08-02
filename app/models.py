@@ -78,6 +78,7 @@ class Customer(models.Model):
     full_name = models.CharField(max_length=100, null=True, blank=True)
     mobile_no = models.CharField(max_length=15, unique=True)
     email = models.EmailField(max_length=100, null=True, blank=True)
+    address = models.CharField(max_length=200, null=True, blank=True)
 
     def _str__(self):
         return self.full_name
@@ -134,7 +135,15 @@ class Quotation(models.Model):
     event_id = models.ForeignKey(Event, null=True, blank=True, on_delete=models.CASCADE)
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
+    due_date = models.DateField(null=True, blank=True)
+    is_converted = models.BooleanField(default=False)
 
+
+class Transaction(models.Model):
+    quotation_id = models.ForeignKey(Quotation, null=True, blank=True, on_delete=models.CASCADE)
+    notes = models.CharField(max_length=250, null=True, blank=True)
+    date = models.DateField(null=True, blank=True)
+    amount = models.IntegerField(null=True, blank=True)
 
 
 
