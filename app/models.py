@@ -137,6 +137,9 @@ class Quotation(models.Model):
     end_date = models.DateField(null=True, blank=True)
     due_date = models.DateField(null=True, blank=True)
     is_converted = models.BooleanField(default=False)
+    json_data = models.JSONField(blank=True, null=True)
+    created_on = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    converted_on = models.DateTimeField(null=True, blank=True)
 
 
 class Transaction(models.Model):

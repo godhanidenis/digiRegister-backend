@@ -5,6 +5,7 @@ from rest_framework import viewsets
 
 from .models import *
 from .serializers import *
+from .pagination import MyPagination
 
 # Create your views here.
 
@@ -20,8 +21,9 @@ class UserViewSet(viewsets.ModelViewSet):
     }
 
 class CustomerViewSet(viewsets.ModelViewSet):
-    queryset = Customer.objects.all()
+    queryset = Customer.objects.all().order_by('-id').distinct()
     serializer_class = CustomerSerializer
+    pagination_class = MyPagination
     filter_backends = [DjangoFilterBackend]
     filterset_fields = {
         'user_id__id':['exact'],
@@ -32,7 +34,7 @@ class CustomerViewSet(viewsets.ModelViewSet):
     }
 
 class InventoryViewSet(viewsets.ModelViewSet):
-    queryset = Inventory.objects.all()
+    queryset = Inventory.objects.all().order_by('-id').distinct()
     serializer_class = InventorySerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = {
@@ -42,7 +44,7 @@ class InventoryViewSet(viewsets.ModelViewSet):
     }
 
 class SkillViewSet(viewsets.ModelViewSet):
-    queryset = Skill.objects.all()
+    queryset = Skill.objects.all().order_by('-id').distinct()
     serializer_class = SkillSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = {
@@ -52,8 +54,9 @@ class SkillViewSet(viewsets.ModelViewSet):
     }
 
 class StaffViewSet(viewsets.ModelViewSet):
-    queryset = Staff.objects.all()
+    queryset = Staff.objects.all().order_by('-id').distinct()
     serializer_class = StaffSerializer
+    pagination_class = MyPagination
     filter_backends = [DjangoFilterBackend]
     filterset_fields = {
         'user_id__id':['exact'],
@@ -65,7 +68,7 @@ class StaffViewSet(viewsets.ModelViewSet):
     }
 
 class EventViewSet(viewsets.ModelViewSet):
-    queryset = Event.objects.all()
+    queryset = Event.objects.all().order_by('-id').distinct()
     serializer_class = EventSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = {
@@ -74,8 +77,9 @@ class EventViewSet(viewsets.ModelViewSet):
     }
 
 class QuotationViewSet(viewsets.ModelViewSet):
-    queryset = Quotation.objects.all()
+    queryset = Quotation.objects.all().order_by('-id').distinct()
     serializer_class = QuotationSerializer
+    pagination_class = MyPagination
     filter_backends = [DjangoFilterBackend]
     filterset_fields = {
         'user_id__id':['exact'],
@@ -86,7 +90,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
     }
 
 class TransactionViewSet(viewsets.ModelViewSet):
-    queryset = Transaction.objects.all()
+    queryset = Transaction.objects.all().order_by('-id').distinct()
     serializer_class = TransactionSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = {
