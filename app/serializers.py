@@ -52,8 +52,8 @@ class QuotationSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-# class TransactionSerializer(serializers.ModelSerializer):
-#     quotation = QuotationSerializer(source="quotation_id", read_only=True)
-#     class Meta:
-#         model = Transaction
-#         fields = "__all__"
+class TransactionSerializer(serializers.ModelSerializer):
+    quotation = QuotationSerializer(source="quotation_id", read_only=True)
+    class Meta:
+        model = Transaction
+        fields = "__all__"

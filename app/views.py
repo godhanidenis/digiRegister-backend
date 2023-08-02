@@ -16,6 +16,7 @@ class UserViewSet(viewsets.ModelViewSet):
         'full_name':['icontains'],
         'mobile_no':['icontains'],
         'email':['icontains'],
+        'address':['icontains']
     }
 
 class CustomerViewSet(viewsets.ModelViewSet):
@@ -27,6 +28,7 @@ class CustomerViewSet(viewsets.ModelViewSet):
         'full_name':['icontains'],
         'mobile_no':['icontains'],
         'email':['icontains'],
+        # 'address':['icontains']
     }
 
 class InventoryViewSet(viewsets.ModelViewSet):
@@ -79,10 +81,18 @@ class QuotationViewSet(viewsets.ModelViewSet):
         'user_id__id':['exact'],
         'customer_id__id':['exact'],
         'event_id__id':['exact'],
-        'customer_id__name':['icontains'],
+        'customer_id__full_name':['icontains'],
         'event_id__event_name':['icontains'],
     }
 
-# class TransactionViewSet(viewsets.ModelViewSet):
-#     queryset = Transaction.objects.all()
-#     serializer_class = TransactionSerializer
+class TransactionViewSet(viewsets.ModelViewSet):
+    queryset = Transaction.objects.all()
+    serializer_class = TransactionSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+        'quotation_id__user_id__id':['exact'],
+        'quotation_id__id':['exact'],
+        'notes':['icontains'],
+        'quotation_id__customer_id__full_name':['icontains'],
+        'quotation_id__event_id__event_name':['icontains'],
+    }
