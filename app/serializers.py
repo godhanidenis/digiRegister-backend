@@ -21,20 +21,20 @@ class InventorySerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class SkillSerializer(serializers.ModelSerializer):
-    inventory = InventorySerializer(source="inventory_id", read_only=True)
-    class Meta:
-        model = Skill
-        fields = "__all__"
-
 
 class StaffSerializer(serializers.ModelSerializer):
     # user = UserSerializer(source="user_id", read_only=True)
-    skill = SkillSerializer(source="skill_id", read_only=True)
     class Meta:
         model = Staff
         fields = "__all__"
 
+
+class StaffSkillSerializer(serializers.ModelSerializer):
+    inventory = InventorySerializer(source="inventory_id", read_only=True)
+    staff = StaffSerializer(source="staff_id", read_only=True)
+    class Meta:
+        model = StaffSkill
+        fields = "__all__"
 
 class EventSerializer(serializers.ModelSerializer):
     user = UserSerializer(source="user_id", read_only=True)

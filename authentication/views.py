@@ -94,15 +94,15 @@ class RegisterView(APIView):
 
     def post(self, request, *args, **kwargs):
         shop_name = request.data.get('shop_name')
-        print("SHOP NAME :: ",shop_name)
+        # print("SHOP NAME :: ",shop_name)
         full_name = request.data.get('full_name')
-        print("FULL NAME :: ",full_name)
+        # print("FULL NAME :: ",full_name)
         mobile_no = request.data.get('mobile_no')
-        print("MOBILE NO :: ",mobile_no)
+        # print("MOBILE NO :: ",mobile_no)
         email = request.data.get('email')
-        print("EMAIL :: ",email)
+        # print("EMAIL :: ",email)
         password = request.data.get('password')
-        print("PASSWORD :: ",password)
+        # print("PASSWORD :: ",password)
 
         if not shop_name:
             return Response("Please provide your Shop Name !!")

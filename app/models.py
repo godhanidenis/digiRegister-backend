@@ -100,11 +100,6 @@ class Inventory(models.Model):
     sell_price = models.FloatField(max_length=10, null=True, blank=True)
     
 
-class Skill(models.Model):
-    inventory_id = models.ForeignKey(Inventory, null=True, blank=True, on_delete=models.CASCADE)
-    price = models.FloatField(max_length=10)
-
-
 class Staff(models.Model):
     user_id = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE)
     full_name = models.CharField(max_length=100, null=True, blank=True)
@@ -112,15 +107,18 @@ class Staff(models.Model):
     email = models.EmailField(max_length=100, null=True, blank=True)
     address = models.CharField(max_length=200, null=True, blank=True)
     studio_name = models.CharField(max_length=150, null=True, blank=True)
-    skill_id = models.ForeignKey(Skill, null=True, blank=True, on_delete=models.CASCADE)
-    charges = models.IntegerField(null=True, blank=True)
 
     def _str__(self):
         return self.full_name
     
     class Meta:
-        unique_together = ['user_id', 'mobile_no', 'skill_id']
-    
+        unique_together = ['user_id', 'mobile_no']
+
+class StaffSkill(models.Model):
+    inventory_id = models.ForeignKey(Inventory, null=True, blank=True, on_delete=models.CASCADE)
+    staff_id = models.ForeignKey(Staff, null=True, blank=True, on_delete=models.CASCADE)
+    price = models.FloatField(max_length=10)
+
 
 class Event(models.Model):
     user_id = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE)
@@ -134,6 +132,7 @@ class Quotation(models.Model):
     user_id = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE)
     customer_id = models.ForeignKey(Customer, null=True, blank=True, on_delete=models.CASCADE)
     event_id = models.ForeignKey(Event, null=True, blank=True, on_delete=models.CASCADE)
+    event_venue = models.CharField(null=True, blank=True)
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
     due_date = models.DateField(null=True, blank=True)
