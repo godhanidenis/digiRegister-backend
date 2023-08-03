@@ -1,6 +1,7 @@
 from django.shortcuts import render
-from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import Sum
 
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -128,10 +129,11 @@ def Report(request):
             # print("Converted :: ", converted)
             for i in converted:
                 # print("I :: ",i.id)
-                transaction = Transaction.objects.get(quotation_id = i.id)
+                total_amount = Transaction.objects.filter(quotation_id=i.id).aggregate(Sum('amount'))['amount__sum']
+                # transaction = Transaction.objects.get(quotation_id = i.id)
                 # print("TRANSACTION :: ",transaction.amount)
 
-                if i.final_amount == transaction.amount:
+                if i.final_amount == total_amount:
                     report['completed'] += 1
                 else:
                     report['not_completed'] += 1
@@ -145,10 +147,11 @@ def Report(request):
             # print("Converted :: ", converted)
             for i in converted:
                 # print("I :: ",i.id)
-                transaction = Transaction.objects.get(quotation_id = i.id)
-                # print("TRANSACTION :: ",transaction.amount)
-
-                if i.final_amount == transaction.amount:
+                total_amount = Transaction.objects.filter(quotation_id=i.id).aggregate(Sum('amount'))['amount__sum']
+                # transaction = Transaction.objects.get(quotation_id = i.id)
+                # print("TRANSACTION :: ",total_amount)
+                # print("FINAL AMOUNT :: ",i.final_amount)
+                if i.final_amount == total_amount:
                     report['completed'] += 1
                 else:
                     report['not_completed'] += 1
