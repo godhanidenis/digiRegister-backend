@@ -45,15 +45,6 @@ class InventoryViewSet(viewsets.ModelViewSet):
         'name':['icontains']
     }
 
-class SkillViewSet(viewsets.ModelViewSet):
-    queryset = Skill.objects.all().order_by('-id').distinct()
-    serializer_class = SkillSerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = {
-        'inventory_id__user_id__id':['exact'],
-        'inventory_id__id':['exact'],
-        'inventory_id__name':['icontains'],
-    }
 
 class StaffViewSet(viewsets.ModelViewSet):
     queryset = Staff.objects.all().order_by('-id').distinct()
@@ -65,10 +56,20 @@ class StaffViewSet(viewsets.ModelViewSet):
         'full_name':['icontains'],
         'mobile_no':['icontains'],
         'email':['icontains'],
-        'skill_id__id':['exact'],
-        'skill_id__inventory_id__name':['icontains'],
+        # 'skill_id__id':['exact'],
+        # 'skill_id__inventory_id__name':['icontains'],
     }
 
+
+class StaffSkillViewSet(viewsets.ModelViewSet):
+    queryset = StaffSkill.objects.all().order_by('-id').distinct()
+    serializer_class = StaffSkillSerializer
+    # filter_backends = [DjangoFilterBackend]
+    # filterset_fields = {
+    #     'inventory_id__user_id__id':['exact'],
+    #     'inventory_id__id':['exact'],
+    #     'inventory_id__name':['icontains'],
+    # }
 class EventViewSet(viewsets.ModelViewSet):
     queryset = Event.objects.all().order_by('-id').distinct()
     serializer_class = EventSerializer
@@ -89,6 +90,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
         'event_id__id':['exact'],
         'customer_id__full_name':['icontains'],
         'event_id__event_name':['icontains'],
+        'is_converted': ['exact'],
     }
 
 class TransactionViewSet(viewsets.ModelViewSet):
@@ -106,58 +108,28 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
 @api_view(['GET', 'POST'])
 def Report(request):
-    # if request.method == 'GET':
-    #     report = {}
-
-    #     converted = Quotation.objects.filter(is_converted=True)
-    #     report['converted'] = len(converted)
-
-    #     not_converted = Quotation.objects.filter(is_converted=False)
-    #     report['not_converted'] = len(not_converted)
-
-    #     is_convert = 0
-    #     not_convert = 0
-    #     datas = Quotation.objects.all()
-    #     for data in datas:
-    #         if data.is_converted == True:
-    #             is_convert += 1
-    #             print("USER ID :: ",data.id)
-    #             transaction = Transaction.objects.filter(quotation_id = data.id)
-    #             print("TRANSACTION :: ",transaction)
-    #         else:
-    #             not_convert += 1
-                
-
-        
-
-    #     print("IS CONVERTED COUNT :: ",is_convert)
-    #     print("NOT CONVERTED COUNT :: ",not_convert)
-    #     print("REPORT ::", report)
-
-    #     return Response(report)
-
-
     if request.method == 'POST':
         report = {}
         report['completed'] = 0
         report['not_completed'] = 0
+
         user = request.data.get('user_id')
-        print("USER ::", user)
+        # print("USER ::", user)
         start_date = request.data.get('start_date', None)
-        print("START ::", start_date)
+        # print("START ::", start_date)
         end_date = request.data.get('end_date', None)
-        print("END ::", end_date)
+        # print("END ::", end_date)
 
         if start_date is None and end_date is None:
             not_converted = Quotation.objects.filter(user_id=user, is_converted=False)
             report['not_converted'] = len(not_converted)
 
             converted = Quotation.objects.filter(user_id=user, is_converted=True)
-            print("Converted :: ", converted)
+            # print("Converted :: ", converted)
             for i in converted:
-                print("I :: ",i.id)
+                # print("I :: ",i.id)
                 transaction = Transaction.objects.get(quotation_id = i.id)
-                print("TRANSACTION :: ",transaction.amount)
+                # print("TRANSACTION :: ",transaction.amount)
 
                 if i.final_amount == transaction.amount:
                     report['completed'] += 1
@@ -170,11 +142,11 @@ def Report(request):
             report['not_converted'] = len(not_converted)
 
             converted = Quotation.objects.filter(user_id=user, is_converted=True, created_on__range=[start_date, end_date])
-            print("Converted :: ", converted)
+            # print("Converted :: ", converted)
             for i in converted:
-                print("I :: ",i.id)
+                # print("I :: ",i.id)
                 transaction = Transaction.objects.get(quotation_id = i.id)
-                print("TRANSACTION :: ",transaction.amount)
+                # print("TRANSACTION :: ",transaction.amount)
 
                 if i.final_amount == transaction.amount:
                     report['completed'] += 1
@@ -182,5 +154,4 @@ def Report(request):
                     report['not_completed'] += 1
             report['converted'] = len(converted)
 
-    
         return Response(report)

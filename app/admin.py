@@ -11,14 +11,14 @@ class CustomerAdmin(admin.ModelAdmin):
     list_display = ['email', 'full_name']
 admin.site.register(Customer, CustomerAdmin)
 
-# class SkillAdmin(admin.ModelAdmin):
-#     list_display = ['email', 'type_of_user']
-# admin.site.register(Skill, SkillAdmin)
-admin.site.register(Skill)
-
 class StaffAdmin(admin.ModelAdmin):
     list_display = ['email', 'full_name']
 admin.site.register(Staff, StaffAdmin)
+
+# class SkillAdmin(admin.ModelAdmin):
+#     list_display = ['email', 'type_of_user']
+# admin.site.register(Skill, SkillAdmin)
+admin.site.register(StaffSkill)
 
 class EventAdmin(admin.ModelAdmin):
     list_display = ['event_name']
