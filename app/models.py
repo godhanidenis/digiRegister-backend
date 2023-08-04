@@ -99,6 +99,9 @@ class Inventory(models.Model):
     base_price = models.FloatField(max_length=10, null=True, blank=True)
     sell_price = models.FloatField(max_length=10, null=True, blank=True)
     
+    def _str__(self):
+        return self.name
+
 
 class Staff(models.Model):
     user_id = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE)
@@ -113,6 +116,7 @@ class Staff(models.Model):
     
     class Meta:
         unique_together = ['user_id', 'mobile_no']
+
 
 class StaffSkill(models.Model):
     inventory_id = models.ForeignKey(Inventory, null=True, blank=True, on_delete=models.CASCADE)

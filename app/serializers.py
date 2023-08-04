@@ -15,7 +15,7 @@ class CustomerSerializer(serializers.ModelSerializer):
 
 
 class InventorySerializer(serializers.ModelSerializer):
-    user = UserSerializer(source="user_id", read_only=True)
+    # user = UserSerializer(source="user_id", read_only=True)
     class Meta:
         model = Inventory
         fields = "__all__"

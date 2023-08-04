@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.db.models import Sum
 
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
@@ -23,6 +23,7 @@ class UserViewSet(viewsets.ModelViewSet):
         'address':['icontains']
     }
 
+
 class CustomerViewSet(viewsets.ModelViewSet):
     queryset = Customer.objects.all().order_by('-id').distinct()
     serializer_class = CustomerSerializer
@@ -35,6 +36,7 @@ class CustomerViewSet(viewsets.ModelViewSet):
         'email':['icontains'],
         'address':['icontains']
     }
+
 
 class InventoryViewSet(viewsets.ModelViewSet):
     queryset = Inventory.objects.all().order_by('-id').distinct()
@@ -50,7 +52,7 @@ class InventoryViewSet(viewsets.ModelViewSet):
 class StaffViewSet(viewsets.ModelViewSet):
     queryset = Staff.objects.all().order_by('-id').distinct()
     serializer_class = StaffSerializer
-    pagination_class = MyPagination
+    # pagination_class = MyPagination
     filter_backends = [DjangoFilterBackend]
     filterset_fields = {
         'user_id__id':['exact'],
@@ -61,16 +63,75 @@ class StaffViewSet(viewsets.ModelViewSet):
         # 'skill_id__inventory_id__name':['icontains'],
     }
 
+    def list(self, request, pk=None):
+
+        querysets = self.filter_queryset(self.get_queryset())
+        print("queryset ::", querysets)
+        print("LENGTH ::", len(querysets))
+
+        data = []
+        for queryset in querysets:
+            print("Queryset ::", queryset)
+            print("Queryset ID ::", queryset.id)
+
+            q_skills = StaffSkill.objects.filter(staff_id__id=queryset.id)
+            print("QUERTSET Skills ::", q_skills)
+
+            staff = StaffSerializer(queryset)
+            skills = StaffSkillSerializer(q_skills, many=True)
+            data.append({'staff': staff.data, 'skills': skills.data})
+            
+        print("DATA ::::", data)
+
+        serializer = StaffSerializer(querysets, many=True)
+        return Response({'serializer':serializer.data,
+                         'data':data})
+
+    def create(self, request, *args, **kwargs):
+        staff = request.data.get('staff_data')
+        print("STAFF ::", staff)
+        skills = request.data.get('skill_data')
+        print("SKILLS ::", skills)
+
+        staffSerializer = StaffSerializer(data=staff)
+        if staffSerializer.is_valid():
+            staff_instance = staffSerializer.save() 
+
+            staff_skill_instances = []
+            staff_skill_serializer = StaffSkillSerializer()
+            for skill in skills:
+                print("SKILL ::", skill)
+                skill["staff_id"] = staff_instance.id
+                print("SKILL STAFF ID ::", skill["staff_id"])
+                staff_skill_serializer = StaffSkillSerializer(data=skill)
+                if staff_skill_serializer.is_valid():
+                    staff_skill_instance = staff_skill_serializer.save()
+                    staff_skill_instances.append(staff_skill_instance)
+                else:
+                    return Response(staff_skill_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            response_data = {
+                'staff': staffSerializer.data,
+                'skills': StaffSkillSerializer(staff_skill_instances, many=True).data
+            }
+            return Response(response_data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(staffSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class StaffSkillViewSet(viewsets.ModelViewSet):
     queryset = StaffSkill.objects.all().order_by('-id').distinct()
     serializer_class = StaffSkillSerializer
-    # filter_backends = [DjangoFilterBackend]
-    # filterset_fields = {
-    #     'inventory_id__user_id__id':['exact'],
-    #     'inventory_id__id':['exact'],
-    #     'inventory_id__name':['icontains'],
-    # }
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+        'staff_id__user_id':['exact'],
+        'staff_id__full_name':['icontains'],
+        'inventory_id__id':['exact'],
+        'inventory_id__name':['icontains'],
+        'price':['icontains']
+    }
+
+
 class EventViewSet(viewsets.ModelViewSet):
     queryset = Event.objects.all().order_by('-id').distinct()
     serializer_class = EventSerializer
@@ -79,6 +140,7 @@ class EventViewSet(viewsets.ModelViewSet):
         'user_id__id':['exact'],
         'event_name':['icontains']
     }
+
 
 class QuotationViewSet(viewsets.ModelViewSet):
     queryset = Quotation.objects.all().order_by('-id').distinct()
@@ -93,6 +155,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
         'event_id__event_name':['icontains'],
         'is_converted': ['exact'],
     }
+
 
 class TransactionViewSet(viewsets.ModelViewSet):
     queryset = Transaction.objects.all().order_by('-id').distinct()
