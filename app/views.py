@@ -156,11 +156,9 @@ class QuotationViewSet(viewsets.ModelViewSet):
     }
 
     def list(self, request):
-
         querysets = self.filter_queryset(self.get_queryset())
         # print("queryset ::", querysets)
         # print("LENGTH ::", len(querysets))
-
         data = []
         for queryset in querysets:
             # print("QUERTSET ::", queryset)
@@ -169,7 +167,11 @@ class QuotationViewSet(viewsets.ModelViewSet):
             # print("total_amount ::", total_amount)
             serializers = QuotationSerializer(queryset)
             # print("SERIALIZERS ::", serializers.data)
+            # print("FINAL AMOUNT ::", queryset.final_amount)
+            # print("DISCOUNT ::", queryset.discount)
+            payable_amount = queryset.final_amount - queryset.discount
             data.append({"quotation":serializers.data,
+                         "payable_amount":payable_amount,
                          "received_amount":total_amount})
 
         return Response(data)
@@ -212,9 +214,10 @@ def Report(request):
                 # print("I :: ",i.id)
                 total_amount = Transaction.objects.filter(quotation_id=i.id).aggregate(Sum('amount'))['amount__sum']
                 # transaction = Transaction.objects.get(quotation_id = i.id)
-                # print("TRANSACTION :: ",transaction.amount)
+                # print("FINAL AMOUNT :: ",i.final_amount)
+                # print("DISCOUNT :: ",i.discount)
 
-                if i.final_amount == total_amount:
+                if (i.final_amount - i.discount) == total_amount:
                     report['completed'] += 1
                 else:
                     report['not_completed'] += 1
@@ -232,7 +235,7 @@ def Report(request):
                 # transaction = Transaction.objects.get(quotation_id = i.id)
                 # print("TRANSACTION :: ",total_amount)
                 # print("FINAL AMOUNT :: ",i.final_amount)
-                if i.final_amount == total_amount:
+                if (i.final_amount - i.discount) == total_amount:
                     report['completed'] += 1
                 else:
                     report['not_completed'] += 1

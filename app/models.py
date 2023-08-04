@@ -144,7 +144,8 @@ class Quotation(models.Model):
     json_data = models.JSONField(blank=True, null=True)
     created_on = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     converted_on = models.DateTimeField(null=True, blank=True)
-    final_amount = models.IntegerField(null=True, blank=True)
+    final_amount = models.IntegerField(default=0)
+    discount = models.IntegerField(default=0)
 
 
 class Transaction(models.Model):
