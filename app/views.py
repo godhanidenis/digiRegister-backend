@@ -63,29 +63,28 @@ class StaffViewSet(viewsets.ModelViewSet):
         # 'skill_id__inventory_id__name':['icontains'],
     }
 
-    def list(self, request, pk=None):
+    def list(self, request):
 
         querysets = self.filter_queryset(self.get_queryset())
-        print("queryset ::", querysets)
-        print("LENGTH ::", len(querysets))
+        # print("queryset ::", querysets)
+        # print("LENGTH ::", len(querysets))
 
         data = []
         for queryset in querysets:
-            print("Queryset ::", queryset)
-            print("Queryset ID ::", queryset.id)
+            # print("Queryset ::", queryset)
+            # print("Queryset ID ::", queryset.id)
 
             q_skills = StaffSkill.objects.filter(staff_id__id=queryset.id)
-            print("QUERTSET Skills ::", q_skills)
+            # print("QUERTSET Skills ::", q_skills)
 
             staff = StaffSerializer(queryset)
             skills = StaffSkillSerializer(q_skills, many=True)
             data.append({'staff': staff.data, 'skills': skills.data})
             
-        print("DATA ::::", data)
+        # print("DATA ::::", data)
 
-        serializer = StaffSerializer(querysets, many=True)
-        return Response({'serializer':serializer.data,
-                         'data':data})
+        # serializer = StaffSerializer(querysets, many=True)
+        return Response({'data':data})
 
     def create(self, request, *args, **kwargs):
         staff = request.data.get('staff_data')
@@ -156,6 +155,25 @@ class QuotationViewSet(viewsets.ModelViewSet):
         'is_converted': ['exact'],
     }
 
+    def list(self, request):
+
+        querysets = self.filter_queryset(self.get_queryset())
+        # print("queryset ::", querysets)
+        # print("LENGTH ::", len(querysets))
+
+        data = []
+        for queryset in querysets:
+            # print("QUERTSET ::", queryset)
+            # print("QUERTSET ID ::", queryset.id)
+            total_amount = Transaction.objects.filter(quotation_id=queryset.id).aggregate(Sum('amount'))['amount__sum']
+            # print("total_amount ::", total_amount)
+            serializers = QuotationSerializer(queryset)
+            # print("SERIALIZERS ::", serializers.data)
+            data.append({"quotation":serializers.data,
+                         "received_amount":total_amount})
+
+        return Response(data)
+
 
 class TransactionViewSet(viewsets.ModelViewSet):
     queryset = Transaction.objects.all().order_by('-id').distinct()
@@ -170,7 +188,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
     }
 
 
-@api_view(['GET', 'POST'])
+@api_view(['POST'])
 def Report(request):
     if request.method == 'POST':
         report = {}
