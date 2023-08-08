@@ -79,6 +79,7 @@ class Customer(models.Model):
     mobile_no = models.CharField(max_length=15, unique=True)
     email = models.EmailField(max_length=100, null=True, blank=True)
     address = models.CharField(max_length=200, null=True, blank=True)
+    social_media = models.CharField(max_length=100, null=True, blank=True)
 
     def _str__(self):
         return self.full_name
@@ -139,6 +140,7 @@ class Quotation(models.Model):
     customer_id = models.ForeignKey(Customer, null=True, blank=True, on_delete=models.CASCADE)
     event_id = models.ForeignKey(Event, null=True, blank=True, on_delete=models.CASCADE)
     event_venue = models.CharField(null=True, blank=True)
+    couple_name = models.CharField(null=True, blank=True)
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
     due_date = models.DateField(null=True, blank=True)
