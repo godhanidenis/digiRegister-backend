@@ -110,6 +110,8 @@ class Staff(models.Model):
     email = models.EmailField(max_length=100, null=True, blank=True)
     address = models.CharField(max_length=200, null=True, blank=True)
     studio_name = models.CharField(max_length=150, null=True, blank=True)
+    social_media = models.CharField(max_length=100, null=True, blank=True)
+
 
     def _str__(self):
         return self.full_name
