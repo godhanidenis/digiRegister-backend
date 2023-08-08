@@ -64,25 +64,19 @@ class StaffViewSet(viewsets.ModelViewSet):
     }
 
     def list(self, request):
-
         querysets = self.filter_queryset(self.get_queryset())
         # print("queryset ::", querysets)
         # print("LENGTH ::", len(querysets))
-
         data = []
         for queryset in querysets:
             # print("Queryset ::", queryset)
             # print("Queryset ID ::", queryset.id)
-
             q_skills = StaffSkill.objects.filter(staff_id__id=queryset.id)
             # print("QUERTSET Skills ::", q_skills)
-
             staff = StaffSerializer(queryset)
             skills = StaffSkillSerializer(q_skills, many=True)
-            data.append({'staff': staff.data, 'skills': skills.data})
-            
+            data.append({'staff': staff.data, 'skills': skills.data}) 
         # print("DATA ::::", data)
-
         # serializer = StaffSerializer(querysets, many=True)
         return Response({'data':data})
 
@@ -157,23 +151,17 @@ class QuotationViewSet(viewsets.ModelViewSet):
 
     def list(self, request):
         querysets = self.filter_queryset(self.get_queryset())
-        # print("queryset ::", querysets)
-        # print("LENGTH ::", len(querysets))
         data = []
         for queryset in querysets:
-            # print("QUERTSET ::", queryset)
-            # print("QUERTSET ID ::", queryset.id)
             total_amount = Transaction.objects.filter(quotation_id=queryset.id).aggregate(Sum('amount'))['amount__sum']
-            # print("total_amount ::", total_amount)
+            s_transaction = Transaction.objects.filter(quotation_id=queryset.id)
             serializers = QuotationSerializer(queryset)
-            # print("SERIALIZERS ::", serializers.data)
-            # print("FINAL AMOUNT ::", queryset.final_amount)
-            # print("DISCOUNT ::", queryset.discount)
+            transaction = TransactionSerializer(s_transaction, many=True)
             payable_amount = queryset.final_amount - queryset.discount
             data.append({"quotation":serializers.data,
+                         "transaction":transaction.data,
                          "payable_amount":payable_amount,
                          "received_amount":total_amount})
-
         return Response(data)
 
 

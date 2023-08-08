@@ -21,7 +21,6 @@ class InventorySerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-
 class StaffSerializer(serializers.ModelSerializer):
     # user = UserSerializer(source="user_id", read_only=True)
     class Meta:
@@ -35,6 +34,7 @@ class StaffSkillSerializer(serializers.ModelSerializer):
     class Meta:
         model = StaffSkill
         fields = "__all__"
+
 
 class EventSerializer(serializers.ModelSerializer):
     user = UserSerializer(source="user_id", read_only=True)
