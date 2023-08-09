@@ -160,7 +160,7 @@ cython_debug/
 
 .env
 
-static/
+# static/
 
 
 # Elastic Beanstalk Files
