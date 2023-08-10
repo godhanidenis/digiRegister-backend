@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.db.models import Sum
+from django.http import  HttpResponse
 
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, status
@@ -9,6 +10,7 @@ from rest_framework.response import Response
 from .models import *
 from .serializers import *
 from .pagination import MyPagination
+from .resource import *
 
 # Create your views here.
 
@@ -146,6 +148,9 @@ class QuotationViewSet(viewsets.ModelViewSet):
         'event_id__id':['exact'],
         'customer_id__full_name':['icontains'],
         'event_id__event_name':['icontains'],
+        'customer_id__mobile_no':['icontains'],
+        'start_date':['exact'],
+        'event_venue':['icontains'],
         'is_converted': ['exact'],
     }
 
@@ -230,3 +235,115 @@ def Report(request):
             report['converted'] = len(converted)
 
         return Response(report)
+    
+
+# class QuotationExport(viewsets.ReadOnlyModelViewSet):
+#     queryset = Quotation.objects.all().order_by('-id').distinct()
+#     serializer_class = QuotationSerializer
+#     pagination_class = MyPagination
+#     filter_backends = [DjangoFilterBackend]
+#     filterset_fields = {
+#         'user_id__id':['exact'],
+#         'customer_id__id':['exact'],
+#         'event_id__id':['exact'],
+#         'customer_id__full_name':['icontains'],
+#         'event_id__event_name':['icontains'],
+#         'customer_id__mobile_no':['icontains'],
+#         'start_date':['exact'],
+#         'event_venue':['icontains'],
+#         'is_converted': ['exact'],
+#     }
+
+#     def list(self, request):
+#         queryset_obj = self.filter_queryset(self.get_queryset())
+#         quotation_resource = QuotationResource()
+#         data_set = quotation_resource.export(queryset_obj)
+#         print(":: DATA SET ::")
+#         print(data_set)
+
+#         file_name = data_set.xlsx
+#         content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        
+#         return HttpResponse(file_name, content_type=content_type)
+    
+#     def retrieve(self, request, *args, **kwarge):
+#         instance = self.get_object()
+#         print("INSTANCE :: ",instance)
+#         quotation_resource = QuotationResource()
+#         print("quotation_resource", quotation_resource)
+#         data_set = quotation_resource.export([instance])
+#         print(":: DATA SET ::")
+#         print(data_set)
+
+#         file_name = data_set.xlsx
+#         content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        
+#         return HttpResponse(file_name, content_type=content_type)
+
+
+# class TransactionExport(viewsets.ReadOnlyModelViewSet):
+#     queryset = Transaction.objects.all().order_by('-id').distinct()
+#     serializer_class = TransactionSerializer
+#     filter_backends = [DjangoFilterBackend]
+#     filterset_fields = {
+#         'quotation_id__user_id__id':['exact'],
+#         'quotation_id__id':['exact'],
+#         'notes':['icontains'],
+#         'quotation_id__customer_id__full_name':['icontains'],
+#         'quotation_id__event_id__event_name':['icontains'],
+#     }
+
+#     def list(self, request):
+#         queryset_obj = self.filter_queryset(self.get_queryset())
+#         transaction_resource = TransactionResource()
+#         data_set = transaction_resource.export(queryset_obj)
+#         print(":: DATA SET ::")
+#         print(data_set)
+
+#         file_name = data_set.xlsx
+#         content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        
+#         return HttpResponse(file_name, content_type=content_type)
+    
+#     def retrieve(self, request, *args, **kwarge):
+#         instance = self.get_object()
+#         print("INSTANCE :: ",instance)
+#         transaction_resource = TransactionResource()
+#         print("transaction_resource", transaction_resource)
+#         data_set = transaction_resource.export([instance])
+#         print(":: DATA SET ::")
+#         print(data_set)
+
+#         file_name = data_set.xlsx
+#         content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        
+#         return HttpResponse(file_name, content_type=content_type)
+    
+
+# class InvoiceExport(viewsets.ReadOnlyModelViewSet):
+#     queryset = Quotation.objects.all().order_by('-id').distinct()
+#     serializer_class = QuotationSerializer
+#     pagination_class = MyPagination
+#     filter_backends = [DjangoFilterBackend]
+#     filterset_fields = {
+#         'user_id__id':['exact'],
+#         'customer_id__id':['exact'],
+#         'event_id__id':['exact'],
+#         'customer_id__full_name':['icontains'],
+#         'event_id__event_name':['icontains'],
+#         'customer_id__mobile_no':['icontains'],
+#         'start_date':['exact'],
+#         'event_venue':['icontains'],
+#         'is_converted': ['exact'],
+#     }
+
+
+# def list(self, request):
+#         querysets = self.filter_queryset(self.get_queryset())
+#         data = []
+#         for queryset in querysets:
+#             s_transaction = Transaction.objects.filter(quotation_id=queryset.id)
+#             serializers = QuotationSerializer(queryset)
+#             transaction = TransactionSerializer(s_transaction, many=True)
+        
+#         return Response(data)

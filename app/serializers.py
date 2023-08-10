@@ -8,7 +8,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class CustomerSerializer(serializers.ModelSerializer):
-    user = UserSerializer(source="user_id", read_only=True)
+    # user = UserSerializer(source="user_id", read_only=True)
     class Meta:
         model = Customer
         fields = "__all__"
@@ -37,7 +37,7 @@ class StaffSkillSerializer(serializers.ModelSerializer):
 
 
 class EventSerializer(serializers.ModelSerializer):
-    user = UserSerializer(source="user_id", read_only=True)
+    # user = UserSerializer(source="user_id", read_only=True)
     class Meta:
         model = Event
         fields = "__all__"
@@ -53,7 +53,7 @@ class QuotationSerializer(serializers.ModelSerializer):
 
 
 class TransactionSerializer(serializers.ModelSerializer):
-    quotation = QuotationSerializer(source="quotation_id", read_only=True)
+    # quotation = QuotationSerializer(source="quotation_id", read_only=True)
     class Meta:
         model = Transaction
         fields = "__all__"
