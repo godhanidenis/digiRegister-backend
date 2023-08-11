@@ -33,5 +33,5 @@ class InventoryAdmin(admin.ModelAdmin):
 admin.site.register(Inventory, InventoryAdmin)
 
 class TransactionAdmin(admin.ModelAdmin):
-    list_display = ['notes', 'amount']
+    list_display = ['notes', 'amount','quotation_id']
 admin.site.register(Transaction, TransactionAdmin)
