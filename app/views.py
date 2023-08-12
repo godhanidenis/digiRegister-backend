@@ -11,7 +11,9 @@ from .models import *
 from .serializers import *
 from .pagination import MyPagination
 from .resource import *
+from app.utils import convert_time_utc_to_local
 
+import pandas as pd
 # Create your views here.
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -154,6 +156,21 @@ class QuotationViewSet(viewsets.ModelViewSet):
         'is_converted': ['exact'],
     }
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        from_date = self.request.query_params.get('from_date')
+        print("FROM DATE :: ",from_date)
+        to_date = self.request.query_params.get('to_date')
+        print("TO DATE :: ",to_date)
+
+        if from_date and to_date:
+            try:
+                queryset = queryset.filter(created_on__range=[from_date, to_date])
+            except ValueError:
+                pass
+
+        return queryset
+
     def list(self, request):
         querysets = self.filter_queryset(self.get_queryset())
         data = []
@@ -237,113 +254,294 @@ def Report(request):
         return Response(report)
     
 
-# class QuotationExport(viewsets.ReadOnlyModelViewSet):
-#     queryset = Quotation.objects.all().order_by('-id').distinct()
-#     serializer_class = QuotationSerializer
-#     pagination_class = MyPagination
-#     filter_backends = [DjangoFilterBackend]
-#     filterset_fields = {
-#         'user_id__id':['exact'],
-#         'customer_id__id':['exact'],
-#         'event_id__id':['exact'],
-#         'customer_id__full_name':['icontains'],
-#         'event_id__event_name':['icontains'],
-#         'customer_id__mobile_no':['icontains'],
-#         'start_date':['exact'],
-#         'event_venue':['icontains'],
-#         'is_converted': ['exact'],
-#     }
+class QuotationExport(viewsets.ReadOnlyModelViewSet):
+    queryset = Quotation.objects.all().order_by('-id').distinct()
+    serializer_class = QuotationSerializer
+    pagination_class = MyPagination
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+        'user_id__id':['exact'],
+        'customer_id__id':['exact'],
+        'event_id__id':['exact'],
+        'customer_id__full_name':['icontains'],
+        'event_id__event_name':['icontains'],
+        'customer_id__mobile_no':['icontains'],
+        'start_date':['exact'],
+        'event_venue':['icontains'],
+        'is_converted': ['exact'],
+    }
 
-#     def list(self, request):
-#         queryset_obj = self.filter_queryset(self.get_queryset())
-#         quotation_resource = QuotationResource()
-#         data_set = quotation_resource.export(queryset_obj)
-#         print(":: DATA SET ::")
-#         print(data_set)
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        from_date = self.request.query_params.get('from_date')
+        print("FROM DATE :: ",from_date)
+        to_date = self.request.query_params.get('to_date')
+        print("TO DATE :: ",to_date)
 
-#         file_name = data_set.xlsx
-#         content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        if from_date and to_date:
+            try:
+                queryset = queryset.filter(created_on__range=[from_date, to_date])
+            except ValueError:
+                pass
+
+        return queryset
+
+    def list(self, request):
+        queryset_obj = self.filter_queryset(self.get_queryset())
+        quotation_resource = QuotationResource()
+        data_set = quotation_resource.export(queryset_obj)
+        print(":: DATA SET ::")
+        print(data_set)
+
+        file_name = data_set.xlsx
+        content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         
-#         return HttpResponse(file_name, content_type=content_type)
+        return HttpResponse(file_name, content_type=content_type)
     
-#     def retrieve(self, request, *args, **kwarge):
-#         instance = self.get_object()
-#         print("INSTANCE :: ",instance)
-#         quotation_resource = QuotationResource()
-#         print("quotation_resource", quotation_resource)
-#         data_set = quotation_resource.export([instance])
-#         print(":: DATA SET ::")
-#         print(data_set)
+    def retrieve(self, request, *args, **kwarge):
+        instance = self.get_object()
+        print("INSTANCE :: ",instance)
+        quotation_resource = QuotationResource()
+        print("quotation_resource", quotation_resource)
+        data_set = quotation_resource.export([instance])
+        print(":: DATA SET ::")
+        print(data_set)
 
-#         file_name = data_set.xlsx
-#         content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        file_name = data_set.xlsx
+        content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         
-#         return HttpResponse(file_name, content_type=content_type)
+        return HttpResponse(file_name, content_type=content_type)
 
 
-# class TransactionExport(viewsets.ReadOnlyModelViewSet):
-#     queryset = Transaction.objects.all().order_by('-id').distinct()
-#     serializer_class = TransactionSerializer
-#     filter_backends = [DjangoFilterBackend]
-#     filterset_fields = {
-#         'quotation_id__user_id__id':['exact'],
-#         'quotation_id__id':['exact'],
-#         'notes':['icontains'],
-#         'quotation_id__customer_id__full_name':['icontains'],
-#         'quotation_id__event_id__event_name':['icontains'],
-#     }
+class TransactionExport(viewsets.ReadOnlyModelViewSet):
+    queryset = Transaction.objects.all().order_by('-id').distinct()
+    serializer_class = TransactionSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+        'quotation_id__user_id__id':['exact'],
+        'quotation_id__id':['exact'],
+        'notes':['icontains'],
+        'quotation_id__customer_id__full_name':['icontains'],
+        'quotation_id__event_id__event_name':['icontains'],
+    }
 
-#     def list(self, request):
-#         queryset_obj = self.filter_queryset(self.get_queryset())
-#         transaction_resource = TransactionResource()
-#         data_set = transaction_resource.export(queryset_obj)
-#         print(":: DATA SET ::")
-#         print(data_set)
+    def list(self, request):
+        queryset_obj = self.filter_queryset(self.get_queryset())
+        transaction_resource = TransactionResource()
+        data_set = transaction_resource.export(queryset_obj)
+        print(":: DATA SET ::")
+        print(data_set)
 
-#         file_name = data_set.xlsx
-#         content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        file_name = data_set.xlsx
+        content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         
-#         return HttpResponse(file_name, content_type=content_type)
+        return HttpResponse(file_name, content_type=content_type)
     
-#     def retrieve(self, request, *args, **kwarge):
-#         instance = self.get_object()
-#         print("INSTANCE :: ",instance)
-#         transaction_resource = TransactionResource()
-#         print("transaction_resource", transaction_resource)
-#         data_set = transaction_resource.export([instance])
-#         print(":: DATA SET ::")
-#         print(data_set)
+    def retrieve(self, request, *args, **kwarge):
+        instance = self.get_object()
+        print("INSTANCE :: ",instance)
+        transaction_resource = TransactionResource()
+        print("transaction_resource", transaction_resource)
+        data_set = transaction_resource.export([instance])
+        print(":: DATA SET ::")
+        print(data_set)
 
-#         file_name = data_set.xlsx
-#         content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        file_name = data_set.xlsx
+        content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         
-#         return HttpResponse(file_name, content_type=content_type)
+        return HttpResponse(file_name, content_type=content_type)
     
 
-# class InvoiceExport(viewsets.ReadOnlyModelViewSet):
-#     queryset = Quotation.objects.all().order_by('-id').distinct()
-#     serializer_class = QuotationSerializer
-#     pagination_class = MyPagination
-#     filter_backends = [DjangoFilterBackend]
-#     filterset_fields = {
-#         'user_id__id':['exact'],
-#         'customer_id__id':['exact'],
-#         'event_id__id':['exact'],
-#         'customer_id__full_name':['icontains'],
-#         'event_id__event_name':['icontains'],
-#         'customer_id__mobile_no':['icontains'],
-#         'start_date':['exact'],
-#         'event_venue':['icontains'],
-#         'is_converted': ['exact'],
-#     }
+class InvoiceExport(viewsets.ReadOnlyModelViewSet):
+    queryset = Quotation.objects.all().order_by('-id').distinct()
+    serializer_class = QuotationSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+        'user_id__id':['exact'],
+        'customer_id__id':['exact'],
+        'event_id__id':['exact'],
+        'customer_id__full_name':['icontains'],
+        'event_id__event_name':['icontains'],
+        'customer_id__mobile_no':['icontains'],
+        'start_date':['exact'],
+        'event_venue':['icontains'],
+        'is_converted': ['exact'],
+    }
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        from_date = self.request.query_params.get('from_date')
+        # print("FROM DATE :: ",from_date)
+        to_date = self.request.query_params.get('to_date')
+        # print("TO DATE :: ",to_date)
 
-# def list(self, request):
-#         querysets = self.filter_queryset(self.get_queryset())
-#         data = []
-#         for queryset in querysets:
-#             s_transaction = Transaction.objects.filter(quotation_id=queryset.id)
-#             serializers = QuotationSerializer(queryset)
-#             transaction = TransactionSerializer(s_transaction, many=True)
+        if from_date and to_date:
+            try:
+                queryset = queryset.filter(created_on__range=[from_date, to_date])
+            except ValueError:
+                pass
+
+        return queryset
+
+    def list(self, request):
+        querysets = self.filter_queryset(self.get_queryset())
+        timezone = request.query_params.get("timezone")
+        # print("TIME ZONE ::",timezone)
+        data = []
+        for queryset in querysets:
+            # print("Quotation ID ::", queryset.id)
+            s_transaction = Transaction.objects.filter(quotation_id=queryset.id)
+            # print("s_transaction :: ", s_transaction)
+            serializers = QuotationSerializer(queryset)
+            transaction = TransactionSerializer(s_transaction, many=True)
+
+            total_amount = Transaction.objects.filter(quotation_id=queryset.id).aggregate(Sum('amount'))['amount__sum']
+            # print("TYPE ::", type(total_amount))
+            # print("Amount ::",total_amount)
+            total_amount = total_amount if total_amount is not None else 0
+            # print("GGGG Amount ::",total_amount)
+            status = "Paid" if queryset.final_amount == total_amount else "Pending"
+            data.append({"quotation":serializers.data,
+                        "transaction":transaction.data,
+                        "payable_amount":queryset.final_amount - queryset.discount,
+                        "received_amount": total_amount ,
+                        "pending_amount":queryset.final_amount - int(total_amount),
+                        "payment_status": status
+                        })
+
+        formatted_data = []
+
+        for item in data:
+            quotation = item['quotation']
+            transaction = item['transaction']
+            payable_amount = item['payable_amount']
+            received_amount = item['received_amount']
+            pending_amount = item['pending_amount']
+            payment_status = item['payment_status']
+
+            print("TIMEEEEE :::",quotation['converted_on'])
+            formatted_item = {
+                "Invoice NO.": quotation['id'],
+                "Customer ID": quotation['customer']['id'],
+                "Customer Name": quotation['customer']['full_name'],
+                "Event Name": quotation['event']['event_name'],
+                # "event_venue": quotation['event_venue'],
+                # "couple_name": quotation['couple_name'],
+                # "start_date": quotation['start_date'],
+                # "end_date": quotation['end_date'],
+                "Created On": convert_time_utc_to_local(timezone, quotation['converted_on']),
+                "due_date": quotation['due_date'],
+                # "is_converted": quotation['is_converted'],
+                # "json_data": quotation['json_data'],
+                # "created_on": quotation['created_on'],
+                "Total Amount (INR)": quotation['final_amount'],
+                "Discount (INR)": quotation['discount'],
+                "Final Amount (INR)": payable_amount,
+                "Received Amount (INR)": received_amount,
+                "Panding Amount (INR)": pending_amount,
+                "Payment Status":payment_status
+                
+            }
+            
+            for idx, transaction_item in enumerate(transaction, start=1):
+                formatted_item[f"Transaction_{idx}_Date"] = transaction_item['date']
+                formatted_item[f"Transaction_{idx}_Amount"] = transaction_item['amount']
+                formatted_item[f"Transaction_{idx}_Notes"] = transaction_item['notes']
+                
+                # Add empty values for the other transactions (if any)
+                for i in range(idx + 1, len(transaction) + 1): 
+                    formatted_item[f"Transaction_{i}_Date"] = ""
+                    formatted_item[f"Transaction_{i}_Amount"] = ""
+                    formatted_item[f"Transaction_{i}_Notes"] = ""
+            
+            formatted_data.append(formatted_item)
+
+        df = pd.DataFrame(formatted_data)
+        print(df)
+
+        output_path = "output_data.xlsx"
+        df.to_excel(output_path, index=False)
+        print(f"Excel file saved at {output_path}")
+
+        with open(output_path, 'rb') as excel_file:
+            response = HttpResponse(excel_file.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            response['Content-Disposition'] = 'attachment; filename=output_data.xlsx'
+            return response
         
-#         return Response(data)
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        timezone = request.query_params.get("timezone")
+        data = []
+        s_transaction = Transaction.objects.filter(quotation_id=instance.id)
+        serializers = QuotationSerializer(instance)
+        transaction = TransactionSerializer(s_transaction, many=True)
+
+        total_amount = Transaction.objects.filter(quotation_id=instance.id).aggregate(Sum('amount'))['amount__sum']
+        total_amount = total_amount if total_amount is not None else 0
+        status = "Paid" if instance.final_amount == total_amount else "Pending"
+        print("STATUS :: ", status)
+        data.append({
+            "quotation": serializers.data,
+            "transaction": transaction.data,
+            "payable_amount": instance.final_amount - instance.discount,
+            "received_amount": total_amount,
+            "pending_amount":instance.final_amount - total_amount,
+            "payment_status": status
+        })
+
+        
+        formatted_data = []  
+
+        for item in data:
+            quotation = item['quotation']
+            transaction = item['transaction']
+            payable_amount = item['payable_amount']
+            received_amount = item['received_amount']
+            pending_amount = item['pending_amount']
+            payment_status = item['payment_status']
+
+            # print("TIMEEEEE :::",quotation['converted_on'])
+            formatted_item = {
+                "Invoice NO.": quotation['id'],
+                "Customer ID": quotation['customer']['id'],
+                "Customer Name": quotation['customer']['full_name'],
+                "Event Name": quotation['event']['event_name'],
+                # "event_venue": quotation['event_venue'],
+                # "couple_name": quotation['couple_name'],
+                # "start_date": quotation['start_date'],
+                # "end_date": quotation['end_date'],
+                "Created On": convert_time_utc_to_local(timezone, quotation['converted_on']),
+                "due_date": quotation['due_date'],
+                # "is_converted": quotation['is_converted'],
+                # "json_data": quotation['json_data'],
+                # "created_on": quotation['created_on'],
+                "Total Amount (INR)": quotation['final_amount'],
+                "Discount (INR)": quotation['discount'],
+                "Final Amount (INR)": payable_amount,
+                "Received Amount (INR)": received_amount,
+                "Pending Amount (INR)": pending_amount,
+                "Payment Status":payment_status
+            }
+            
+            for idx, transaction_item in enumerate(transaction, start=1):
+                formatted_item[f"Transaction_{idx}_Date"] = transaction_item['date']
+                formatted_item[f"Transaction_{idx}_Amount"] = transaction_item['amount']
+                formatted_item[f"Transaction_{idx}_Notes"] = transaction_item['notes']
+                
+                # Add empty values for the other transactions (if any)
+                for i in range(idx + 1, len(transaction) + 1): 
+                    formatted_item[f"Transaction_{i}_Date"] = ""
+                    formatted_item[f"Transaction_{i}_Amount"] = ""
+                    formatted_item[f"Transaction_{i}_Notes"] = ""
+            
+            formatted_data.append(formatted_item)
+
+
+        df = pd.DataFrame(formatted_data)
+        output_path = "single_object_output.xlsx"
+        df.to_excel(output_path, index=False)
+
+        with open(output_path, 'rb') as excel_file:
+            response = HttpResponse(excel_file.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            response['Content-Disposition'] = 'attachment; filename=single_object_output.xlsx'
+            return response
