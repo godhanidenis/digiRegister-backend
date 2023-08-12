@@ -112,7 +112,7 @@ class Staff(models.Model):
     address = models.CharField(max_length=200, null=True, blank=True)
     studio_name = models.CharField(max_length=150, null=True, blank=True)
     social_media = models.CharField(max_length=100, null=True, blank=True)
-
+    # is_Eposure = models.BooleanField(default=False, null=True, blank=True)
 
     def _str__(self):
         return self.full_name
@@ -159,4 +159,8 @@ class Transaction(models.Model):
     amount = models.IntegerField(null=True, blank=True)
 
 
-
+# class StudioDetails(models.Model):
+#     email = models.EmailField(null=True, blank=True)
+#     phone = models.CharField(null=True, blank=True)
+#     address = models.CharField(null=True, blank=True, max_length=200)
+#     social_media = models.CharField(max_length=100, null=True, blank=True)
