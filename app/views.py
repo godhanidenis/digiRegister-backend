@@ -254,6 +254,33 @@ def Report(request):
         return Response(report)
     
 
+class CustomerExport(viewsets.ReadOnlyModelViewSet):
+    queryset = Customer.objects.all().order_by('-id').distinct()
+    serializer_class = CustomerSerializer
+    pagination_class = MyPagination
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+        'user_id__id':['exact'],
+        'full_name':['icontains'],
+        'mobile_no':['icontains'],
+        'email':['icontains'],
+        'address':['icontains']
+    }
+
+    def list(self, request):
+        queryset_obj = self.filter_queryset(self.get_queryset())
+        customer_resource = CustomerResource()
+        data_set = customer_resource.export(queryset_obj)
+        print(":: DATA SET ::")
+        print(data_set)
+
+        file_name = data_set.xlsx
+        content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        
+        return HttpResponse(file_name, content_type=content_type)
+
+
+
 class QuotationExport(viewsets.ReadOnlyModelViewSet):
     queryset = Quotation.objects.all().order_by('-id').distinct()
     serializer_class = QuotationSerializer
