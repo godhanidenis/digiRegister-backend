@@ -115,6 +115,63 @@ class StaffViewSet(viewsets.ModelViewSet):
         else:
             return Response(staffSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def update(self, request, pk=None, *args, **kwargs):
+        staff_data = request.data.get('staff_data', None)
+        print("STAFF DATA :: ", staff_data)
+        skills = request.data.get('skills', None)
+        print("SKILLS :: ", skills)
+        delete_skills = request.data.get('delete_skills', None)
+        print("DELETE SKILLS :: ", delete_skills)
+        print("--------------------------------------")
+
+        staff = Staff.objects.get(pk=pk)
+        print("STAFF :: ", staff)
+        print("--------------------------------------")
+
+        s_serializer = StaffSerializer(staff, data=staff_data, partial=True)
+        if s_serializer.is_valid():
+            s_serializer.save()
+        else:
+            return Response(s_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        
+        if delete_skills is not None:
+            for delete_skill in delete_skills:
+                print("ONE DELETE SKILL ::",delete_skill)
+                d_skill = StaffSkill.objects.get(id=delete_skill["id"])
+                d_skill.delete()
+        print("--------------------------------------")
+
+        if skills is not None:
+            for skill in skills:
+                print("ONE SKILL ::",skill)
+                print("STAFFSKILL ID ::", skill['id'])
+                if skill['id'] == '':
+                    print("===================")
+                    skill.pop("id")
+                    print("SKILLLLL ::",skill)
+                    ns_serializer = StaffSkillSerializer(data=skill)
+                    if ns_serializer.is_valid():
+                        ns_serializer.save()
+                    else:
+                        return Response(ns_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    print("NEW SKILL")
+                    print("--------------------------------------")
+                else:
+                    o_skill = StaffSkill.objects.get(id=skill['id'])
+                    os_serializer = StaffSkillSerializer(o_skill, data=skill, partial=True)
+                    if os_serializer.is_valid():
+                        os_serializer.save()
+                    else:
+                        return Response(os_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    print("OLD SKILL")
+                    print("--------------------------------------")
+
+        return Response({
+            "staff_data":s_serializer.data,
+            # "new_skill":ns_serializer.data,
+            # "updated_skill":os_serializer.data
+                         })
 
 class StaffSkillViewSet(viewsets.ModelViewSet):
     queryset = StaffSkill.objects.all().order_by('-id').distinct()
@@ -152,6 +209,8 @@ class QuotationViewSet(viewsets.ModelViewSet):
         'event_id__event_name':['icontains'],
         'customer_id__mobile_no':['icontains'],
         'start_date':['exact'],
+        'due_date':['exact'],
+        'converted_on':['gt'],
         'event_venue':['icontains'],
         'is_converted': ['exact'],
     }
@@ -159,9 +218,9 @@ class QuotationViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
         from_date = self.request.query_params.get('from_date')
-        print("FROM DATE :: ",from_date)
+        # print("FROM DATE :: ",from_date)
         to_date = self.request.query_params.get('to_date')
-        print("TO DATE :: ",to_date)
+        # print("TO DATE :: ",to_date)
 
         if from_date and to_date:
             try:
@@ -278,7 +337,6 @@ class CustomerExport(viewsets.ReadOnlyModelViewSet):
         content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         
         return HttpResponse(file_name, content_type=content_type)
-
 
 
 class QuotationExport(viewsets.ReadOnlyModelViewSet):
