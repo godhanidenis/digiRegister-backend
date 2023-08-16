@@ -248,7 +248,6 @@ class QuotationViewSet(viewsets.ModelViewSet):
 
         return queryset
 
-
     def list(self, request):
         querysets = self.filter_queryset(self.get_queryset())
         paginator = MyPagination()  
@@ -261,8 +260,6 @@ class QuotationViewSet(viewsets.ModelViewSet):
             serializers = QuotationSerializer(queryset)
             transaction = TransactionSerializer(s_transaction, many=True)
             payable_amount = queryset.final_amount - queryset.discount
-            paid_amount += total_amount
-            total += payable_amount
             data.append({"quotation":serializers.data,
                          "transaction":transaction.data,
                          "payable_amount":payable_amount,
