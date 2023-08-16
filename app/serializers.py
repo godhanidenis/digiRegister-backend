@@ -7,8 +7,15 @@ class UserSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class StudioDetailsSerializer(serializers.ModelSerializer):
+    user = UserSerializer(source="user_id", read_only=True)
+    class Meta:
+        model = StudioDetails
+        fields = "__all__"
+
+
 class CustomerSerializer(serializers.ModelSerializer):
-    # user = UserSerializer(source="user_id", read_only=True)
+    
     class Meta:
         model = Customer
         fields = "__all__"
