@@ -251,18 +251,24 @@ class QuotationViewSet(viewsets.ModelViewSet):
 
     def list(self, request):
         querysets = self.filter_queryset(self.get_queryset())
+        paginator = MyPagination()  
+        paginated_queryset = paginator.paginate_queryset(querysets, request)
         data = []
-        for queryset in querysets:
+        for queryset in paginated_queryset:
             total_amount = Transaction.objects.filter(quotation_id=queryset.id).aggregate(Sum('amount'))['amount__sum']
+            total_amount = total_amount if total_amount is not None else 0
             s_transaction = Transaction.objects.filter(quotation_id=queryset.id)
             serializers = QuotationSerializer(queryset)
             transaction = TransactionSerializer(s_transaction, many=True)
             payable_amount = queryset.final_amount - queryset.discount
+            paid_amount += total_amount
+            total += payable_amount
             data.append({"quotation":serializers.data,
                          "transaction":transaction.data,
                          "payable_amount":payable_amount,
                          "received_amount":total_amount})
-        return Response(data)
+
+        return paginator.get_paginated_response(data)
 
 
 class TransactionViewSet(viewsets.ModelViewSet):
@@ -323,9 +329,10 @@ class AmountReportViewSet(viewsets.ModelViewSet):
         total = 0
         for queryset in querysets:
             total_amount = Transaction.objects.filter(quotation_id=queryset.id).aggregate(Sum('amount'))['amount__sum']
+            total_amount = total_amount if total_amount is not None else 0
             s_transaction = Transaction.objects.filter(quotation_id=queryset.id)
-            serializers = QuotationSerializer(queryset)
-            transaction = TransactionSerializer(s_transaction, many=True)
+            # serializers = QuotationSerializer(queryset)
+            # transaction = TransactionSerializer(s_transaction, many=True)
             payable_amount = queryset.final_amount - queryset.discount
             
             paid_amount += total_amount
@@ -335,8 +342,6 @@ class AmountReportViewSet(viewsets.ModelViewSet):
             "total":total
         }
         return Response(data)
-
-
 
 
 @api_view(['POST'])
