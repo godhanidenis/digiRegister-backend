@@ -7,6 +7,10 @@ class UserAdmin(admin.ModelAdmin):
     list_display = ['email', 'type_of_user']
 admin.site.register(User, UserAdmin)
 
+class StudioDetailsAdmin(admin.ModelAdmin):
+    list_display = ['name', 'email']
+admin.site.register(StudioDetails, StudioDetailsAdmin)
+
 class CustomerAdmin(admin.ModelAdmin):
     list_display = ['email', 'full_name']
 admin.site.register(Customer, CustomerAdmin)

@@ -28,6 +28,11 @@ class UserViewSet(viewsets.ModelViewSet):
     }
 
 
+class StudioDetailsViewSet(viewsets.ModelViewSet):
+    queryset = StudioDetails.objects.all().order_by('-id').distinct()
+    serializer_class = StudioDetailsSerializer
+
+
 class CustomerViewSet(viewsets.ModelViewSet):
     queryset = Customer.objects.all().order_by('-id').distinct()
     serializer_class = CustomerSerializer
@@ -138,7 +143,7 @@ class StaffViewSet(viewsets.ModelViewSet):
         if delete_skills is not None:
             for delete_skill in delete_skills:
                 print("ONE DELETE SKILL ::",delete_skill)
-                d_skill = StaffSkill.objects.get(id=delete_skill["id"])
+                d_skill = StaffSkill.objects.get(id=delete_skill)
                 d_skill.delete()
         print("--------------------------------------")
 
@@ -146,8 +151,9 @@ class StaffViewSet(viewsets.ModelViewSet):
             for skill in skills:
                 print("ONE SKILL ::",skill)
                 print("STAFFSKILL ID ::", skill['id'])
+                print("===================")
                 if skill['id'] == '':
-                    print("===================")
+                    print("NEW SKILL")
                     skill.pop("id")
                     print("SKILLLLL ::",skill)
                     ns_serializer = StaffSkillSerializer(data=skill)
@@ -155,16 +161,15 @@ class StaffViewSet(viewsets.ModelViewSet):
                         ns_serializer.save()
                     else:
                         return Response(ns_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                    print("NEW SKILL")
                     print("--------------------------------------")
                 else:
+                    print("OLD SKILL")
                     o_skill = StaffSkill.objects.get(id=skill['id'])
                     os_serializer = StaffSkillSerializer(o_skill, data=skill, partial=True)
                     if os_serializer.is_valid():
                         os_serializer.save()
                     else:
                         return Response(os_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                    print("OLD SKILL")
                     print("--------------------------------------")
 
         return Response({
@@ -172,6 +177,7 @@ class StaffViewSet(viewsets.ModelViewSet):
             # "new_skill":ns_serializer.data,
             # "updated_skill":os_serializer.data
                          })
+
 
 class StaffSkillViewSet(viewsets.ModelViewSet):
     queryset = StaffSkill.objects.all().order_by('-id').distinct()
@@ -257,6 +263,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
         'quotation_id__customer_id__full_name':['icontains'],
         'quotation_id__event_id__event_name':['icontains'],
     }
+
 
 
 @api_view(['POST'])

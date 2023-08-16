@@ -73,6 +73,15 @@ class User(AbstractUser):
         super().save(*args, **kwargs)
 
 
+class StudioDetails(models.Model):
+    user_id = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE)
+    name = models.CharField(max_length=200, null=True, blank=True)
+    email = models.EmailField(null=True, blank=True)
+    phone = models.CharField(null=True, blank=True)
+    address = models.CharField(null=True, blank=True, max_length=200)
+    social_media = models.CharField(max_length=100, null=True, blank=True)
+
+
 class Customer(models.Model):
     user_id = models.ForeignKey(User,null=True, blank=True, on_delete=models.CASCADE)
     full_name = models.CharField(max_length=100, null=True, blank=True)
@@ -110,9 +119,10 @@ class Staff(models.Model):
     mobile_no = models.CharField(max_length=15,unique=True)
     email = models.EmailField(max_length=100, null=True, blank=True)
     address = models.CharField(max_length=200, null=True, blank=True)
-    studio_name = models.CharField(max_length=150, null=True, blank=True)
+    # studio_name = models.CharField(max_length=150, null=True, blank=True)
+    studio_id = models.ForeignKey(StudioDetails, null=True, blank=True, on_delete=models.SET_NULL)
     social_media = models.CharField(max_length=100, null=True, blank=True)
-    # is_Eposure = models.BooleanField(default=False, null=True, blank=True)
+    is_eposure = models.BooleanField(default=False, null=True, blank=True)
 
     def _str__(self):
         return self.full_name
@@ -157,10 +167,3 @@ class Transaction(models.Model):
     notes = models.CharField(max_length=250, null=True, blank=True)
     date = models.DateField(null=True, blank=True)
     amount = models.IntegerField(null=True, blank=True)
-
-
-# class StudioDetails(models.Model):
-#     email = models.EmailField(null=True, blank=True)
-#     phone = models.CharField(null=True, blank=True)
-#     address = models.CharField(null=True, blank=True, max_length=200)
-#     social_media = models.CharField(max_length=100, null=True, blank=True)

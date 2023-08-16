@@ -7,6 +7,7 @@ from app.views import *
 
 router = routers.DefaultRouter()
 router.register(r'user',views.UserViewSet)
+router.register(r'studiodetails',views.StudioDetailsViewSet)
 router.register(r'customer',views.CustomerViewSet)
 router.register(r'inventory',views.InventoryViewSet)
 router.register(r'staff',views.StaffViewSet)
