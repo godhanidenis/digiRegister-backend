@@ -227,14 +227,27 @@ class QuotationViewSet(viewsets.ModelViewSet):
         # print("FROM DATE :: ",from_date)
         to_date = self.request.query_params.get('to_date')
         # print("TO DATE :: ",to_date)
+        status = self.request.query_params.get('status')
+        print("STATUS :: ",status)
 
         if from_date and to_date:
             try:
-                queryset = queryset.filter(created_on__range=[from_date, to_date])
+                print("LENGTH :: ",len(queryset))
+                queryset = queryset.filter(converted_on__range=[from_date, to_date])
+                # return queryset
             except ValueError:
                 pass
 
+        # if status:
+        #     if status == 'paid':
+        #         print("QUERYSET :: ",queryset)
+        #         print("LENGTH :: ",len(queryset))
+        #     else:
+        #         print("QUERYSET :: ",queryset)
+        #         print("LENGTH :: ",len(queryset))
+
         return queryset
+
 
     def list(self, request):
         querysets = self.filter_queryset(self.get_queryset())
@@ -263,6 +276,66 @@ class TransactionViewSet(viewsets.ModelViewSet):
         'quotation_id__customer_id__full_name':['icontains'],
         'quotation_id__event_id__event_name':['icontains'],
     }
+
+
+class AmountReportViewSet(viewsets.ModelViewSet):
+    queryset = Quotation.objects.all().order_by('-id').distinct()
+    serializer_class = QuotationSerializer
+    pagination_class = MyPagination
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+        'user_id__id':['exact'],
+        'customer_id__id':['exact'],
+        'event_id__id':['exact'],
+        'customer_id__full_name':['icontains'],
+        'event_id__event_name':['icontains'],
+        'customer_id__mobile_no':['icontains'],
+        'start_date':['exact'],
+        'due_date':['exact'],
+        'converted_on':['gt'],
+        'event_venue':['icontains'],
+        'is_converted': ['exact'],
+    }
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        from_date = self.request.query_params.get('from_date')
+        # print("FROM DATE :: ",from_date)
+        to_date = self.request.query_params.get('to_date')
+        # print("TO DATE :: ",to_date)
+        status = self.request.query_params.get('status')
+        print("STATUS :: ",status)
+
+        if from_date and to_date:
+            try:
+                print("LENGTH :: ",len(queryset))
+                queryset = queryset.filter(converted_on__range=[from_date, to_date])
+                # return queryset
+            except ValueError:
+                pass
+
+        return queryset
+
+
+    def list(self, request):
+        querysets = self.filter_queryset(self.get_queryset())
+        paid_amount = 0
+        total = 0
+        for queryset in querysets:
+            total_amount = Transaction.objects.filter(quotation_id=queryset.id).aggregate(Sum('amount'))['amount__sum']
+            s_transaction = Transaction.objects.filter(quotation_id=queryset.id)
+            serializers = QuotationSerializer(queryset)
+            transaction = TransactionSerializer(s_transaction, many=True)
+            payable_amount = queryset.final_amount - queryset.discount
+            
+            paid_amount += total_amount
+            total += payable_amount
+        data = {
+            "paid_amount":paid_amount,
+            "total":total
+        }
+        return Response(data)
+
 
 
 
