@@ -146,6 +146,10 @@ class Event(models.Model):
 
 
 class Quotation(models.Model):
+    PAYMENT_STATUS_CHOICES = (
+        ("paid","PAID"),
+        ("pending","PENDING")
+    )
     user_id = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE)
     customer_id = models.ForeignKey(Customer, null=True, blank=True, on_delete=models.CASCADE)
     event_id = models.ForeignKey(Event, null=True, blank=True, on_delete=models.CASCADE)
@@ -160,6 +164,7 @@ class Quotation(models.Model):
     converted_on = models.DateTimeField(null=True, blank=True)
     final_amount = models.IntegerField(default=0)
     discount = models.IntegerField(default=0)
+    payment_status = models.CharField(max_length=10, choices=PAYMENT_STATUS_CHOICES, default="pending")
 
 
 class Transaction(models.Model):

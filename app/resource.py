@@ -56,7 +56,7 @@ class QuotationResource(resources.ModelResource):
 
 
 class TransactionResource(resources.ModelResource):
-    quotation_id = fields.Field(column_name='Quotation ID', attribute='quotation_id',widget=ForeignKeyWidget(Quotation, 'quotation_id'))
+    quotation_id = fields.Field(column_name='Quotation ID', attribute='quotation_id',widget=ForeignKeyWidget(Quotation, 'id'))
     notes = fields.Field(column_name='Notes', attribute='notes')
     date = fields.Field(column_name='Date', attribute='date', widget=DateWidget(format=None))
     amount = fields.Field(column_name='Amount', attribute='amount', widget=IntegerWidget(coerce_to_string=False))
