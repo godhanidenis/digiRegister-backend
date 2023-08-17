@@ -7,13 +7,18 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
+from app.utils import convert_time_utc_to_local
 from .models import *
 from .serializers import *
 from .pagination import MyPagination
 from .resource import *
-from app.utils import convert_time_utc_to_local
 
+from decouple import config
 import pandas as pd
+import boto3
+import uuid
+import os
+
 # Create your views here.
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -27,10 +32,62 @@ class UserViewSet(viewsets.ModelViewSet):
         'address':['icontains']
     }
 
+    def update(self, request, pk=None, *args, **kwargs):
+        # print(" POST DATA ::", request.data)
+        user = User.objects.get(pk=pk)
+        # print("USER ::", user)
+        old_pic = f"digi_profile_pic/{os.path.basename(user.profile_pic)}" if user.profile_pic else None
+        # print("OLD PIC URL :: ", old_pic)
+
+        if 'password' in request.data:
+            # print("PASSWORD ::", request.data['password'])
+            # user.password = request.data['password']
+            user.set_password(request.data['password'])
+            user.save()
+            request.data.pop('password')
+
+        if 'profile_pic' in request.data:
+            # print("::: PROFILE PIC :::")
+            bucket_name = config('wasabisys_bucket_name')
+            region = config('wasabisys_region')
+            s3 = boto3.client('s3',
+                          endpoint_url=config('wasabisys_endpoint_url'),
+                          aws_access_key_id=config('wasabisys_access_key_id'),
+                          aws_secret_access_key=config('wasabisys_secret_access_key')
+                          )
+            
+            if old_pic:
+                s3.delete_object(
+                            Bucket = bucket_name, 
+                            Key=old_pic
+                            )
+            
+            file = request.data['profile_pic']
+            file_name = f"digi_profile_pic/{uuid.uuid4().hex}.jpg"
+
+            s3.upload_fileobj(file, bucket_name, file_name)
+
+            s3_file_url = f"https://s3.{region}.wasabisys.com/{bucket_name}/{file_name}"
+            # print("S3 File URL :: ",s3_file_url)
+            request.data['profile_pic'] = s3_file_url
+
+        # print("UPDATED DATA :: ",request.data)
+        serializer = UserSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response(serializer.data)
+
 
 class StudioDetailsViewSet(viewsets.ModelViewSet):
     queryset = StudioDetails.objects.all().order_by('-id').distinct()
     serializer_class = StudioDetailsSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+        'user_id__id':['exact'],
+    }
 
 
 class CustomerViewSet(viewsets.ModelViewSet):
@@ -91,9 +148,9 @@ class StaffViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         staff = request.data.get('staff_data')
-        print("STAFF ::", staff)
+        # print("STAFF ::", staff)
         skills = request.data.get('skill_data')
-        print("SKILLS ::", skills)
+        # print("SKILLS ::", skills)
 
         staffSerializer = StaffSerializer(data=staff)
         if staffSerializer.is_valid():
@@ -102,9 +159,9 @@ class StaffViewSet(viewsets.ModelViewSet):
             staff_skill_instances = []
             staff_skill_serializer = StaffSkillSerializer()
             for skill in skills:
-                print("SKILL ::", skill)
+                # print("SKILL ::", skill)
                 skill["staff_id"] = staff_instance.id
-                print("SKILL STAFF ID ::", skill["staff_id"])
+                # print("SKILL STAFF ID ::", skill["staff_id"])
                 staff_skill_serializer = StaffSkillSerializer(data=skill)
                 if staff_skill_serializer.is_valid():
                     staff_skill_instance = staff_skill_serializer.save()
@@ -122,16 +179,16 @@ class StaffViewSet(viewsets.ModelViewSet):
 
     def update(self, request, pk=None, *args, **kwargs):
         staff_data = request.data.get('staff_data', None)
-        print("STAFF DATA :: ", staff_data)
+        # print("STAFF DATA :: ", staff_data)
         skills = request.data.get('skills', None)
-        print("SKILLS :: ", skills)
+        # print("SKILLS :: ", skills)
         delete_skills = request.data.get('delete_skills', None)
-        print("DELETE SKILLS :: ", delete_skills)
-        print("--------------------------------------")
+        # print("DELETE SKILLS :: ", delete_skills)
+        # print("--------------------------------------")
 
         staff = Staff.objects.get(pk=pk)
-        print("STAFF :: ", staff)
-        print("--------------------------------------")
+        # print("STAFF :: ", staff)
+        # print("--------------------------------------")
 
         s_serializer = StaffSerializer(staff, data=staff_data, partial=True)
         if s_serializer.is_valid():
@@ -142,35 +199,35 @@ class StaffViewSet(viewsets.ModelViewSet):
         
         if delete_skills is not None:
             for delete_skill in delete_skills:
-                print("ONE DELETE SKILL ::",delete_skill)
+                # print("ONE DELETE SKILL ::",delete_skill)
                 d_skill = StaffSkill.objects.get(id=delete_skill)
                 d_skill.delete()
-        print("--------------------------------------")
+        # print("--------------------------------------")
 
         if skills is not None:
             for skill in skills:
-                print("ONE SKILL ::",skill)
-                print("STAFFSKILL ID ::", skill['id'])
-                print("===================")
+                # print("ONE SKILL ::",skill)
+                # print("STAFFSKILL ID ::", skill['id'])
+                # print("===================")
                 if skill['id'] == '':
-                    print("NEW SKILL")
+                    # print("NEW SKILL")
                     skill.pop("id")
-                    print("SKILLLLL ::",skill)
+                    # print("SKILLLLL ::",skill)
                     ns_serializer = StaffSkillSerializer(data=skill)
                     if ns_serializer.is_valid():
                         ns_serializer.save()
                     else:
                         return Response(ns_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                    print("--------------------------------------")
+                    # print("--------------------------------------")
                 else:
-                    print("OLD SKILL")
+                    # print("OLD SKILL")
                     o_skill = StaffSkill.objects.get(id=skill['id'])
                     os_serializer = StaffSkillSerializer(o_skill, data=skill, partial=True)
                     if os_serializer.is_valid():
                         os_serializer.save()
                     else:
                         return Response(os_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                    print("--------------------------------------")
+                    # print("--------------------------------------")
 
         return Response({
             "staff_data":s_serializer.data,
@@ -272,40 +329,40 @@ class TransactionViewSet(viewsets.ModelViewSet):
     }
 
     def create(self, request, *args, **kwargs):
-        print("POST DATA ::", request.data)
+        # print("POST DATA ::", request.data)
     
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
 
         quotation_id = request.data.get('quotation_id')
-        print("Quotation ID ::", quotation_id)
+        # print("Quotation ID ::", quotation_id)
         quotation = Quotation.objects.get(id=quotation_id)
-        print("Quotation ::", quotation)
+        # print("Quotation ::", quotation)
         total_amount = Transaction.objects.filter(quotation_id=quotation_id).aggregate(Sum('amount'))['amount__sum']
         payable_amount = quotation.final_amount - quotation.discount
 
-        print("Final amount :::", quotation.final_amount)
-        print("Discount amount :::", quotation.discount)
-        print("Total amount :::", total_amount)
-        print("Payable amount :::",payable_amount)
+        # print("Final amount :::", quotation.final_amount)
+        # print("Discount amount :::", quotation.discount)
+        # print("Total amount :::", total_amount)
+        # print("Payable amount :::",payable_amount)
 
         if payable_amount == total_amount:
-            print("PAID")
+            # print("PAID")
             quotation.payment_status = 'paid'
             quotation.save()
         else:
-            print("PENDING")
+            # print("PENDING")
             quotation.payment_status = 'pending'
             quotation.save()
 
         return Response(serializer.data)
 
     def update(self, request, pk=None, *args, **kwargs):
-        print("POST DATA ::", request.data)
+        # print("POST DATA ::", request.data)
 
         transaction = Transaction.objects.get(pk=pk)
-        print("DATA ::", transaction)
+        # print("DATA ::", transaction)
         t_serializer = TransactionSerializer(transaction, data=request.data, partial=True)
         if t_serializer.is_valid():
             t_serializer.save()
@@ -313,23 +370,23 @@ class TransactionViewSet(viewsets.ModelViewSet):
             return Response(t_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
         quotation_id = transaction.quotation_id.id
-        print("Quotation ID ::", quotation_id)
+        # print("Quotation ID ::", quotation_id)
         quotation = Quotation.objects.get(id=quotation_id)
-        print("Quotation ::", quotation)
+        # print("Quotation ::", quotation)
         total_amount = Transaction.objects.filter(quotation_id=quotation_id).aggregate(Sum('amount'))['amount__sum']
         payable_amount = quotation.final_amount - quotation.discount
 
-        print("Final amount :::", quotation.final_amount)
-        print("Discount amount :::", quotation.discount)
-        print("Total amount :::", total_amount)
-        print("Payable amount :::",payable_amount)
+        # print("Final amount :::", quotation.final_amount)
+        # print("Discount amount :::", quotation.discount)
+        # print("Total amount :::", total_amount)
+        # print("Payable amount :::",payable_amount)
 
         if payable_amount == total_amount:
-            print("PAID")
+            # print("PAID")
             quotation.payment_status = 'paid'
             quotation.save()
         else:
-            print("PENDING")
+            # print("PENDING")
             quotation.payment_status = 'pending'
             quotation.save()
 
@@ -338,27 +395,27 @@ class TransactionViewSet(viewsets.ModelViewSet):
     def destroy(self, request, pk=None, *args, **kwargs):
         transaction = Transaction.objects.get(pk=pk)
         transaction.delete()
-        print("DATA ::", transaction)
+        # print("DATA ::", transaction)
         
         quotation_id = transaction.quotation_id.id
-        print("Quotation ID ::", quotation_id)
+        # print("Quotation ID ::", quotation_id)
         quotation = Quotation.objects.get(id=quotation_id)
-        print("Quotation ::", quotation)
+        # print("Quotation ::", quotation)
         total_amount = Transaction.objects.filter(quotation_id=quotation_id).aggregate(Sum('amount'))['amount__sum']
         total_amount = total_amount if total_amount is not None else 0
         payable_amount = quotation.final_amount - quotation.discount
 
-        print("Final amount :::", quotation.final_amount)
-        print("Discount amount :::", quotation.discount)
-        print("Total amount :::", total_amount)
-        print("Payable amount :::",payable_amount)
+        # print("Final amount :::", quotation.final_amount)
+        # print("Discount amount :::", quotation.discount)
+        # print("Total amount :::", total_amount)
+        # print("Payable amount :::",payable_amount)
 
         if payable_amount == total_amount:
-            print("PAID")
+            # print("PAID")
             quotation.payment_status = 'paid'
             quotation.save()
         else:
-            print("PENDING")
+            # print("PENDING")
             quotation.payment_status = 'pending'
             quotation.save()
 
@@ -391,19 +448,16 @@ class AmountReportViewSet(viewsets.ModelViewSet):
         # print("FROM DATE :: ",from_date)
         to_date = self.request.query_params.get('to_date')
         # print("TO DATE :: ",to_date)
-        status = self.request.query_params.get('status')
-        print("STATUS :: ",status)
 
         if from_date and to_date:
             try:
-                print("LENGTH :: ",len(queryset))
+                # print("LENGTH :: ",len(queryset))
                 queryset = queryset.filter(converted_on__range=[from_date, to_date])
                 # return queryset
             except ValueError:
                 pass
 
         return queryset
-
 
     def list(self, request):
         querysets = self.filter_queryset(self.get_queryset())
@@ -521,6 +575,7 @@ class QuotationExport(viewsets.ReadOnlyModelViewSet):
         'start_date':['exact'],
         'event_venue':['icontains'],
         'is_converted': ['exact'],
+        'payment_status':['exact'],
     }
 
     def get_queryset(self):
@@ -618,6 +673,7 @@ class InvoiceExport(viewsets.ReadOnlyModelViewSet):
         'start_date':['exact'],
         'event_venue':['icontains'],
         'is_converted': ['exact'],
+        'payment_status':['exact'],
     }
 
     def get_queryset(self):
