@@ -219,6 +219,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
         'converted_on':['gt'],
         'event_venue':['icontains'],
         'is_converted': ['exact'],
+        'payment_status':['exact'],
     }
 
     def get_queryset(self):
@@ -227,8 +228,6 @@ class QuotationViewSet(viewsets.ModelViewSet):
         # print("FROM DATE :: ",from_date)
         to_date = self.request.query_params.get('to_date')
         # print("TO DATE :: ",to_date)
-        status = self.request.query_params.get('status')
-        print("STATUS :: ",status)
 
         if from_date and to_date:
             try:
@@ -237,14 +236,6 @@ class QuotationViewSet(viewsets.ModelViewSet):
                 # return queryset
             except ValueError:
                 pass
-
-        # if status:
-        #     if status == 'paid':
-        #         print("QUERYSET :: ",queryset)
-        #         print("LENGTH :: ",len(queryset))
-        #     else:
-        #         print("QUERYSET :: ",queryset)
-        #         print("LENGTH :: ",len(queryset))
 
         return queryset
 
@@ -280,6 +271,99 @@ class TransactionViewSet(viewsets.ModelViewSet):
         'quotation_id__event_id__event_name':['icontains'],
     }
 
+    def create(self, request, *args, **kwargs):
+        print("POST DATA ::", request.data)
+    
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+
+        quotation_id = request.data.get('quotation_id')
+        print("Quotation ID ::", quotation_id)
+        quotation = Quotation.objects.get(id=quotation_id)
+        print("Quotation ::", quotation)
+        total_amount = Transaction.objects.filter(quotation_id=quotation_id).aggregate(Sum('amount'))['amount__sum']
+        payable_amount = quotation.final_amount - quotation.discount
+
+        print("Final amount :::", quotation.final_amount)
+        print("Discount amount :::", quotation.discount)
+        print("Total amount :::", total_amount)
+        print("Payable amount :::",payable_amount)
+
+        if payable_amount == total_amount:
+            print("PAID")
+            quotation.payment_status = 'paid'
+            quotation.save()
+        else:
+            print("PENDING")
+            quotation.payment_status = 'pending'
+            quotation.save()
+
+        return Response(serializer.data)
+
+    def update(self, request, pk=None, *args, **kwargs):
+        print("POST DATA ::", request.data)
+
+        transaction = Transaction.objects.get(pk=pk)
+        print("DATA ::", transaction)
+        t_serializer = TransactionSerializer(transaction, data=request.data, partial=True)
+        if t_serializer.is_valid():
+            t_serializer.save()
+        else:
+            return Response(t_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        quotation_id = transaction.quotation_id.id
+        print("Quotation ID ::", quotation_id)
+        quotation = Quotation.objects.get(id=quotation_id)
+        print("Quotation ::", quotation)
+        total_amount = Transaction.objects.filter(quotation_id=quotation_id).aggregate(Sum('amount'))['amount__sum']
+        payable_amount = quotation.final_amount - quotation.discount
+
+        print("Final amount :::", quotation.final_amount)
+        print("Discount amount :::", quotation.discount)
+        print("Total amount :::", total_amount)
+        print("Payable amount :::",payable_amount)
+
+        if payable_amount == total_amount:
+            print("PAID")
+            quotation.payment_status = 'paid'
+            quotation.save()
+        else:
+            print("PENDING")
+            quotation.payment_status = 'pending'
+            quotation.save()
+
+        return Response(t_serializer.data)
+
+    def destroy(self, request, pk=None, *args, **kwargs):
+        transaction = Transaction.objects.get(pk=pk)
+        transaction.delete()
+        print("DATA ::", transaction)
+        
+        quotation_id = transaction.quotation_id.id
+        print("Quotation ID ::", quotation_id)
+        quotation = Quotation.objects.get(id=quotation_id)
+        print("Quotation ::", quotation)
+        total_amount = Transaction.objects.filter(quotation_id=quotation_id).aggregate(Sum('amount'))['amount__sum']
+        total_amount = total_amount if total_amount is not None else 0
+        payable_amount = quotation.final_amount - quotation.discount
+
+        print("Final amount :::", quotation.final_amount)
+        print("Discount amount :::", quotation.discount)
+        print("Total amount :::", total_amount)
+        print("Payable amount :::",payable_amount)
+
+        if payable_amount == total_amount:
+            print("PAID")
+            quotation.payment_status = 'paid'
+            quotation.save()
+        else:
+            print("PENDING")
+            quotation.payment_status = 'pending'
+            quotation.save()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
 
 class AmountReportViewSet(viewsets.ModelViewSet):
     queryset = Quotation.objects.all().order_by('-id').distinct()
@@ -298,6 +382,7 @@ class AmountReportViewSet(viewsets.ModelViewSet):
         'converted_on':['gt'],
         'event_venue':['icontains'],
         'is_converted': ['exact'],
+        'payment_status':['exact'],
     }
 
     def get_queryset(self):
