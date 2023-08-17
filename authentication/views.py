@@ -88,7 +88,6 @@ class RefreshTokenView(APIView):
                 "access_token":str(token.generate_access_token(email, True))
             })
 
-
 class RegisterView(APIView):
     permission_classes = [AllowAny]
 
