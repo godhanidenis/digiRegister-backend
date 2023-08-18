@@ -592,7 +592,7 @@ class QuotationExport(viewsets.ReadOnlyModelViewSet):
 
         if from_date and to_date:
             try:
-                queryset = queryset.filter(created_on__range=[from_date, to_date])
+                queryset = queryset.filter(converted_on__range=[from_date, to_date])
             except ValueError:
                 pass
 
@@ -684,13 +684,14 @@ class InvoiceExport(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
         from_date = self.request.query_params.get('from_date')
-        # print("FROM DATE :: ",from_date)
+        print("FROM DATE :: ",from_date)
         to_date = self.request.query_params.get('to_date')
-        # print("TO DATE :: ",to_date)
+        print("TO DATE :: ",to_date)
 
         if from_date and to_date:
             try:
-                queryset = queryset.filter(created_on__range=[from_date, to_date])
+                queryset = queryset.filter(converted_on__range=[from_date, to_date])
+                print("queryset ::: ", queryset)
             except ValueError:
                 pass
 
@@ -698,6 +699,7 @@ class InvoiceExport(viewsets.ReadOnlyModelViewSet):
 
     def list(self, request):
         querysets = self.filter_queryset(self.get_queryset())
+        # print("QUERYSET list :::",querysets)
         timezone = request.query_params.get("timezone")
         # print("TIME ZONE ::",timezone)
         data = []
@@ -770,11 +772,11 @@ class InvoiceExport(viewsets.ReadOnlyModelViewSet):
             formatted_data.append(formatted_item)
 
         df = pd.DataFrame(formatted_data)
-        print(df)
+        # print(df)
 
         output_path = "output_data.xlsx"
         df.to_excel(output_path, index=False)
-        print(f"Excel file saved at {output_path}")
+        # print(f"Excel file saved at {output_path}")
 
         with open(output_path, 'rb') as excel_file:
             response = HttpResponse(excel_file.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
