@@ -23,9 +23,9 @@ class LoginView(APIView):
         password = request.data.get("password")
 
         if not email:
-            return Response("Please provide Email ID!",status=status.HTTP_401_UNAUTHORIZED)
+            return Response("Please provide Email ID!",status=status.HTTP_400_BAD_REQUEST)
         elif not password:
-            return Response("Please provide password!",status=status.HTTP_401_UNAUTHORIZED)
+            return Response("Please provide password!",status=status.HTTP_400_BAD_REQUEST)
         else:
 
             try:
@@ -88,7 +88,6 @@ class RefreshTokenView(APIView):
                 "access_token":str(token.generate_access_token(email, True))
             })
 
-
 class RegisterView(APIView):
     permission_classes = [AllowAny]
 
@@ -105,15 +104,15 @@ class RegisterView(APIView):
         # print("PASSWORD :: ",password)
 
         if not shop_name:
-            return Response("Please provide your Shop Name !!")
+            return Response("Please provide your Shop Name !!", status=status.HTTP_400_BAD_REQUEST)
         elif not full_name:
-            return Response("Please provide Full Name !!")
+            return Response("Please provide Full Name !!", status=status.HTTP_400_BAD_REQUEST)
         elif not mobile_no:
-            return Response("Please provide Mobile Number !!")
+            return Response("Please provide Mobile Number !!", status=status.HTTP_400_BAD_REQUEST)
         elif not email:
-            return Response("Please provide Email !!")
+            return Response("Please provide Email !!", status=status.HTTP_400_BAD_REQUEST)
         elif not password:
-            return Response("Please provide Password !!")
+            return Response("Please provide Password !!", status=status.HTTP_400_BAD_REQUEST)
         else:
 
             try:
@@ -131,4 +130,5 @@ class RegisterView(APIView):
 
                 return Response({
                     "message": "User Created Successfully !!!"
-                })
+                }, status=status.HTTP_201_CREATED)
+            

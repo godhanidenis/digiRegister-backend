@@ -3,7 +3,8 @@ from app.models import *
 from import_export.widgets import ForeignKeyWidget, DateTimeWidget, DateWidget, BooleanWidget, JSONWidget, IntegerWidget
 
 class CustomerResource(resources.ModelResource):
-    user_id = fields.Field(column_name='User ID', attribute='user_id',widget=ForeignKeyWidget(User, 'id'))
+    id = fields.Field(column_name='ID', attribute='id')
+    # user_id = fields.Field(column_name='User ID', attribute='user_id',widget=ForeignKeyWidget(User, 'id'))
     full_name = fields.Field(column_name='Full Name', attribute='full_name')
     mobile_no = fields.Field(column_name='Mobile No.', attribute='mobile_no')
     email = fields.Field(column_name='Email', attribute='email')
@@ -13,7 +14,6 @@ class CustomerResource(resources.ModelResource):
     class Meta:
         model = Customer
         fields = '__all__'
-
 
 
 class QuotationResource(resources.ModelResource):
@@ -32,6 +32,7 @@ class QuotationResource(resources.ModelResource):
     converted_on = fields.Field(column_name='Converted On', attribute='converted_on', widget=DateTimeWidget(format=None))
     final_amount = fields.Field(column_name='Final Amount', attribute='final_amount', widget=IntegerWidget(coerce_to_string=False))
     discount = fields.Field(column_name='Discount', attribute='discount', widget=IntegerWidget(coerce_to_string=False))
+    payment_status = fields.Field(column_name='Payment Status', attribute='payment_status')
     # transactions = fields.Field(column_name='transactions', attribute='transactions')
     
     # def dehydrate_override(self, Quotation):
@@ -56,7 +57,7 @@ class QuotationResource(resources.ModelResource):
 
 
 class TransactionResource(resources.ModelResource):
-    quotation_id = fields.Field(column_name='Quotation ID', attribute='quotation_id',widget=ForeignKeyWidget(Quotation, 'quotation_id'))
+    quotation_id = fields.Field(column_name='Quotation ID', attribute='quotation_id',widget=ForeignKeyWidget(Quotation, 'id'))
     notes = fields.Field(column_name='Notes', attribute='notes')
     date = fields.Field(column_name='Date', attribute='date', widget=DateWidget(format=None))
     amount = fields.Field(column_name='Amount', attribute='amount', widget=IntegerWidget(coerce_to_string=False))
