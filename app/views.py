@@ -358,7 +358,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
         return Response({"transaction_data":serializer.data,
                          "payable_amount":payable_amount,
-                         "total_amount":total_amount})
+                         "received_amount":total_amount})
 
     def update(self, request, pk=None, *args, **kwargs):
         # print("POST DATA ::", request.data)
@@ -394,7 +394,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
         return Response({"transaction_data":t_serializer.data,
                          "payable_amount":payable_amount,
-                         "total_amount":total_amount})
+                         "received_amount":total_amount})
 
     def destroy(self, request, pk=None, *args, **kwargs):
         transaction = Transaction.objects.get(pk=pk)
@@ -424,7 +424,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
             quotation.save()
 
         return Response({"payable_amount":payable_amount,
-                         "total_amount":total_amount},status=status.HTTP_204_NO_CONTENT)
+                         "received_amount":total_amount},status=status.HTTP_204_NO_CONTENT)
     
 
 class AmountReportViewSet(viewsets.ModelViewSet):
