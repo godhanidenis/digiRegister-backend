@@ -8,7 +8,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class StudioDetailsSerializer(serializers.ModelSerializer):
-    user = UserSerializer(source="user_id", read_only=True)
+    # user = UserSerializer(source="user_id", read_only=True)
     class Meta:
         model = StudioDetails
         fields = "__all__"
@@ -30,6 +30,7 @@ class InventorySerializer(serializers.ModelSerializer):
 
 class StaffSerializer(serializers.ModelSerializer):
     # user = UserSerializer(source="user_id", read_only=True)
+    studiodetails = StudioDetailsSerializer(source="studio_id", read_only=True)
     class Meta:
         model = Staff
         fields = "__all__"
