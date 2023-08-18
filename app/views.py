@@ -424,7 +424,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
             quotation.save()
 
         return Response({"payable_amount":payable_amount,
-                         "received_amount":total_amount},status=status.HTTP_204_NO_CONTENT)
+                         "received_amount":total_amount})
     
 
 class AmountReportViewSet(viewsets.ModelViewSet):
