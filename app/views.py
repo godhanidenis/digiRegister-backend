@@ -708,13 +708,13 @@ class InvoiceExport(viewsets.ReadOnlyModelViewSet):
             # print("Amount ::",total_amount)
             total_amount = total_amount if total_amount is not None else 0
             # print("GGGG Amount ::",total_amount)
-            status = "Paid" if queryset.final_amount == total_amount else "Pending"
+            # status = "Paid" if queryset.final_amount == total_amount else "Pending"
             data.append({"quotation":serializers.data,
                         "transaction":transaction.data,
                         "payable_amount":queryset.final_amount - queryset.discount,
                         "received_amount": total_amount ,
                         "pending_amount":queryset.final_amount - int(total_amount),
-                        "payment_status": status
+                        # "payment_status": status
                         })
 
         formatted_data = []
@@ -725,7 +725,7 @@ class InvoiceExport(viewsets.ReadOnlyModelViewSet):
             payable_amount = item['payable_amount']
             received_amount = item['received_amount']
             pending_amount = item['pending_amount']
-            payment_status = item['payment_status']
+            # payment_status = item['payment_status']
 
             print("TIMEEEEE :::",quotation['converted_on'])
             formatted_item = {
@@ -747,7 +747,7 @@ class InvoiceExport(viewsets.ReadOnlyModelViewSet):
                 "Final Amount (INR)": payable_amount,
                 "Received Amount (INR)": received_amount,
                 "Panding Amount (INR)": pending_amount,
-                "Payment Status":payment_status
+                "Payment Status":quotation['payment_status']
                 
             }
             
@@ -794,7 +794,7 @@ class InvoiceExport(viewsets.ReadOnlyModelViewSet):
             "payable_amount": instance.final_amount - instance.discount,
             "received_amount": total_amount,
             "pending_amount":instance.final_amount - total_amount,
-            "payment_status": status
+            # "payment_status": status
         })
 
         
@@ -806,7 +806,7 @@ class InvoiceExport(viewsets.ReadOnlyModelViewSet):
             payable_amount = item['payable_amount']
             received_amount = item['received_amount']
             pending_amount = item['pending_amount']
-            payment_status = item['payment_status']
+            # payment_status = item['payment_status']
 
             # print("TIMEEEEE :::",quotation['converted_on'])
             formatted_item = {
@@ -828,7 +828,7 @@ class InvoiceExport(viewsets.ReadOnlyModelViewSet):
                 "Final Amount (INR)": payable_amount,
                 "Received Amount (INR)": received_amount,
                 "Pending Amount (INR)": pending_amount,
-                "Payment Status":payment_status
+                "Payment Status":quotation['payment_status']
             }
             
             for idx, transaction_item in enumerate(transaction, start=1):
