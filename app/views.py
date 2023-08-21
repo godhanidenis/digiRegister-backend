@@ -1,6 +1,7 @@
 from django.shortcuts import render
-from django.db.models import Sum
+from django.db.models import Sum, Count
 from django.http import  HttpResponse
+from django.db.models.functions import TruncMonth, TruncYear
 
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, status
@@ -485,60 +486,6 @@ class AmountReportViewSet(viewsets.ModelViewSet):
         return Response(data)
 
 
-@api_view(['POST'])
-def Report(request):
-    if request.method == 'POST':
-        report = {}
-        report['completed'] = 0
-        report['not_completed'] = 0
-
-        user = request.data.get('user_id')
-        # print("USER ::", user)
-        start_date = request.data.get('start_date', None)
-        # print("START ::", start_date)
-        end_date = request.data.get('end_date', None)
-        # print("END ::", end_date)
-
-        if start_date is None and end_date is None:
-            not_converted = Quotation.objects.filter(user_id=user, is_converted=False)
-            report['not_converted'] = len(not_converted)
-
-            converted = Quotation.objects.filter(user_id=user, is_converted=True)
-            # print("Converted :: ", converted)
-            for i in converted:
-                # print("I :: ",i.id)
-                total_amount = Transaction.objects.filter(quotation_id=i.id).aggregate(Sum('amount'))['amount__sum']
-                # transaction = Transaction.objects.get(quotation_id = i.id)
-                # print("FINAL AMOUNT :: ",i.final_amount)
-                # print("DISCOUNT :: ",i.discount)
-
-                if (i.final_amount - i.discount) == total_amount:
-                    report['completed'] += 1
-                else:
-                    report['not_completed'] += 1
-            report['converted'] = len(converted)
-
-        else:
-            not_converted = Quotation.objects.filter(user_id=user, is_converted=False, created_on__range=[start_date, end_date])
-            report['not_converted'] = len(not_converted)
-
-            converted = Quotation.objects.filter(user_id=user, is_converted=True, created_on__range=[start_date, end_date])
-            # print("Converted :: ", converted)
-            for i in converted:
-                # print("I :: ",i.id)
-                total_amount = Transaction.objects.filter(quotation_id=i.id).aggregate(Sum('amount'))['amount__sum']
-                # transaction = Transaction.objects.get(quotation_id = i.id)
-                # print("TRANSACTION :: ",total_amount)
-                # print("FINAL AMOUNT :: ",i.final_amount)
-                if (i.final_amount - i.discount) == total_amount:
-                    report['completed'] += 1
-                else:
-                    report['not_completed'] += 1
-            report['converted'] = len(converted)
-
-        return Response(report)
-    
-
 class CustomerExport(viewsets.ReadOnlyModelViewSet):
     queryset = Customer.objects.all().order_by('-id').distinct()
     serializer_class = CustomerSerializer
@@ -860,3 +807,99 @@ class InvoiceExport(viewsets.ReadOnlyModelViewSet):
             response = HttpResponse(excel_file.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
             response['Content-Disposition'] = 'attachment; filename=single_object_output.xlsx'
             return response
+
+
+@api_view(['POST'])
+def Report(request):
+    if request.method == 'POST':
+        report = {}
+        report['completed'] = 0
+        report['not_completed'] = 0
+
+        user = request.data.get('user_id')
+        # print("USER ::", user)
+        start_date = request.data.get('start_date', None)
+        # print("START ::", start_date)
+        end_date = request.data.get('end_date', None)
+        # print("END ::", end_date)
+
+        if start_date is None and end_date is None:
+
+            # result1 = Quotation.objects.filter(user_id=user, is_converted=True).annotate(month=TruncMonth('converted_on')).values('month').annotate(converted_count=Count('id')).order_by('month')
+            # for entry in result1:
+            #     print(f"Month: {entry['month'].strftime('%B %Y')}, Converted Count: {entry['converted_count']}")
+
+            # print("------------------------------------------------------")
+
+            # result1 = Quotation.objects.filter(user_id=user, is_converted=True).annotate(year=TruncYear('converted_on')).values('year').annotate(converted_count=Count('id')).order_by('year')
+            # for entry in result1:
+            #     print(f"Year: {entry['year'].strftime('%Y')}, Converted Count: {entry['converted_count']}")
+
+            # print("------------------------------------------------------")
+
+            # result = Transaction.objects.filter(quotation_id__user_id=user).annotate(month=TruncMonth('date')).values('month').annotate(total_amount=Sum('amount')).order_by('month')
+            # for entry in result:
+            #     print(f"Month: {entry['month'].strftime('%B %Y')}, Total Amount: {entry['total_amount']}")
+
+            not_converted = Quotation.objects.filter(user_id=user, is_converted=False)
+            report['not_converted'] = len(not_converted)
+
+            converted = Quotation.objects.filter(user_id=user, is_converted=True)
+            # print("Converted :: ", converted)
+            for i in converted:
+                # print("I :: ",i.id)
+                total_amount = Transaction.objects.filter(quotation_id=i.id).aggregate(Sum('amount'))['amount__sum']
+                # transaction = Transaction.objects.get(quotation_id = i.id)
+                # print("FINAL AMOUNT :: ",i.final_amount)
+                # print("DISCOUNT :: ",i.discount)
+
+                if (i.final_amount - i.discount) == total_amount:
+                    report['completed'] += 1
+                else:
+                    report['not_completed'] += 1
+            report['converted'] = len(converted)
+
+        else:
+            not_converted = Quotation.objects.filter(user_id=user, is_converted=False, created_on__range=[start_date, end_date])
+            report['not_converted'] = len(not_converted)
+
+            converted = Quotation.objects.filter(user_id=user, is_converted=True, created_on__range=[start_date, end_date])
+            # print("Converted :: ", converted)
+            for i in converted:
+                # print("I :: ",i.id)
+                total_amount = Transaction.objects.filter(quotation_id=i.id).aggregate(Sum('amount'))['amount__sum']
+                # transaction = Transaction.objects.get(quotation_id = i.id)
+                # print("TRANSACTION :: ",total_amount)
+                # print("FINAL AMOUNT :: ",i.final_amount)
+                if (i.final_amount - i.discount) == total_amount:
+                    report['completed'] += 1
+                else:
+                    report['not_completed'] += 1
+            report['converted'] = len(converted)
+
+        return Response(report)
+    
+# @api_view(['POST'])
+# def AmountReport(request):
+#     if request.method == 'POST':
+#         pass
+
+
+# @api_view(['POST'])
+# def InvoiceStatusReport(request):
+#     if request.method == 'POST':
+#         pass
+
+
+# @api_view(['POST'])
+# def ConversationRateReport(request):
+#     if request.method == 'POST':
+#         pass
+
+
+# @api_view(['POST'])
+# def MonthylyEarningReport(request):
+#     if request.method == 'POST':
+#         pass
+
+
