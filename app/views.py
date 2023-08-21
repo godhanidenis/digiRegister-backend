@@ -503,8 +503,8 @@ class CustomerExport(viewsets.ReadOnlyModelViewSet):
         queryset_obj = self.filter_queryset(self.get_queryset())
         customer_resource = CustomerResource()
         data_set = customer_resource.export(queryset_obj)
-        print(":: DATA SET ::")
-        print(data_set)
+        # print(":: DATA SET ::")
+        # print(data_set)
 
         file_name = data_set.xlsx
         content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -533,9 +533,9 @@ class QuotationExport(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
         from_date = self.request.query_params.get('from_date')
-        print("FROM DATE :: ",from_date)
+        # print("FROM DATE :: ",from_date)
         to_date = self.request.query_params.get('to_date')
-        print("TO DATE :: ",to_date)
+        # print("TO DATE :: ",to_date)
 
         if from_date and to_date:
             try:
@@ -549,8 +549,8 @@ class QuotationExport(viewsets.ReadOnlyModelViewSet):
         queryset_obj = self.filter_queryset(self.get_queryset())
         quotation_resource = QuotationResource()
         data_set = quotation_resource.export(queryset_obj)
-        print(":: DATA SET ::")
-        print(data_set)
+        # print(":: DATA SET ::")
+        # print(data_set)
 
         file_name = data_set.xlsx
         content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -559,12 +559,12 @@ class QuotationExport(viewsets.ReadOnlyModelViewSet):
     
     def retrieve(self, request, *args, **kwarge):
         instance = self.get_object()
-        print("INSTANCE :: ",instance)
+        # print("INSTANCE :: ",instance)
         quotation_resource = QuotationResource()
-        print("quotation_resource", quotation_resource)
+        # print("quotation_resource", quotation_resource)
         data_set = quotation_resource.export([instance])
-        print(":: DATA SET ::")
-        print(data_set)
+        # print(":: DATA SET ::")
+        # print(data_set)
 
         file_name = data_set.xlsx
         content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -588,8 +588,8 @@ class TransactionExport(viewsets.ReadOnlyModelViewSet):
         queryset_obj = self.filter_queryset(self.get_queryset())
         transaction_resource = TransactionResource()
         data_set = transaction_resource.export(queryset_obj)
-        print(":: DATA SET ::")
-        print(data_set)
+        # print(":: DATA SET ::")
+        # print(data_set)
 
         file_name = data_set.xlsx
         content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -598,12 +598,12 @@ class TransactionExport(viewsets.ReadOnlyModelViewSet):
     
     def retrieve(self, request, *args, **kwarge):
         instance = self.get_object()
-        print("INSTANCE :: ",instance)
+        # print("INSTANCE :: ",instance)
         transaction_resource = TransactionResource()
-        print("transaction_resource", transaction_resource)
+        # print("transaction_resource", transaction_resource)
         data_set = transaction_resource.export([instance])
-        print(":: DATA SET ::")
-        print(data_set)
+        # print(":: DATA SET ::")
+        # print(data_set)
 
         file_name = data_set.xlsx
         content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -631,14 +631,14 @@ class InvoiceExport(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
         from_date = self.request.query_params.get('from_date')
-        print("FROM DATE :: ",from_date)
+        # print("FROM DATE :: ",from_date)
         to_date = self.request.query_params.get('to_date')
-        print("TO DATE :: ",to_date)
+        # print("TO DATE :: ",to_date)
 
         if from_date and to_date:
             try:
                 queryset = queryset.filter(converted_on__range=[from_date, to_date])
-                print("queryset ::: ", queryset)
+                # print("queryset ::: ", queryset)
             except ValueError:
                 pass
 
@@ -741,7 +741,7 @@ class InvoiceExport(viewsets.ReadOnlyModelViewSet):
         total_amount = Transaction.objects.filter(quotation_id=instance.id).aggregate(Sum('amount'))['amount__sum']
         total_amount = total_amount if total_amount is not None else 0
         status = "Paid" if instance.final_amount == total_amount else "Pending"
-        print("STATUS :: ", status)
+        # print("STATUS :: ", status)
         data.append({
             "quotation": serializers.data,
             "transaction": transaction.data,
@@ -810,11 +810,11 @@ class InvoiceExport(viewsets.ReadOnlyModelViewSet):
 
 
 @api_view(['POST'])
-def Report(request):
+def ConversationRateReport(request):
     if request.method == 'POST':
         report = {}
-        report['completed'] = 0
-        report['not_completed'] = 0
+        # report['completed'] = 0
+        # report['pending'] = 0
 
         user = request.data.get('user_id')
         # print("USER ::", user)
@@ -824,82 +824,158 @@ def Report(request):
         # print("END ::", end_date)
 
         if start_date is None and end_date is None:
-
-            # result1 = Quotation.objects.filter(user_id=user, is_converted=True).annotate(month=TruncMonth('converted_on')).values('month').annotate(converted_count=Count('id')).order_by('month')
-            # for entry in result1:
-            #     print(f"Month: {entry['month'].strftime('%B %Y')}, Converted Count: {entry['converted_count']}")
-
-            # print("------------------------------------------------------")
-
-            # result1 = Quotation.objects.filter(user_id=user, is_converted=True).annotate(year=TruncYear('converted_on')).values('year').annotate(converted_count=Count('id')).order_by('year')
-            # for entry in result1:
-            #     print(f"Year: {entry['year'].strftime('%Y')}, Converted Count: {entry['converted_count']}")
-
-            # print("------------------------------------------------------")
-
-            # result = Transaction.objects.filter(quotation_id__user_id=user).annotate(month=TruncMonth('date')).values('month').annotate(total_amount=Sum('amount')).order_by('month')
-            # for entry in result:
-            #     print(f"Month: {entry['month'].strftime('%B %Y')}, Total Amount: {entry['total_amount']}")
+            total = Quotation.objects.filter(user_id=user)
+            report['total'] = len(total)
 
             not_converted = Quotation.objects.filter(user_id=user, is_converted=False)
             report['not_converted'] = len(not_converted)
 
             converted = Quotation.objects.filter(user_id=user, is_converted=True)
-            # print("Converted :: ", converted)
-            for i in converted:
-                # print("I :: ",i.id)
-                total_amount = Transaction.objects.filter(quotation_id=i.id).aggregate(Sum('amount'))['amount__sum']
-                # transaction = Transaction.objects.get(quotation_id = i.id)
-                # print("FINAL AMOUNT :: ",i.final_amount)
-                # print("DISCOUNT :: ",i.discount)
-
-                if (i.final_amount - i.discount) == total_amount:
-                    report['completed'] += 1
-                else:
-                    report['not_completed'] += 1
             report['converted'] = len(converted)
+            # print("Converted :: ", converted)
+            # for i in converted:
+            #     if i.payment_status == 'paid':
+            #         report['completed'] += 1
+            #     else:
+            #         report['pending'] += 1
 
         else:
+            total = Quotation.objects.filter(user_id=user, created_on__range=[start_date, end_date])
+            report['total'] = len(total)
+
             not_converted = Quotation.objects.filter(user_id=user, is_converted=False, created_on__range=[start_date, end_date])
             report['not_converted'] = len(not_converted)
 
             converted = Quotation.objects.filter(user_id=user, is_converted=True, created_on__range=[start_date, end_date])
-            # print("Converted :: ", converted)
-            for i in converted:
-                # print("I :: ",i.id)
-                total_amount = Transaction.objects.filter(quotation_id=i.id).aggregate(Sum('amount'))['amount__sum']
-                # transaction = Transaction.objects.get(quotation_id = i.id)
-                # print("TRANSACTION :: ",total_amount)
-                # print("FINAL AMOUNT :: ",i.final_amount)
-                if (i.final_amount - i.discount) == total_amount:
-                    report['completed'] += 1
-                else:
-                    report['not_completed'] += 1
             report['converted'] = len(converted)
+            # print("Converted :: ", converted)
+            # for i in converted:
+            #     if i.payment_status == 'paid':
+            #         report['completed'] += 1
+            #     else:
+            #         report['pending'] += 1
 
         return Response(report)
     
-# @api_view(['POST'])
-# def AmountReport(request):
-#     if request.method == 'POST':
-#         pass
+
+@api_view(['POST'])
+def InvoiceStatusReport(request):
+    if request.method == 'POST':
+        report = {}
+        report['completed'] = 0
+        report['pending'] = 0
+
+        user = request.data.get('user_id')
+        # print("USER ::", user)
+        start_date = request.data.get('start_date', None)
+        # print("START ::", start_date)
+        end_date = request.data.get('end_date', None)
+        # print("END ::", end_date)
+
+        if start_date is None and end_date is None:
+            converted = Quotation.objects.filter(user_id=user, is_converted=True)
+            # report['converted'] = len(converted)
+            # print("Converted :: ", converted)
+            for i in converted:
+                if i.payment_status == 'paid':
+                    report['completed'] += 1
+                else:
+                    report['pending'] += 1
+        else:
+            converted = Quotation.objects.filter(user_id=user, is_converted=True, created_on__range=[start_date, end_date])
+            report['converted'] = len(converted)
+            # print("Converted :: ", converted)
+            for i in converted:
+                if i.payment_status == 'paid':
+                    report['completed'] += 1
+                else:
+                    report['pending'] += 1
+        
+        return Response(report)
 
 
-# @api_view(['POST'])
-# def InvoiceStatusReport(request):
-#     if request.method == 'POST':
-#         pass
+@api_view(['POST'])
+def MonthylyEarningReport(request):
+    if request.method == 'POST':
+        data = []
+        user = request.data.get('user_id')
+        # print("USER ::", user)
+        start_date = request.data.get('start_date', None)
+        # print("START ::", start_date)
+        end_date = request.data.get('end_date', None)
+        # print("END ::", end_date)
+
+        if start_date is None and end_date is None:
+            result = Transaction.objects.filter(quotation_id__user_id=user).annotate(month=TruncMonth('date')).values('month').annotate(total_amount=Sum('amount')).order_by('month')
+            
+            for entry in result:
+                data.append({"month": entry['month'].strftime('%B %Y'),
+                             "total_amount":entry['total_amount']})
+                # print(f"Month: {entry['month'].strftime('%B %Y')}, Total Amount: {entry['total_amount']}")
+        else:
+            result = Transaction.objects.filter(quotation_id__user_id=user, 
+                                                date__range=[start_date, end_date]).annotate(month=TruncMonth('date')).values('month').annotate(total_amount=Sum('amount')).order_by('month')
+            
+            for entry in result:
+                data.append({"month": entry['month'].strftime('%B %Y'),
+                             "total_amount":entry['total_amount']})
+                # print(f"Month: {entry['month'].strftime('%B %Y')}, Total Amount: {entry['total_amount']}")
+        
+        return Response(data)
 
 
-# @api_view(['POST'])
-# def ConversationRateReport(request):
-#     if request.method == 'POST':
-#         pass
+@api_view(['POST'])
+def InvoiceCreationReport(request):
+    if request.method == 'POST':
+        data = []
+        user = request.data.get('user_id')
+        # print("USER ::", user)
+        start_date = request.data.get('start_date', None)
+        # print("START ::", start_date)
+        end_date = request.data.get('end_date', None)
+        # print("END ::", end_date)
+        type = request.data.get('type')
+        # print("TYPE ::", type)
 
+        if start_date is None and end_date is None:
 
-# @api_view(['POST'])
-# def MonthylyEarningReport(request):
-#     if request.method == 'POST':
-#         pass
+            if type == 'per_month':
+                result = Quotation.objects.filter(user_id=user, 
+                                                   is_converted=True).annotate(month=TruncMonth('converted_on')).values('month').annotate(converted_count=Count('id')).order_by('month')
+                
+                for entry in result:
+                    data.append({"month": entry['month'].strftime('%B %Y'),
+                             "converted_count":entry['converted_count']})
+                    print(f"Month: {entry['month'].strftime('%B %Y')}, Converted Count: {entry['converted_count']}")
+            
+            if type == 'per_year':
+                result = Quotation.objects.filter(user_id=user,
+                                                    is_converted=True).annotate(year=TruncYear('converted_on')).values('year').annotate(converted_count=Count('id')).order_by('year')
+                
+                for entry in result:
+                    data.append({"year": entry['year'].strftime('%Y'),
+                             "converted_count":entry['converted_count']})
+                    # print(f"Year: {entry['year'].strftime('%Y')}, Converted Count: {entry['converted_count']}")
+        else:
 
+            if type == 'per_month':
+                result = Quotation.objects.filter(user_id=user,
+                                                    is_converted=True, 
+                                                    converted_on__range=[start_date, end_date]).annotate(month=TruncMonth('converted_on')).values('month').annotate(converted_count=Count('id')).order_by('month')
+                
+                for entry in result:
+                    data.append({"month": entry['month'].strftime('%B %Y'),
+                             "converted_count":entry['converted_count']})
+                    # print(f"Month: {entry['month'].strftime('%B %Y')}, Converted Count: {entry['converted_count']}")
+            
+            if type == 'per_year':
+                result = Quotation.objects.filter(user_id=user, 
+                                                   is_converted=True, 
+                                                   converted_on__range=[start_date, end_date]).annotate(year=TruncYear('converted_on')).values('year').annotate(converted_count=Count('id')).order_by('year')
+                
+                for entry in result:
+                    data.append({"year": entry['year'].strftime('%Y'),
+                             "converted_count":entry['converted_count']})
+                    # print(f"Year: {entry['year'].strftime('%Y')}, Converted Count: {entry['converted_count']}")
 
+        return Response(data)

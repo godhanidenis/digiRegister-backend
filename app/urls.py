@@ -26,5 +26,8 @@ router.register(r'exportinvoice',views.InvoiceExport)
 
 urlpatterns =[
     path('',include(router.urls)),
-    path('report/',views.Report, name='report'),
-]
+    path('conversationreport/',views.ConversationRateReport, name='conversationratereport'),
+    path('statusreport/',views.InvoiceStatusReport, name='invoicestatusreport'),
+    path('earningreport/',views.MonthylyEarningReport, name='monthylyearningreport'),
+    path('creationreport/',views.InvoiceCreationReport, name='invoicecreationreport'),
+]       
