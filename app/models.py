@@ -168,7 +168,21 @@ class Quotation(models.Model):
 
 
 class Transaction(models.Model):
+    PAYMENT_TYPE = (
+        ("cash","CASH"),
+        ("cheque","CHEQUE"),
+        ("net_banking","NET BANKING"),
+        ("upi","UPI"),
+    )
+    TYPE = (
+        ("sale","SALE"),
+        ("payment_in","PAYMENT IN"),
+        ("payment_out","PAYMENT OUT"),
+        ("expense","EXPENSE"),
+    )
+    type = models.CharField(max_length=15, choices=TYPE, default="payment_in")
     quotation_id = models.ForeignKey(Quotation, null=True, blank=True, on_delete=models.CASCADE)
     notes = models.CharField(max_length=250, null=True, blank=True)
     date = models.DateField(null=True, blank=True)
+    payment_type = models.CharField(max_length=15, choices=PAYMENT_TYPE, default="cash")
     amount = models.IntegerField(null=True, blank=True)
