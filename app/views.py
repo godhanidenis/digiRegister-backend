@@ -297,7 +297,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
         'customer_id__mobile_no':['icontains'],
         'start_date':['exact'],
         'due_date':['exact'],
-        # 'invoice_type':['exact'],
+        'invoice_type':['exact'],
         'converted_on':['gt'],
         'event_venue':['icontains'],
         'is_converted': ['exact'],
