@@ -13,6 +13,8 @@ router.register(r'inventory',views.InventoryViewSet)
 router.register(r'staff',views.StaffViewSet)
 router.register(r'staffskill',views.StaffSkillViewSet)
 router.register(r'event',views.EventViewSet)
+router.register(r'category',views.CategoryViewSet)
+router.register(r'item',views.ItemViewSet)
 router.register(r'quotation',views.QuotationViewSet)
 router.register(r'transaction',views.TransactionViewSet)
 
