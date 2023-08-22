@@ -269,6 +269,18 @@ class CategoryViewSet(viewsets.ModelViewSet):
         'name':['icontains']
     }
 
+    def list(self, request):
+        querysets = self.filter_queryset(self.get_queryset())
+
+        data = []
+        for queryset in querysets:
+            q_items = Item.objects.filter(category_id__id=queryset.id)
+            category = CategorySerializer(queryset)
+            items = ItemSerializer(q_items, many=True)
+            data.append({'category': category.data, 'items': items.data})
+
+        return Response({'data':data}) 
+
 
 class ItemViewSet(viewsets.ModelViewSet):
     queryset = Item.objects.all().order_by('-id').distinct()
@@ -281,6 +293,18 @@ class ItemViewSet(viewsets.ModelViewSet):
         'name':['icontains'],
         'price':['icontains']
     }
+
+    def list(self, request):
+        querysets = self.filter_queryset(self.get_queryset())
+
+        data = []
+        for queryset in querysets:
+            q_transaction = Transaction.objects.filter(item_id__id=queryset.id)
+            category = ItemSerializer(queryset)
+            transaction = TransactionSerializer(q_transaction, many=True)
+            data.append({'category': category.data, 'transaction': transaction.data})
+
+        return Response({'data':data}) 
 
 
 class QuotationViewSet(viewsets.ModelViewSet):
@@ -356,101 +380,118 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         # print("POST DATA ::", request.data)
-    
+        data = {}
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
+        data['transaction_data'] = serializer.data
 
-        quotation_id = request.data.get('quotation_id')
+        quotation_id = request.data.get('quotation_id', None)
         # print("Quotation ID ::", quotation_id)
-        quotation = Quotation.objects.get(id=quotation_id)
-        # print("Quotation ::", quotation)
-        total_amount = Transaction.objects.filter(quotation_id=quotation_id).aggregate(Sum('amount'))['amount__sum']
-        payable_amount = quotation.final_amount - quotation.discount
+        if quotation_id is not None:
+            quotation = Quotation.objects.get(id=quotation_id)
+            # print("Quotation ::", quotation)
+            total_amount = Transaction.objects.filter(quotation_id=quotation_id).aggregate(Sum('amount'))['amount__sum']
+            payable_amount = quotation.final_amount - quotation.discount
 
-        # print("Final amount :::", quotation.final_amount)
-        # print("Discount amount :::", quotation.discount)
-        # print("Total amount :::", total_amount)
-        # print("Payable amount :::",payable_amount)
+            data['payable_amount'] = payable_amount
+            data['received_amount'] = total_amount
 
-        if payable_amount == total_amount:
-            # print("PAID")
-            quotation.payment_status = 'paid'
-            quotation.save()
-        else:
-            # print("PENDING")
-            quotation.payment_status = 'pending'
-            quotation.save()
+            # print("Final amount :::", quotation.final_amount)
+            # print("Discount amount :::", quotation.discount)
+            # print("Total amount :::", total_amount)
+            # print("Payable amount :::",payable_amount)
 
-        return Response({"transaction_data":serializer.data,
-                         "payable_amount":payable_amount,
-                         "received_amount":total_amount})
+            if payable_amount == total_amount:
+                # print("PAID")
+                quotation.payment_status = 'paid'
+                quotation.save()
+            else:
+                # print("PENDING")
+                quotation.payment_status = 'pending'
+                quotation.save()
+
+        return Response(data)
+
+        # return Response({"transaction_data":serializer.data,
+        #                  "payable_amount":payable_amount,
+        #                  "received_amount":total_amount})
 
     def update(self, request, pk=None, *args, **kwargs):
         # print("POST DATA ::", request.data)
-
+        data = {}
         transaction = Transaction.objects.get(pk=pk)
         # print("DATA ::", transaction)
         t_serializer = TransactionSerializer(transaction, data=request.data, partial=True)
         if t_serializer.is_valid():
             t_serializer.save()
+            data['transaction_data'] = t_serializer.data
         else:
             return Response(t_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
-        quotation_id = transaction.quotation_id.id
+        quotation_id = transaction.quotation_id.id if transaction.quotation_id is not None else None
         # print("Quotation ID ::", quotation_id)
-        quotation = Quotation.objects.get(id=quotation_id)
-        # print("Quotation ::", quotation)
-        total_amount = Transaction.objects.filter(quotation_id=quotation_id).aggregate(Sum('amount'))['amount__sum']
-        payable_amount = quotation.final_amount - quotation.discount
+        if quotation_id is not None:
+            quotation = Quotation.objects.get(id=quotation_id)
+            # print("Quotation ::", quotation)
+            total_amount = Transaction.objects.filter(quotation_id=quotation_id).aggregate(Sum('amount'))['amount__sum']
+            payable_amount = quotation.final_amount - quotation.discount
 
-        # print("Final amount :::", quotation.final_amount)
-        # print("Discount amount :::", quotation.discount)
-        # print("Total amount :::", total_amount)
-        # print("Payable amount :::",payable_amount)
+            data['payable_amount'] = payable_amount
+            data['received_amount'] = total_amount
 
-        if payable_amount == total_amount:
-            # print("PAID")
-            quotation.payment_status = 'paid'
-            quotation.save()
-        else:
-            # print("PENDING")
-            quotation.payment_status = 'pending'
-            quotation.save()
+            # print("Final amount :::", quotation.final_amount)
+            # print("Discount amount :::", quotation.discount)
+            # print("Total amount :::", total_amount)
+            # print("Payable amount :::",payable_amount)
 
-        return Response({"transaction_data":t_serializer.data,
-                         "payable_amount":payable_amount,
-                         "received_amount":total_amount})
+            if payable_amount == total_amount:
+                # print("PAID")
+                quotation.payment_status = 'paid'
+                quotation.save()
+            else:
+                # print("PENDING")
+                quotation.payment_status = 'pending'
+                quotation.save()
+
+        return Response(data)
+
+        # return Response({"transaction_data":t_serializer.data,
+        #                  "payable_amount":payable_amount,
+        #                  "received_amount":total_amount})
 
     def destroy(self, request, pk=None, *args, **kwargs):
         transaction = Transaction.objects.get(pk=pk)
         transaction.delete()
         # print("DATA ::", transaction)
         
-        quotation_id = transaction.quotation_id.id
+        quotation_id = transaction.quotation_id.id if transaction.quotation_id is not None else None
         # print("Quotation ID ::", quotation_id)
-        quotation = Quotation.objects.get(id=quotation_id)
-        # print("Quotation ::", quotation)
-        total_amount = Transaction.objects.filter(quotation_id=quotation_id).aggregate(Sum('amount'))['amount__sum']
-        total_amount = total_amount if total_amount is not None else 0
-        payable_amount = quotation.final_amount - quotation.discount
+        if quotation_id is not None:
+            quotation = Quotation.objects.get(id=quotation_id)
+            # print("Quotation ::", quotation)
+            total_amount = Transaction.objects.filter(quotation_id=quotation_id).aggregate(Sum('amount'))['amount__sum']
+            total_amount = total_amount if total_amount is not None else 0
+            payable_amount = quotation.final_amount - quotation.discount
 
-        # print("Final amount :::", quotation.final_amount)
-        # print("Discount amount :::", quotation.discount)
-        # print("Total amount :::", total_amount)
-        # print("Payable amount :::",payable_amount)
+            # print("Final amount :::", quotation.final_amount)
+            # print("Discount amount :::", quotation.discount)
+            # print("Total amount :::", total_amount)
+            # print("Payable amount :::",payable_amount)
 
-        if payable_amount == total_amount:
-            # print("PAID")
-            quotation.payment_status = 'paid'
-            quotation.save()
-        else:
-            # print("PENDING")
-            quotation.payment_status = 'pending'
-            quotation.save()
+            if payable_amount == total_amount:
+                # print("PAID")
+                quotation.payment_status = 'paid'
+                quotation.save()
+            else:
+                # print("PENDING")
+                quotation.payment_status = 'pending'
+                quotation.save()
 
-        return Response({"payable_amount":payable_amount,
-                         "received_amount":total_amount})
+            return Response({"payable_amount":payable_amount,
+                            "received_amount":total_amount})
+        
+        return Response(status=status.HTTP_204_NO_CONTENT)
     
 
 class AmountReportViewSet(viewsets.ModelViewSet):

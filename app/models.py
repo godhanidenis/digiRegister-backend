@@ -149,11 +149,17 @@ class Category(models.Model):
     user_id = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
 
+    def __str__(self):
+        return self.name
+
 
 class Item(models.Model):
     category_id = models.ForeignKey(Category, null=True, blank=True, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     price = models.IntegerField(default=0)
+
+    def __str__(self):
+        return self.name
 
 
 class Quotation(models.Model):
