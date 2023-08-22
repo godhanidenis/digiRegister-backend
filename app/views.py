@@ -260,6 +260,29 @@ class EventViewSet(viewsets.ModelViewSet):
     }
 
 
+class CategoryViewSet(viewsets.ModelViewSet):
+    queryset = Category.objects.all().order_by('-id').distinct()
+    serializer_class = CategorySerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+        'user_id__id':['exact'],
+        'name':['icontains']
+    }
+
+
+class ItemViewSet(viewsets.ModelViewSet):
+    queryset = Item.objects.all().order_by('-id').distinct()
+    serializer_class = ItemSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+        'category_id__user_id__id':['exact'],
+        'category_id__id':['exact'],
+        'category_id__name':['icontains'],
+        'name':['icontains'],
+        'price':['icontains']
+    }
+
+
 class QuotationViewSet(viewsets.ModelViewSet):
     queryset = Quotation.objects.all().order_by('-id').distinct()
     serializer_class = QuotationSerializer
@@ -274,6 +297,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
         'customer_id__mobile_no':['icontains'],
         'start_date':['exact'],
         'due_date':['exact'],
+        # 'invoice_type':['exact'],
         'converted_on':['gt'],
         'event_venue':['icontains'],
         'is_converted': ['exact'],
@@ -327,6 +351,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
         'notes':['icontains'],
         'quotation_id__customer_id__full_name':['icontains'],
         'quotation_id__event_id__event_name':['icontains'],
+        "payment_type":['exact'],
     }
 
     def create(self, request, *args, **kwargs):

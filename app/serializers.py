@@ -51,6 +51,20 @@ class EventSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class CategorySerializer(serializers.ModelSerializer):
+    # user = UserSerializer(source="user_id", read_only=True)
+    class Meta:
+        model = Category
+        fields = "__all__"
+
+
+class ItemSerializer(serializers.ModelSerializer):
+    category = CategorySerializer(source="category_id", read_only=True)
+    class Meta:
+        model = Item
+        fields = "__all__"
+
+
 class QuotationSerializer(serializers.ModelSerializer):
     # user = UserSerializer(source="user_id", read_only=True)
     customer = CustomerSerializer(source="customer_id", read_only=True)

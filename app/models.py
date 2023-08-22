@@ -145,10 +145,26 @@ class Event(models.Model):
         return self.event_name
 
 
+class Category(models.Model):
+    user_id = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE)
+    name = models.CharField(max_length=100)
+
+
+class Item(models.Model):
+    category_id = models.ForeignKey(Category, null=True, blank=True, on_delete=models.CASCADE)
+    name = models.CharField(max_length=100)
+    price = models.IntegerField(default=0)
+
+
 class Quotation(models.Model):
     PAYMENT_STATUS_CHOICES = (
         ("paid","PAID"),
         ("pending","PENDING")
+    )
+    INVOICE_TYPE_CHOICES = (
+        ("sale","SALE"),
+        ("service","SERVICE"),
+        ("purchase","PURCHASE"),
     )
     user_id = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE)
     customer_id = models.ForeignKey(Customer, null=True, blank=True, on_delete=models.CASCADE)
@@ -158,6 +174,7 @@ class Quotation(models.Model):
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
     due_date = models.DateField(null=True, blank=True)
+    invoice_type = models.CharField(max_length=10, choices=INVOICE_TYPE_CHOICES, default="services")
     is_converted = models.BooleanField(default=False)
     json_data = models.JSONField(blank=True, null=True)
     created_on = models.DateTimeField(auto_now_add=True, null=True, blank=True)
@@ -168,21 +185,24 @@ class Quotation(models.Model):
 
 
 class Transaction(models.Model):
-    PAYMENT_TYPE = (
+    PAYMENT_TYPE_CHOICES = (
         ("cash","CASH"),
         ("cheque","CHEQUE"),
         ("net_banking","NET BANKING"),
         ("upi","UPI"),
     )
-    TYPE = (
+    TYPE_CHOICES = (
         ("sale","SALE"),
         ("payment_in","PAYMENT IN"),
         ("payment_out","PAYMENT OUT"),
         ("expense","EXPENSE"),
+        ("purchase","PURCHASE"),
+
     )
-    type = models.CharField(max_length=15, choices=TYPE, default="payment_in")
+    type = models.CharField(max_length=15, choices=TYPE_CHOICES, default="payment_in")
     quotation_id = models.ForeignKey(Quotation, null=True, blank=True, on_delete=models.CASCADE)
+    item_id = models.ForeignKey(Item, null=True, blank=True, on_delete=models.CASCADE)
     notes = models.CharField(max_length=250, null=True, blank=True)
     date = models.DateField(null=True, blank=True)
-    payment_type = models.CharField(max_length=15, choices=PAYMENT_TYPE, default="cash")
+    payment_type = models.CharField(max_length=15, choices=PAYMENT_TYPE_CHOICES, default="cash")
     amount = models.IntegerField(null=True, blank=True)
