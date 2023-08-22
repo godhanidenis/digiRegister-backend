@@ -174,7 +174,7 @@ class Quotation(models.Model):
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
     due_date = models.DateField(null=True, blank=True)
-    invoice_type = models.CharField(max_length=10, choices=INVOICE_TYPE_CHOICES, default="services")
+    invoice_type = models.CharField(max_length=10, choices=INVOICE_TYPE_CHOICES, default="service")
     is_converted = models.BooleanField(default=False)
     json_data = models.JSONField(blank=True, null=True)
     created_on = models.DateTimeField(auto_now_add=True, null=True, blank=True)
