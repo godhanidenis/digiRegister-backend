@@ -145,21 +145,21 @@ class Event(models.Model):
         return self.event_name
 
 
-class Category(models.Model):
-    user_id = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE)
-    name = models.CharField(max_length=100)
+# class Category(models.Model):
+#     user_id = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE)
+#     name = models.CharField(max_length=100)
 
-    def __str__(self):
-        return self.name
+#     def __str__(self):
+#         return self.name
 
 
-class Item(models.Model):
-    category_id = models.ForeignKey(Category, null=True, blank=True, on_delete=models.CASCADE)
-    name = models.CharField(max_length=100)
-    price = models.IntegerField(default=0)
+# class Item(models.Model):
+#     category_id = models.ForeignKey(Category, null=True, blank=True, on_delete=models.CASCADE)
+#     name = models.CharField(max_length=100)
+#     price = models.IntegerField(default=0)
 
-    def __str__(self):
-        return self.name
+#     def __str__(self):
+#         return self.name
 
 
 class Quotation(models.Model):
@@ -206,7 +206,7 @@ class Transaction(models.Model):
     )
     type = models.CharField(max_length=15, choices=TYPE_CHOICES, default="payment_in")
     quotation_id = models.ForeignKey(Quotation, null=True, blank=True, on_delete=models.CASCADE)
-    category_id = models.ForeignKey(Category, null=True, blank=True, on_delete=models.CASCADE)
+    # category_id = models.ForeignKey(Category, null=True, blank=True, on_delete=models.CASCADE)
     notes = models.CharField(max_length=250, null=True, blank=True)
     date = models.DateField(null=True, blank=True)
     payment_type = models.CharField(max_length=15, choices=PAYMENT_TYPE_CHOICES, default="cash")

@@ -34,14 +34,14 @@ class EventAdmin(admin.ModelAdmin):
 admin.site.register(Event, EventAdmin)
 
 
-class CategoryAdmin(admin.ModelAdmin):
-    list_display = ['name']
-admin.site.register(Category, CategoryAdmin)
+# class CategoryAdmin(admin.ModelAdmin):
+#     list_display = ['name']
+# admin.site.register(Category, CategoryAdmin)
 
 
-class ItemAdmin(admin.ModelAdmin):
-    list_display = ['name', 'price']
-admin.site.register(Item, ItemAdmin)
+# class ItemAdmin(admin.ModelAdmin):
+#     list_display = ['name', 'price']
+# admin.site.register(Item, ItemAdmin)
 
 
 class QuotationAdmin(admin.ModelAdmin):
