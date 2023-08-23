@@ -66,6 +66,75 @@ class ExpenseViewSet(viewsets.ModelViewSet):
         'amount':['icontains'],
     }
 
+    def list(self, request):
+        querysets = self.filter_queryset(self.get_queryset())
+        data = []
+        for queryset in querysets:
+            q_item = ExpenseItem.objects.filter(expense_id=queryset.id)
+            expense = ExpenseSerializer(queryset)
+            items = ExpenseItemSerializer(q_item, many=True)
+            data.append({"expense":expense.data,
+                         "items":items.data})
+            
+        return Response({'data':data})
+
+    def retrieve(self, request, *args, **kwarge):
+        instance = self.get_object()
+
+        item = ExpenseItem.objects.filter(expense_id=instance.id)
+        transaction = Transaction.objects.filter(expense_id=instance.id)
+
+        serializers = ExpenseSerializer(instance)
+        i_serializers = ExpenseItemSerializer(item, many=True)
+        t_serializers = TransactionSerializer(transaction, many=True)
+
+        return Response({"expense":serializers.data,
+                         "items":i_serializers.data,
+                         "serializers":t_serializers.data})
+
+    def create(self, request, *args, **kwargs):
+        print("POST DATA ::", request.data)
+        expense = request.data['expense_data']
+        print("EXPENSE ::", expense)
+        transaction = request.data['transaction_data']
+        print("TRANSACTION ::", transaction)
+        items = request.data['item_data']
+        print("ITEMS ::", items)
+
+        expenseSerializer = ExpenseSerializer(data=expense)
+        if expenseSerializer.is_valid():
+            expenseSerializer.save()
+        else:
+            print("Expense Failed to save")
+            return Response(expenseSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        transaction['expense_id'] = expenseSerializer.data['id']
+        transactionSerializer = TransactionSerializer(data=transaction)
+        if transactionSerializer.is_valid():
+            transactionSerializer.save()
+        else:
+            print("Transaction Failed to save")
+            return Response(transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        item_instances = []
+        for item in items:
+            print("ITEM :::", item)
+            item['expense_id'] = expenseSerializer.data['id']
+            print("CHANGE :::", item)
+            expenseitemSerializer = ExpenseItemSerializer(data=item)
+            if expenseitemSerializer.is_valid():
+                item_instance = expenseitemSerializer.save()
+                item_instances.append(item_instance)
+            else:
+                print("Item Failed to save")
+                return Response(expenseitemSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({
+            "expense_data": expenseSerializer.data,
+            "transaction_data": transactionSerializer.data,
+            "items": ExpenseItemSerializer(item_instances, many=True).data
+        })
+
 
 class ExpenseItemViewSet(viewsets.ModelViewSet):
     queryset = ExpenseItem.objects.all().order_by('-id').distinct()

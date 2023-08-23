@@ -22,8 +22,8 @@ class ExpenseSerializer(serializers.ModelSerializer):
 
 
 class ExpenseItemSerializer(serializers.ModelSerializer):
-    expense = ExpenseSerializer(source="expense_id", read_only=True)
-    category = CategorySerializer(source="category_id", read_only=True)
+    # expense = ExpenseSerializer(source="expense_id", read_only=True)
+    # category = CategorySerializer(source="category_id", read_only=True)
     item = ItemSerializer(source="item_id", read_only=True)
     class Meta:
         model = ExpenseItem
