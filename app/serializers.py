@@ -51,18 +51,18 @@ class EventSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class CategorySerializer(serializers.ModelSerializer):
-    # user = UserSerializer(source="user_id", read_only=True)
-    class Meta:
-        model = Category
-        fields = "__all__"
+# class CategorySerializer(serializers.ModelSerializer):
+#     # user = UserSerializer(source="user_id", read_only=True)
+#     class Meta:
+#         model = Category
+#         fields = "__all__"
 
 
-class ItemSerializer(serializers.ModelSerializer):
-    category = CategorySerializer(source="category_id", read_only=True)
-    class Meta:
-        model = Item
-        fields = "__all__"
+# class ItemSerializer(serializers.ModelSerializer):
+#     category = CategorySerializer(source="category_id", read_only=True)
+#     class Meta:
+#         model = Item
+#         fields = "__all__"
 
 
 class QuotationSerializer(serializers.ModelSerializer):
@@ -76,7 +76,7 @@ class QuotationSerializer(serializers.ModelSerializer):
 
 class TransactionSerializer(serializers.ModelSerializer):
     # quotation = QuotationSerializer(source="quotation_id", read_only=True)
-    category = CategorySerializer(source="category_id", read_only=True)
+    # category = CategorySerializer(source="category_id", read_only=True)
     class Meta:
         model = Transaction
         fields = "__all__"

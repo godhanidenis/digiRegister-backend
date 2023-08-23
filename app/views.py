@@ -260,51 +260,51 @@ class EventViewSet(viewsets.ModelViewSet):
     }
 
 
-class CategoryViewSet(viewsets.ModelViewSet):
-    queryset = Category.objects.all().order_by('-id').distinct()
-    serializer_class = CategorySerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = {
-        'user_id__id':['exact'],
-        'name':['icontains']
-    }
+# class CategoryViewSet(viewsets.ModelViewSet):
+#     queryset = Category.objects.all().order_by('-id').distinct()
+#     serializer_class = CategorySerializer
+#     filter_backends = [DjangoFilterBackend]
+#     filterset_fields = {
+#         'user_id__id':['exact'],
+#         'name':['icontains']
+#     }
 
-    def list(self, request):
-        querysets = self.filter_queryset(self.get_queryset())
+#     def list(self, request):
+#         querysets = self.filter_queryset(self.get_queryset())
 
-        data = []
-        for queryset in querysets:
-            q_items = Item.objects.filter(category_id__id=queryset.id)
-            category = CategorySerializer(queryset)
-            items = ItemSerializer(q_items, many=True)
-            data.append({'category': category.data, 'items': items.data})
+#         data = []
+#         for queryset in querysets:
+#             q_items = Item.objects.filter(category_id__id=queryset.id)
+#             category = CategorySerializer(queryset)
+#             items = ItemSerializer(q_items, many=True)
+#             data.append({'category': category.data, 'items': items.data})
 
-        return Response({'data':data}) 
+#         return Response({'data':data}) 
 
 
-class ItemViewSet(viewsets.ModelViewSet):
-    queryset = Item.objects.all().order_by('-id').distinct()
-    serializer_class = ItemSerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = {
-        'category_id__user_id__id':['exact'],
-        'category_id__id':['exact'],
-        'category_id__name':['icontains'],
-        'name':['icontains'],
-        'price':['icontains']
-    }
+# class ItemViewSet(viewsets.ModelViewSet):
+#     queryset = Item.objects.all().order_by('-id').distinct()
+#     serializer_class = ItemSerializer
+#     filter_backends = [DjangoFilterBackend]
+#     filterset_fields = {
+#         'category_id__user_id__id':['exact'],
+#         'category_id__id':['exact'],
+#         'category_id__name':['icontains'],
+#         'name':['icontains'],
+#         'price':['icontains']
+#     }
 
-    def list(self, request):
-        querysets = self.filter_queryset(self.get_queryset())
+#     def list(self, request):
+#         querysets = self.filter_queryset(self.get_queryset())
 
-        data = []
-        for queryset in querysets:
-            q_transaction = Transaction.objects.filter(item_id__id=queryset.id)
-            category = ItemSerializer(queryset)
-            transaction = TransactionSerializer(q_transaction, many=True)
-            data.append({'category': category.data, 'transaction': transaction.data})
+#         data = []
+#         for queryset in querysets:
+#             q_transaction = Transaction.objects.filter(item_id__id=queryset.id)
+#             category = ItemSerializer(queryset)
+#             transaction = TransactionSerializer(q_transaction, many=True)
+#             data.append({'category': category.data, 'transaction': transaction.data})
 
-        return Response({'data':data}) 
+#         return Response({'data':data}) 
 
 
 class QuotationViewSet(viewsets.ModelViewSet):
