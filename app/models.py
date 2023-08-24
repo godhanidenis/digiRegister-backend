@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import BaseUserManager, AbstractUser
+
+
 # Create your models here.
 
 class UserManager(BaseUserManager):
@@ -185,11 +187,11 @@ class Quotation(models.Model):
     json_data = models.JSONField(blank=True, null=True)
     created_on = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     converted_on = models.DateTimeField(null=True, blank=True)
-    final_amount = models.IntegerField(default=0)
-    discount = models.IntegerField(default=0)
+    final_amount = models.FloatField(max_length=10, default=0.0)
+    discount = models.FloatField(max_length=10, default=0.0)
     payment_status = models.CharField(max_length=10, choices=PAYMENT_STATUS_CHOICES, default="pending")
 
-
+from expense.models import Expense
 class Transaction(models.Model):
     PAYMENT_TYPE_CHOICES = (
         ("cash","CASH"),
@@ -206,8 +208,9 @@ class Transaction(models.Model):
     )
     type = models.CharField(max_length=15, choices=TYPE_CHOICES, default="payment_in")
     quotation_id = models.ForeignKey(Quotation, null=True, blank=True, on_delete=models.CASCADE)
-    # category_id = models.ForeignKey(Category, null=True, blank=True, on_delete=models.CASCADE)
+    expense_id = models.ForeignKey(Expense, null=True, blank=True, on_delete=models.CASCADE)
     notes = models.CharField(max_length=250, null=True, blank=True)
     date = models.DateField(null=True, blank=True)
     payment_type = models.CharField(max_length=15, choices=PAYMENT_TYPE_CHOICES, default="cash")
-    amount = models.IntegerField(null=True, blank=True)
+    amount = models.FloatField(max_length=10, default=0.0)
+
