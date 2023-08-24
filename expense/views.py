@@ -20,27 +20,41 @@ class CategoryViewSet(viewsets.ModelViewSet):
         'name':['icontains']
     }
 
-    # def list(self, request):
-    #     querysets = self.filter_queryset(self.get_queryset())
+    def list(self, request):
+        querysets = self.filter_queryset(self.get_queryset())
 
-    #     data = []
-    #     for queryset in querysets:
-    #         total_amount = Expense.objects.filter(category_id__id=queryset.id).aggregate(Sum('amount'))['amount__sum']
-    #         print(f"CATEGORY ID::{queryset.id} ---- TOTAL AMOUNT:: {total_amount}")
-    #         category = CategorySerializer(queryset)
-    #         # q_items = ExpenseItem.objects.filter(category_id__id=queryset.id)
-    #         # items = ExpenseItemSerializer(q_items, many=True)
-    #         data.append({'category': category.data})
+        data = []
+        for queryset in querysets:
+            total_amount = Expense.objects.filter(category_id__id=queryset.id).aggregate(Sum('amount'))['amount__sum']
+            print(f"CATEGORY ID::{queryset.id} ---- TOTAL AMOUNT:: {total_amount}")
+            category = CategorySerializer(queryset)
+            # q_items = ExpenseItem.objects.filter(category_id__id=queryset.id)
+            # items = ExpenseItemSerializer(q_items, many=True)
+            data.append({'category': category.data, 'total_amount':total_amount})
 
-    #     return Response({'data':data, 'total_amount':total_amount}) 
+        return Response({'data':data}) 
 
-    # def retrieve(self, request, *args, **kwarge):
-    #     instance = self.get_object()
-    #     print("INSTANCE ID :::", instance.id)
+    def retrieve(self, request, *args, **kwarge):
+        instance = self.get_object()
+        print("INSTANCE ID :::", instance.id)
+        data = {
+            "category_data": CategorySerializer(instance).data,
+            "category_expense": []
+        }
+        expenses = Expense.objects.filter(category_id=instance.id)
+        for expense in expenses:
+            print("EXPENSE :::", expense.id)
+            transaction = Transaction.objects.get(expense_id__id=expense.id)
+            print("TRANSACTION :::", transaction)
+            expense_data = ExpenseSerializer(expense).data
+            transaction_data = TransactionSerializer(transaction).data
 
-    #     expenses = Expense.objects.filter(category_id=instance.id)
-    #     for expense in expenses:
-    #         print("EXPENSE :::", expense)
+            data["category_expense"].append({
+                "expense_data": expense_data,
+                "transaction": transaction_data
+            })
+
+        return Response(data)
 
 
 class ItemViewSet(viewsets.ModelViewSet):
@@ -55,22 +69,43 @@ class ItemViewSet(viewsets.ModelViewSet):
         'price':['icontains']
     }
 
-    # def list(self, request):
-    #     querysets = self.filter_queryset(self.get_queryset())
+    def list(self, request):
+        querysets = self.filter_queryset(self.get_queryset())
 
-    #     data = []
-    #     for queryset in querysets:
-    #         total_amount = Expense.objects.filter(category_id__id=queryset.id).aggregate(Sum('amount'))['amount__sum']
-    #         print(f"CATEGORY ID::{queryset.id} ---- TOTAL AMOUNT:: {total_amount}")
-    #         category = ItemSerializer(queryset)
-    #         # q_transaction = Transaction.objects.filter(item_id__id=queryset.id)
-    #         # transaction = TransactionSerializer(q_transaction, many=True)
-    #         data.append({'category': category.data, 'total_amount':total_amount})
+        data = []
+        for queryset in querysets:
+            total_amount = ExpenseItem.objects.filter(item_id__id=queryset.id).aggregate(Sum('amount'))['amount__sum']
+            print(f"ITEM ID::{queryset.id} ---- TOTAL AMOUNT:: {total_amount}")
+            category = ItemSerializer(queryset)
+            # q_transaction = Transaction.objects.filter(item_id__id=queryset.id)
+            # transaction = TransactionSerializer(q_transaction, many=True)
+            data.append({'category': category.data, 'total_amount':total_amount})
 
-    #     return Response({'data':data}) 
+        return Response({'data':data}) 
 
-    # def retrieve(self, request, *args, **kwarge):
-    #     instance = self.get_object()
+    def retrieve(self, request, *args, **kwarge):
+        instance = self.get_object()
+        print("INSTANCE ID :::", instance.id)
+        data = {
+            "item_data": ItemSerializer(instance).data,
+            "item_expense": []
+        }
+        items = ExpenseItem.objects.filter(item_id=instance.id)
+        for item in items:
+            print("ITEM :::", item.expense_id.id)
+            transaction = Transaction.objects.get(expense_id__id=item.expense_id.id)
+            print("TRANSACTION :::", transaction)
+            item_data = ExpenseItemSerializer(item).data
+            transaction_data = TransactionSerializer(transaction).data
+
+            data["item_expense"].append({
+                "expense_data": item_data,
+                "transaction": transaction_data
+            })
+
+
+
+        return Response(data)
 
 
 class ExpenseViewSet(viewsets.ModelViewSet):
@@ -220,8 +255,8 @@ class ExpenseItemViewSet(viewsets.ModelViewSet):
     serializer_class = ExpenseItemSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = {
-        'category_id__user_id__id':['exact'],
-        'category_id__name':['icontains'],
+        # 'category_id__user_id__id':['exact'],
+        # 'category_id__name':['icontains'],
         'expense_id__id':['exact'],
         'expense_id__date':['exact'],
         'expense_id__amount':['icontains'],

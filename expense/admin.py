@@ -14,9 +14,10 @@ admin.site.register(Item, ItemAdmin)
 
 
 class ExpenseAdmin(admin.ModelAdmin):
-    list_display = ['date', 'amount']
+    list_display = ['category_id', 'date', 'amount']
 admin.site.register(Expense, ExpenseAdmin)
 
 
 class ExpenseItemAdmin(admin.ModelAdmin):
-    list_display = ['expense_id', 'category_id', 'item_id', 'amount']
+    list_display = ['expense_id', 'item_id', 'amount']
+admin.site.register(ExpenseItem, ExpenseItemAdmin)
