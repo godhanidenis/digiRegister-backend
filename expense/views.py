@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.db.models import Sum
 
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, status
@@ -24,12 +25,22 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
     #     data = []
     #     for queryset in querysets:
-    #         q_items = Item.objects.filter(category_id__id=queryset.id)
+    #         total_amount = Expense.objects.filter(category_id__id=queryset.id).aggregate(Sum('amount'))['amount__sum']
+    #         print(f"CATEGORY ID::{queryset.id} ---- TOTAL AMOUNT:: {total_amount}")
     #         category = CategorySerializer(queryset)
-    #         items = ItemSerializer(q_items, many=True)
-    #         data.append({'category': category.data, 'items': items.data})
+    #         # q_items = ExpenseItem.objects.filter(category_id__id=queryset.id)
+    #         # items = ExpenseItemSerializer(q_items, many=True)
+    #         data.append({'category': category.data})
 
-    #     return Response({'data':data}) 
+    #     return Response({'data':data, 'total_amount':total_amount}) 
+
+    # def retrieve(self, request, *args, **kwarge):
+    #     instance = self.get_object()
+    #     print("INSTANCE ID :::", instance.id)
+
+    #     expenses = Expense.objects.filter(category_id=instance.id)
+    #     for expense in expenses:
+    #         print("EXPENSE :::", expense)
 
 
 class ItemViewSet(viewsets.ModelViewSet):
@@ -49,12 +60,17 @@ class ItemViewSet(viewsets.ModelViewSet):
 
     #     data = []
     #     for queryset in querysets:
-    #         q_transaction = Transaction.objects.filter(item_id__id=queryset.id)
+    #         total_amount = Expense.objects.filter(category_id__id=queryset.id).aggregate(Sum('amount'))['amount__sum']
+    #         print(f"CATEGORY ID::{queryset.id} ---- TOTAL AMOUNT:: {total_amount}")
     #         category = ItemSerializer(queryset)
-    #         transaction = TransactionSerializer(q_transaction, many=True)
-    #         data.append({'category': category.data, 'transaction': transaction.data})
+    #         # q_transaction = Transaction.objects.filter(item_id__id=queryset.id)
+    #         # transaction = TransactionSerializer(q_transaction, many=True)
+    #         data.append({'category': category.data, 'total_amount':total_amount})
 
     #     return Response({'data':data}) 
+
+    # def retrieve(self, request, *args, **kwarge):
+    #     instance = self.get_object()
 
 
 class ExpenseViewSet(viewsets.ModelViewSet):
@@ -90,7 +106,7 @@ class ExpenseViewSet(viewsets.ModelViewSet):
 
         return Response({"expense":serializers.data,
                          "items":i_serializers.data,
-                         "serializers":t_serializers.data})
+                         "transaction":t_serializers.data})
 
     def create(self, request, *args, **kwargs):
         # print("POST DATA ::", request.data)
@@ -133,6 +149,69 @@ class ExpenseViewSet(viewsets.ModelViewSet):
             "expense_data": expenseSerializer.data,
             "transaction_data": transactionSerializer.data,
             "items": ExpenseItemSerializer(item_instances, many=True).data
+        })
+
+    def update(self, request, pk=None, *args, **kwargs):
+        expense_data = request.data.get('expense_data', None)
+        print("EXPENSE ::", expense_data)
+        transaction_data = request.data.get('transaction_data', None)
+        print("TRANSACTION ::", transaction_data)
+        items = request.data.get('item_data', None)
+        print("ITEMS ::", items)
+        delete_items = request.data.get('delete_item', None)
+        print("DELETE ::", delete_items)
+        print("--------------------------------------")
+
+        expense = Expense.objects.get(pk=pk)
+        print("EXPENSE :::", expense)
+        e_serializer = ExpenseSerializer(expense, data=expense_data, partial=True)
+        if e_serializer.is_valid():
+            e_serializer.save()
+        else:
+            return Response(e_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        print("--------------------------------------")
+        transaction_id = transaction_data['id']
+        print("TRANSACTION ID :::", transaction_id)
+        transaction = Transaction.objects.get(pk=transaction_id)
+        print("TRANSACTION :::", transaction)
+        t_serializer = TransactionSerializer(transaction, data=transaction_data, partial=True)
+        if t_serializer.is_valid():
+            t_serializer.save()
+        else:
+            return Response(t_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        print("--------------------------------------")
+        if delete_items is not None:
+            for delete_item in delete_items:
+                print("ONE ITEM :::", delete_item)
+                d_item = ExpenseItem.objects.get(id=delete_item)
+                d_item.delete()
+
+        print("--------------------------------------")
+        if items is not None:
+            for item in items:
+                print("ONE ITEM ::::", item)
+                print("ITEM ID ::::", item['id'])
+                if item['id'] == '':
+                    print(":::: NEW ITEM ::::")
+                    item.pop('id')
+                    ni_serializer = ExpenseItemSerializer(data=item)
+                    if ni_serializer.is_valid():
+                        ni_serializer.save()
+                    else:
+                        return Response(ni_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    print("--------------------------------------")
+                else:
+                    print(":::: OLD ITEM ::::")
+                    o_item = ExpenseItem.objects.get(id=item['id'])
+                    oi_serializer = ExpenseItemSerializer(o_item, data=item, partial=True)
+                    if oi_serializer.is_valid():
+                        oi_serializer.save()
+                    else:
+                        return Response(oi_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({
+            "expense_data": e_serializer.data
         })
 
 

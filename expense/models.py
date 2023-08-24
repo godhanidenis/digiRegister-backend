@@ -21,13 +21,14 @@ class Item(models.Model):
 
 
 class Expense(models.Model):
+    category_id = models.ForeignKey(Category, null=True, blank=True, on_delete=models.CASCADE)
     date = models.DateField(null=True, blank=True)
     amount = models.FloatField(max_length=10, default=0.0)
 
 
 class ExpenseItem(models.Model):
     expense_id = models.ForeignKey(Expense, null=True, blank=True, on_delete=models.CASCADE) 
-    category_id = models.ForeignKey(Category, null=True, blank=True, on_delete=models.CASCADE)
+    # category_id = models.ForeignKey(Category, null=True, blank=True, on_delete=models.CASCADE)
     item_id = models.ForeignKey(Item, null=True, blank=True, on_delete=models.CASCADE)
     amount = models.FloatField(max_length=10, default=0.0)
 

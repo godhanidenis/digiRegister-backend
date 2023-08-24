@@ -375,7 +375,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
         'notes':['icontains'],
         'quotation_id__customer_id__full_name':['icontains'],
         'quotation_id__event_id__event_name':['icontains'],
-        "payment_type":['exact'],
+        'payment_type':['exact'],
     }
 
     def create(self, request, *args, **kwargs):
