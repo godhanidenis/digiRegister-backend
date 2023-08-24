@@ -93,13 +93,13 @@ class ExpenseViewSet(viewsets.ModelViewSet):
                          "serializers":t_serializers.data})
 
     def create(self, request, *args, **kwargs):
-        print("POST DATA ::", request.data)
+        # print("POST DATA ::", request.data)
         expense = request.data['expense_data']
-        print("EXPENSE ::", expense)
+        # print("EXPENSE ::", expense)
         transaction = request.data['transaction_data']
-        print("TRANSACTION ::", transaction)
+        # print("TRANSACTION ::", transaction)
         items = request.data['item_data']
-        print("ITEMS ::", items)
+        # print("ITEMS ::", items)
 
         expenseSerializer = ExpenseSerializer(data=expense)
         if expenseSerializer.is_valid():
@@ -118,15 +118,15 @@ class ExpenseViewSet(viewsets.ModelViewSet):
         
         item_instances = []
         for item in items:
-            print("ITEM :::", item)
+            # print("ITEM :::", item)
             item['expense_id'] = expenseSerializer.data['id']
-            print("CHANGE :::", item)
+            # print("CHANGE :::", item)
             expenseitemSerializer = ExpenseItemSerializer(data=item)
             if expenseitemSerializer.is_valid():
                 item_instance = expenseitemSerializer.save()
                 item_instances.append(item_instance)
             else:
-                print("Item Failed to save")
+                # print("Item Failed to save")
                 return Response(expenseitemSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({
