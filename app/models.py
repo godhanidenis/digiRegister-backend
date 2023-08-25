@@ -194,10 +194,10 @@ class Quotation(models.Model):
 from expense.models import Expense
 class Transaction(models.Model):
     PAYMENT_TYPE_CHOICES = (
-        ("cash","CASH"),
-        ("cheque","CHEQUE"),
-        ("net_banking","NET BANKING"),
-        ("upi","UPI"),
+        ("Cash","CASH"),
+        ("Cheque","CHEQUE"),
+        ("Net_banking","NET BANKING"),
+        ("Upi","UPI"),
     )
     TYPE_CHOICES = (
         ("sale","SALE"),
@@ -211,6 +211,6 @@ class Transaction(models.Model):
     expense_id = models.ForeignKey(Expense, null=True, blank=True, on_delete=models.CASCADE)
     notes = models.CharField(max_length=250, null=True, blank=True)
     date = models.DateField(null=True, blank=True)
-    payment_type = models.CharField(max_length=15, choices=PAYMENT_TYPE_CHOICES, default="cash")
+    payment_type = models.CharField(max_length=15, choices=PAYMENT_TYPE_CHOICES, default="Cash")
     amount = models.FloatField(max_length=10, default=0.0)
 
