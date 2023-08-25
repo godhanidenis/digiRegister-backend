@@ -260,53 +260,6 @@ class EventViewSet(viewsets.ModelViewSet):
     }
 
 
-# class CategoryViewSet(viewsets.ModelViewSet):
-#     queryset = Category.objects.all().order_by('-id').distinct()
-#     serializer_class = CategorySerializer
-#     filter_backends = [DjangoFilterBackend]
-#     filterset_fields = {
-#         'user_id__id':['exact'],
-#         'name':['icontains']
-#     }
-
-#     def list(self, request):
-#         querysets = self.filter_queryset(self.get_queryset())
-
-#         data = []
-#         for queryset in querysets:
-#             q_items = Item.objects.filter(category_id__id=queryset.id)
-#             category = CategorySerializer(queryset)
-#             items = ItemSerializer(q_items, many=True)
-#             data.append({'category': category.data, 'items': items.data})
-
-#         return Response({'data':data}) 
-
-
-# class ItemViewSet(viewsets.ModelViewSet):
-#     queryset = Item.objects.all().order_by('-id').distinct()
-#     serializer_class = ItemSerializer
-#     filter_backends = [DjangoFilterBackend]
-#     filterset_fields = {
-#         'category_id__user_id__id':['exact'],
-#         'category_id__id':['exact'],
-#         'category_id__name':['icontains'],
-#         'name':['icontains'],
-#         'price':['icontains']
-#     }
-
-#     def list(self, request):
-#         querysets = self.filter_queryset(self.get_queryset())
-
-#         data = []
-#         for queryset in querysets:
-#             q_transaction = Transaction.objects.filter(item_id__id=queryset.id)
-#             category = ItemSerializer(queryset)
-#             transaction = TransactionSerializer(q_transaction, many=True)
-#             data.append({'category': category.data, 'transaction': transaction.data})
-
-#         return Response({'data':data}) 
-
-
 class QuotationViewSet(viewsets.ModelViewSet):
     queryset = Quotation.objects.all().order_by('-id').distinct()
     serializer_class = QuotationSerializer
@@ -363,6 +316,33 @@ class QuotationViewSet(viewsets.ModelViewSet):
                          "received_amount":total_amount})
 
         return paginator.get_paginated_response(data)
+
+    def create(self, request, *args, **kwargs):
+        quotation =request.data['quotation_data']
+        print("QUOTATION :::", quotation)
+        quotationSerializer = QuotationSerializer(data=quotation)
+        if quotationSerializer.is_valid():
+            quotationSerializer.save()
+        else:
+            return Response(quotationSerializer.errors(), status=status.HTTP_400_BAD_REQUEST)
+
+
+class EventDayViewSet(viewsets.ModelViewSet):
+    queryset = EventDay.objects.all().order_by('-id').distinct()
+    serializer_class = EventDaySerializer
+
+class InventoryDetailsViewSet(viewsets.ModelViewSet):
+    queryset = InventoryDetails.objects.all().order_by('-id').distinct()
+    serializer_class = InventoryDetailsSerializer
+
+class EventDetailsViewSet(viewsets.ModelViewSet):
+    queryset = EventDetails.objects.all().order_by('-id').distinct()
+    serializer_class = EventDetailsSerializer
+
+class ExposureDetailsViewSet(viewsets.ModelViewSet):
+    queryset = ExposureDetails.objects.all().order_by('-id').distinct()
+    serializer_class = ExposureDetailsSerializer
+
 
 
 class TransactionViewSet(viewsets.ModelViewSet):

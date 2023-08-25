@@ -13,9 +13,14 @@ router.register(r'inventory',views.InventoryViewSet)
 router.register(r'staff',views.StaffViewSet)
 router.register(r'staffskill',views.StaffSkillViewSet)
 router.register(r'event',views.EventViewSet)
-# router.register(r'category',views.CategoryViewSet)
-# router.register(r'item',views.ItemViewSet)
+
 router.register(r'quotation',views.QuotationViewSet)
+router.register(r'eventday',views.EventDayViewSet)
+router.register(r'inventorydetails',views.InventoryDetailsViewSet)
+router.register(r'eventdetails',views.EventDetailsViewSet)
+router.register(r'exposuredetails',views.ExposureDetailsViewSet)
+
+
 router.register(r'transaction',views.TransactionViewSet)
 
 router.register(r'amountreport',views.AmountReportViewSet)
