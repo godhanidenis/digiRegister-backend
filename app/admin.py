@@ -45,7 +45,7 @@ admin.site.register(Event, EventAdmin)
 
 
 class QuotationAdmin(admin.ModelAdmin):
-    list_display = ['event_id', 'start_date', 'end_date']
+    list_display = ['user_id', 'event_id','final_amount', 'payment_status']
 admin.site.register(Quotation, QuotationAdmin)
 
 
