@@ -55,5 +55,5 @@ admin.site.register(Inventory, InventoryAdmin)
 
 
 class TransactionAdmin(admin.ModelAdmin):
-    list_display = ['notes', 'amount','quotation_id']
+    list_display = ['notes', 'amount','quotation_id','payment_type']
 admin.site.register(Transaction, TransactionAdmin)
