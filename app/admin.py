@@ -57,7 +57,7 @@ class InventoryDetailsAdmin(admin.ModelAdmin):
 admin.site.register(InventoryDetails, InventoryDetailsAdmin)
 
 class EventDetailsAdmin(admin.ModelAdmin):
-    list_display = ['eventday_id', 'quotation_id', 'event_id', 'evnet_time']
+    list_display = ['eventday_id', 'quotation_id', 'event_id']
 admin.site.register(EventDetails, EventDetailsAdmin)
 
 class ExposureDetailsAdmin(admin.ModelAdmin):

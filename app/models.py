@@ -226,13 +226,16 @@ class InventoryDetails(models.Model):
     eventday_id = models.ForeignKey(EventDay, null=True, blank=True, on_delete=models.CASCADE)
     inventory_id = models.ForeignKey(Inventory, null=True, blank=True, on_delete=models.CASCADE)
     price = models.FloatField(max_length=10, default=0.0)
+    qty = models.IntegerField(null=True, blank=True)
+    profit = models.FloatField(max_length=10, default=0.0)
 
 class EventDetails(models.Model):
     eventday_id = models.ForeignKey(EventDay, null=True, blank=True, on_delete=models.CASCADE)
     quotation_id = models.ForeignKey(Quotation, null=True, blank=True, on_delete=models.CASCADE)
     event_id = models.ForeignKey(Event, null=True, blank=True, on_delete=models.CASCADE)
     event_venue = models.CharField(null=True, blank=True)
-    evnet_time = models.TimeField(null=True, blank=True)
+    start_time = models.TimeField(null=True, blank=True)
+    end_time = models.TimeField(null=True, blank=True)
 
 class ExposureDetails(models.Model):
     eventdetails_id = models.ForeignKey(EventDetails, null=True, blank=True, on_delete=models.CASCADE)
