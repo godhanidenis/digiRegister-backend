@@ -369,7 +369,6 @@ class QuotationViewSet(viewsets.ModelViewSet):
         data = {"quotation_data": QuotationSerializer(instance).data, 
                 "datas": []}
 
-        # Process event days
         eventdays = EventDay.objects.filter(quotation_id=instance.id)
         for eventday in eventdays:
             eventday_data = {
@@ -378,24 +377,21 @@ class QuotationViewSet(viewsets.ModelViewSet):
                 "description": []
             }
 
-            # Process event details
             eventdetails = EventDetails.objects.filter(eventday_id=eventday.id)
-            print("Event", eventdetails)
+            # print("Event", eventdetails)
             for eventdetail in eventdetails:
                 eventday_data["event_details"].append(EventDetailsSerializer(eventdetail).data)
                 
             inventorydetails = InventoryDetails.objects.filter(eventday_id = eventday.id)
-            print("inventorydetails ::", inventorydetails)
+            # print("inventorydetails ::", inventorydetails)
 
-            # Process exposure details
             for inventorydetail in inventorydetails:
-                print("IDDDDD ::",inventorydetail)
+                # print("IDDDDD ::",inventorydetail)
                 exposuredetails = ExposureDetails.objects.filter(inventorydetails_id=inventorydetail.id)
                 eventday_data["description"].append({
                     "inventory_details": InventoryDetailsSerializer(inventorydetail).data,
                     "exposure_details": ExposureDetailsSerializer(exposuredetails, many=True).data
-                })
-            
+                })     
             data["datas"].append(eventday_data)
 
         return Response(data)
@@ -502,7 +498,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
         delete_eventdays = request.data.get('delete_eventday', None)
         print("Delete Eventday :", delete_eventdays)
 
-
+        print("*************************************************")
         ### FOR UPDATE QUOTATION DATA ###
         quotation = Quotation.objects.get(pk=pk)
         print("Quotation ::", quotation)
@@ -516,7 +512,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
         final_eventdetails_data = []
         final_inventorydetails_data = []
         final_exposuredetails_data = []
-
+        print("*************************************************")
         ### FOR ADD AND UPDATE OTHER DATA ### 
         if datas is not None:
             for data in datas:
@@ -531,6 +527,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                 if eventdate_data['id'] == '':
                     print(":::: NEW DAY ADDED ::::")
                     eventdate_data.pop('id')
+                    print("eventdate_data ::", eventdate_data)
                     n_eventdaySerializer = EventDaySerializer(data=eventdate_data)
                     if n_eventdaySerializer.is_valid():
                         eventday_instance = n_eventdaySerializer.save()
@@ -583,7 +580,8 @@ class QuotationViewSet(viewsets.ModelViewSet):
                                         exposuredetails_data = {
                                             'staff_id':exposuredetail['staff_id'],
                                             'price':exposuredetail['price'],
-                                            'eventdetails_id':single_eventdetails.id
+                                            'eventdetails_id':single_eventdetails.id,
+                                            'inventorydetails_id':inventorydetails_instance.id
                                         }
                                         print("exposuredetails_data ::", exposuredetails_data)
                                         exposuredetailsSerializer = ExposureDetailsSerializer(data=exposuredetails_data)
@@ -592,10 +590,13 @@ class QuotationViewSet(viewsets.ModelViewSet):
                                             final_exposuredetails_data.append(exposuredetails_instance)
                                         else:
                                             return Response(exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                
                 else:
+                    print("*************************************************")
+
                     print(":::: OLD DAY UPDATED ::::")
                     o_eventday = EventDay.objects.get(pk=eventdate_data['id'])
+                    print("o_eventday ::::: ",o_eventday)
+                    print("eventdate_data ::::: ",eventdate_data)
                     o_eventdaySerializer = EventDaySerializer(o_eventday, data=eventdate_data, partial=True)
                     if o_eventdaySerializer.is_valid():
                         o_eventdaySerializer.save()
@@ -604,11 +605,12 @@ class QuotationViewSet(viewsets.ModelViewSet):
                             
                     eventdetails_datas = data['event_details']
                     for eventdetails_data in eventdetails_datas:
-                        print("Event Details Data ::::",eventdetails_data)
+                        print("Event Details Data :::::",eventdetails_data)
 
                         if eventdetails_data['id'] == '':
                             print("::: NEW EVENT DETAILS :::")
                             eventdetails_data.pop('id')
+                            print("eventdetails_data ::::: ",eventdetails_data)
                             n_eventdetailsSerializer = EventDetailsSerializer(eventdetails_data)
                             if n_eventdetailsSerializer.is_valid():
                                 eventdetails_instance = n_eventdetailsSerializer.save()
@@ -624,12 +626,12 @@ class QuotationViewSet(viewsets.ModelViewSet):
                             if o_eventdetailsSerializer.is_valid():
                                 eventdetails_instance = o_eventdetailsSerializer.save()
                                 final_eventdetails_data.append(eventdetails_instance)
-                                print("Event Details Instance saved :::", eventdetails_instance)
+                                print("Event Details Instance saved :::::", eventdetails_instance)
                             else:
                                 return Response(o_eventdetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                             
                     descriptions = data['descriptions']
-                    print("Descriptions :::", descriptions)
+                    print("Descriptions :::::", descriptions)
 
                     for description in descriptions:
                         inventorydetails_data = {
@@ -644,6 +646,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                         if inventorydetails_data['id'] == '':
                             print("::: NEW INVENTORY DETAILS :::")
                             inventorydetails_data.pop('id')
+                            print("inventorydetails_data :::::",inventorydetails_data)
                             n_inventorydetailsSerializer = InventoryDetailsSerializer(data=inventorydetails_data)
                             if n_inventorydetailsSerializer.is_valid():
                                 inventorydetails_instance = n_inventorydetailsSerializer.save()
@@ -653,7 +656,9 @@ class QuotationViewSet(viewsets.ModelViewSet):
                                 return Response(n_inventorydetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                         else:
                             print("::: OLD INVENTORY DETAILS :::")
+                            print("inventorydetails_data ::::: ",inventorydetails_data)
                             o_inventorydetails = InventoryDetails.objects.get(pk=inventorydetails_data['id'])
+                            print("o_inventorydetails ::::: ",o_inventorydetails)
                             o_inventorydetailsSerializer = InventoryDetailsSerializer(o_inventorydetails, data=inventorydetails_data, partial=True)
                             if o_inventorydetailsSerializer.is_valid():
                                 inventorydetails_instance = o_inventorydetailsSerializer.save()
@@ -663,6 +668,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                                 return Response(o_inventorydetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                         
                         exposuredetails = description['exposure']
+                        print("exposuredetails ::::: ",exposuredetails)
                         for exposuredetail in exposuredetails:
                             allocations = exposuredetail['allocation']
                             for allocation in allocations:
@@ -677,6 +683,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                                         }
                                         if exposuredetails_data['id'] == '':
                                             print("::: NEW EXPOSURE DETAILS :::")
+                                            print("exposuredetails_data :::::",exposuredetails_data)
                                             n_exposuredetailsSerializer = ExposureDetailsSerializer(data=exposuredetails_data)
                                             if n_exposuredetailsSerializer.is_valid():
                                                 exposuredetails_instance = n_exposuredetailsSerializer.save()
@@ -686,7 +693,9 @@ class QuotationViewSet(viewsets.ModelViewSet):
                                                 return Response(n_exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                                         else:
                                             print("::: NEW OLD DETAILS :::")
+                                            print("exposuredetails_data ::::: ",exposuredetails_data)
                                             o_exposuredetails = ExposureDetails.objects.get(pk=exposuredetails_data['id'])
+                                            print("o_exposuredetails ::::: ",o_exposuredetails)
                                             o_exposuredetailsSerializer = ExposureDetailsSerializer(o_exposuredetails, data=exposuredetails_data, partial=True)
                                             if o_exposuredetailsSerializer.is_valid():
                                                 exposuredetails_instance = o_exposuredetailsSerializer.save()
@@ -694,7 +703,9 @@ class QuotationViewSet(viewsets.ModelViewSet):
                                                 print("Inventory Details Instance saved ::::::::", exposuredetails_instance)
                                             else:
                                                 return Response(o_exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
 
+        print("*************************************************")
         ### DELETE EXPOSURES DETAILS ###
         if delete_exposures is not None:
             for delete_exposure in delete_exposures:
@@ -703,6 +714,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                 print("Exposure ::", d_exposure)
                 d_exposure.delete()
 
+        print("*************************************************")
         ### DELETE INVENTORYS DETAILS ###
         if delete_inventorys is not None:
             for delete_inventory in delete_inventorys:
@@ -711,6 +723,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                 print("Inventory ::", d_inventory)
                 d_inventory.delete()
         
+        print("*************************************************")
         ### DELETE EVENTS DETAILS ###
         if delete_events is not None:
             for delete_event in delete_events:
@@ -719,6 +732,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                 print("EVENT ::", d_event)
                 d_event.delete()
         
+        print("*************************************************")
         ### DELETE EVENT DAY DETAILS ###
         if delete_eventdays is not None:
             for delete_eventday in delete_eventdays:
