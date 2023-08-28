@@ -240,6 +240,7 @@ class EventDetails(models.Model):
 class ExposureDetails(models.Model):
     eventdetails_id = models.ForeignKey(EventDetails, null=True, blank=True, on_delete=models.CASCADE)
     staff_id = models.ForeignKey(Staff, null=True, blank=True, on_delete=models.CASCADE)
+    inventorydetails_id = models.ForeignKey(InventoryDetails, null=True, blank=True, on_delete=models.CASCADE)
     price = models.FloatField(max_length=10, default=0.0)
 
 
