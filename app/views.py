@@ -126,6 +126,7 @@ class StaffViewSet(viewsets.ModelViewSet):
         'full_name':['icontains'],
         'mobile_no':['icontains'],
         'email':['icontains'],
+        'is_eposure':['exact'],
         # 'skill_id__id':['exact'],
         # 'skill_id__inventory_id__name':['icontains'],
     }
