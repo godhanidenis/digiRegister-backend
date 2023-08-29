@@ -934,6 +934,11 @@ class TransactionViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
     
 
+# class BalanceViewSet(viewsets.ModelViewSet):
+#     queryset = Balance.objects.all().order_by('-id').distinct()
+#     serializer_class = BalanceSerializer
+
+
 class AmountReportViewSet(viewsets.ModelViewSet):
     queryset = Quotation.objects.all().order_by('-id').distinct()
     serializer_class = QuotationSerializer

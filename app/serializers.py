@@ -121,3 +121,11 @@ class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
         fields = "__all__"
+
+
+# class BalanceSerializer(serializers.ModelSerializer):
+#     staff = StaffSerializer(source="staff_id", read_only=True)
+#     customer = CustomerSerializer(source="customer_id", read_only=True)
+#     class Meta:
+#         model = Balance
+#         fields = "__all__"

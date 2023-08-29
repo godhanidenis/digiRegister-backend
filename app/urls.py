@@ -22,6 +22,8 @@ router.register(r'exposuredetails',views.ExposureDetailsViewSet)
 
 
 router.register(r'transaction',views.TransactionViewSet)
+# router.register(r'balance',views.BalanceViewSet)
+
 
 router.register(r'amountreport',views.AmountReportViewSet)
 
