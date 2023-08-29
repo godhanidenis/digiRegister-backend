@@ -1,5 +1,7 @@
 from django.shortcuts import render
-from django.db.models import Sum, Count
+from django.db.models import Sum, Count, F, Q , Value, CharField
+from django.db.models.functions import Concat
+from django.contrib.postgres.aggregates import ArrayAgg
 from django.http import  HttpResponse
 from django.db.models.functions import TruncMonth, TruncYear
 
@@ -365,6 +367,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
     #     return Response(data)
 
     def retrieve(self, request, *args, **kwargs):
+
         instance = self.get_object()
         data = {"quotation_data": QuotationSerializer(instance).data, 
                 "datas": []}
@@ -388,10 +391,33 @@ class QuotationViewSet(viewsets.ModelViewSet):
             for inventorydetail in inventorydetails:
                 # print("IDDDDD ::",inventorydetail)
                 exposuredetails = ExposureDetails.objects.filter(inventorydetails_id=inventorydetail.id)
+                exposure_details_list = []
+                # print("exposuredetails ::",exposuredetails)
+                grouped_exposure_details = exposuredetails.values('staff_id','inventorydetails_id','price').annotate(event_ids_list=ArrayAgg('eventdetails_id'))
+                # print("grouped_exposure_details ::",grouped_exposure_details)
+                exposure = {}
+                for entry in grouped_exposure_details:
+                    # print("ENTRY ::",entry)
+                    exposure = {
+                    "staff_id" : entry['staff_id'],
+                    "inventorydetails_id" : entry['inventorydetails_id'],
+                    "event_ids_list" : entry['event_ids_list'],
+                    "price" : entry['price'],
+                    }
+                    exposure_details_list.append(exposure)
+                    # Do something with the aggregated values
+                    print(f"Staff ID: {exposure['staff_id']}")
+                    print(f"Inventory Details ID: {exposure['inventorydetails_id']}")
+                    # print(f"Total Price: {total_price}")
+                    print(f"Event IDs: {exposure['event_ids_list']}")
+                    print(f"PRICE: {exposure['price']}")
+
                 eventday_data["description"].append({
                     "inventory_details": InventoryDetailsSerializer(inventorydetail).data,
-                    "exposure_details": ExposureDetailsSerializer(exposuredetails, many=True).data
-                })     
+                    "exposure_details": exposure_details_list
+                })
+                
+
             data["datas"].append(eventday_data)
 
         return Response(data)
@@ -611,7 +637,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                             print("::: NEW EVENT DETAILS :::")
                             eventdetails_data.pop('id')
                             print("eventdetails_data ::::: ",eventdetails_data)
-                            n_eventdetailsSerializer = EventDetailsSerializer(eventdetails_data)
+                            n_eventdetailsSerializer = EventDetailsSerializer(data=eventdetails_data)
                             if n_eventdetailsSerializer.is_valid():
                                 eventdetails_instance = n_eventdetailsSerializer.save()
                                 final_eventdetails_data.append(eventdetails_instance)
@@ -710,6 +736,10 @@ class QuotationViewSet(viewsets.ModelViewSet):
         if delete_exposures is not None:
             for delete_exposure in delete_exposures:
                 print("Delete Exposure ::", delete_exposure)
+                # staff_id = delete_exposure['staff_id']
+                # print("staff_id :::",staff_id)
+                # eventdetail_id = delete_exposure['eventdetail_id']
+                # print("eventdetail_id :::",eventdetail_id)
                 d_exposure = ExposureDetails.objects.get(pk=delete_exposure)
                 print("Exposure ::", d_exposure)
                 d_exposure.delete()
@@ -749,18 +779,20 @@ class EventDayViewSet(viewsets.ModelViewSet):
     queryset = EventDay.objects.all().order_by('-id').distinct()
     serializer_class = EventDaySerializer
 
+
 class InventoryDetailsViewSet(viewsets.ModelViewSet):
     queryset = InventoryDetails.objects.all().order_by('-id').distinct()
     serializer_class = InventoryDetailsSerializer
+
 
 class EventDetailsViewSet(viewsets.ModelViewSet):
     queryset = EventDetails.objects.all().order_by('-id').distinct()
     serializer_class = EventDetailsSerializer
 
+
 class ExposureDetailsViewSet(viewsets.ModelViewSet):
     queryset = ExposureDetails.objects.all().order_by('-id').distinct()
     serializer_class = ExposureDetailsSerializer
-
 
 
 class TransactionViewSet(viewsets.ModelViewSet):
@@ -950,6 +982,7 @@ class AmountReportViewSet(viewsets.ModelViewSet):
         return Response(data)
 
 
+### EXPORT CUSTOMER DETAILS TO EXCEL ###
 class CustomerExport(viewsets.ReadOnlyModelViewSet):
     queryset = Customer.objects.all().order_by('-id').distinct()
     serializer_class = CustomerSerializer
@@ -976,6 +1009,7 @@ class CustomerExport(viewsets.ReadOnlyModelViewSet):
         return HttpResponse(file_name, content_type=content_type)
 
 
+### EXPORT QUOTATION DETAILS TO EXCEL ###
 class QuotationExport(viewsets.ReadOnlyModelViewSet):
     queryset = Quotation.objects.all().order_by('-id').distinct()
     serializer_class = QuotationSerializer
@@ -1036,6 +1070,7 @@ class QuotationExport(viewsets.ReadOnlyModelViewSet):
         return HttpResponse(file_name, content_type=content_type)
 
 
+### EXPORT TRANSACTION DETAILS TO EXCEL ###
 class TransactionExport(viewsets.ReadOnlyModelViewSet):
     queryset = Transaction.objects.all().order_by('-id').distinct()
     serializer_class = TransactionSerializer
@@ -1075,6 +1110,7 @@ class TransactionExport(viewsets.ReadOnlyModelViewSet):
         return HttpResponse(file_name, content_type=content_type)
     
 
+### EXPORT INVOICE DETAILS TO EXCEL ###
 class InvoiceExport(viewsets.ReadOnlyModelViewSet):
     queryset = Quotation.objects.all().order_by('-id').distinct()
     serializer_class = QuotationSerializer

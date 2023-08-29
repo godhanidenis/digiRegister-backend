@@ -147,50 +147,6 @@ class Event(models.Model):
         return self.event_name
 
 
-# class Category(models.Model):
-#     user_id = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE)
-#     name = models.CharField(max_length=100)
-
-#     def __str__(self):
-#         return self.name
-
-
-# class Item(models.Model):
-#     category_id = models.ForeignKey(Category, null=True, blank=True, on_delete=models.CASCADE)
-#     name = models.CharField(max_length=100)
-#     price = models.IntegerField(default=0)
-
-#     def __str__(self):
-#         return self.name
-
-
-# class Quotation(models.Model):
-#     PAYMENT_STATUS_CHOICES = (
-#         ("paid","PAID"),
-#         ("pending","PENDING")
-#     )
-#     INVOICE_TYPE_CHOICES = (
-#         ("sale","SALE"),
-#         ("service","SERVICE"),
-#         ("purchase","PURCHASE"),
-#     )
-#     user_id = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE)
-#     customer_id = models.ForeignKey(Customer, null=True, blank=True, on_delete=models.CASCADE)
-#     event_id = models.ForeignKey(Event, null=True, blank=True, on_delete=models.CASCADE)
-#     event_venue = models.CharField(null=True, blank=True)
-#     couple_name = models.CharField(null=True, blank=True)
-#     start_date = models.DateField(null=True, blank=True)
-#     end_date = models.DateField(null=True, blank=True)
-#     due_date = models.DateField(null=True, blank=True)
-#     invoice_type = models.CharField(max_length=10, choices=INVOICE_TYPE_CHOICES, default="service")
-#     is_converted = models.BooleanField(default=False)
-#     json_data = models.JSONField(blank=True, null=True)
-#     created_on = models.DateTimeField(auto_now_add=True, null=True, blank=True)
-#     converted_on = models.DateTimeField(null=True, blank=True)
-#     final_amount = models.FloatField(max_length=10, default=0.0)
-#     discount = models.FloatField(max_length=10, default=0.0)
-#     payment_status = models.CharField(max_length=10, choices=PAYMENT_STATUS_CHOICES, default="pending")
-
 class Quotation(models.Model):
     PAYMENT_STATUS_CHOICES = (
         ("paid","PAID"),
@@ -218,9 +174,11 @@ class Quotation(models.Model):
     discount = models.FloatField(max_length=10, default=0.0)
     payment_status = models.CharField(max_length=10, choices=PAYMENT_STATUS_CHOICES, default="pending")
 
+
 class EventDay(models.Model):
     quotation_id = models.ForeignKey(Quotation, null=True, blank=True, on_delete=models.CASCADE)
     event_date = models.DateField(null=True, blank=True)
+
 
 class InventoryDetails(models.Model):
     eventday_id = models.ForeignKey(EventDay, null=True, blank=True, on_delete=models.CASCADE)
@@ -228,6 +186,7 @@ class InventoryDetails(models.Model):
     price = models.FloatField(max_length=10, default=0.0)
     qty = models.IntegerField(null=True, blank=True)
     profit = models.FloatField(max_length=10, default=0.0)
+
 
 class EventDetails(models.Model):
     eventday_id = models.ForeignKey(EventDay, null=True, blank=True, on_delete=models.CASCADE)
@@ -237,12 +196,12 @@ class EventDetails(models.Model):
     start_time = models.TimeField(null=True, blank=True)
     end_time = models.TimeField(null=True, blank=True)
 
+
 class ExposureDetails(models.Model):
     eventdetails_id = models.ForeignKey(EventDetails, null=True, blank=True, on_delete=models.CASCADE)
     staff_id = models.ForeignKey(Staff, null=True, blank=True, on_delete=models.CASCADE)
     inventorydetails_id = models.ForeignKey(InventoryDetails, null=True, blank=True, on_delete=models.CASCADE)
     price = models.FloatField(max_length=10, default=0.0)
-
 
 
 from expense.models import Expense
