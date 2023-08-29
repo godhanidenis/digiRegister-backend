@@ -389,23 +389,23 @@ class QuotationViewSet(viewsets.ModelViewSet):
             
             for inventorydetail in inventorydetails:
                 exposuredetails = ExposureDetails.objects.filter(inventorydetails_id=inventorydetail.id)
-                exposure_details_list = []
+                # exposure_details_list = []
 
-                grouped_exposure_details = exposuredetails.values('staff_id','inventorydetails_id','price').annotate(event_ids_list=ArrayAgg('eventdetails_id'))
-                exposure = {}
+                # grouped_exposure_details = exposuredetails.values('staff_id','inventorydetails_id','price').annotate(event_ids_list=ArrayAgg('eventdetails_id'))
+                # exposure = {}
 
-                for entry in grouped_exposure_details:
-                    exposure = {
-                    "staff_id" : entry['staff_id'],
-                    "inventorydetails_id" : entry['inventorydetails_id'],
-                    "event_ids_list" : entry['event_ids_list'],
-                    "price" : entry['price'],
-                    }
-                    exposure_details_list.append(exposure)
+                # for entry in grouped_exposure_details:
+                #     exposure = {
+                #     "staff_id" : entry['staff_id'],
+                #     "inventorydetails_id" : entry['inventorydetails_id'],
+                #     "event_ids_list" : entry['event_ids_list'],
+                #     "price" : entry['price'],
+                #     }
+                #     exposure_details_list.append(exposure)
 
                 eventday_data["description"].append({
                     "inventory_details": InventoryDetailsSerializer(inventorydetail).data,
-                    "exposure_details": exposure_details_list
+                    "exposure_details": ExposureDetailsSerializer(exposuredetails, many=True).data
                 })
                 
             data["datas"].append(eventday_data)
