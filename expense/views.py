@@ -265,3 +265,4 @@ class ExpenseItemViewSet(viewsets.ModelViewSet):
         'item_id__price':['exact'],
         'amount':['icontains'],
     }
+

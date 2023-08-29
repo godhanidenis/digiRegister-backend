@@ -67,13 +67,52 @@ class EventSerializer(serializers.ModelSerializer):
 #         fields = "__all__"
 
 
+# class QuotationSerializer(serializers.ModelSerializer):
+#     # user = UserSerializer(source="user_id", read_only=True)
+#     customer = CustomerSerializer(source="customer_id", read_only=True)
+#     event = EventSerializer(source="event_id", read_only=True)
+#     class Meta:
+#         model = Quotation
+#         fields = "__all__"
+
+
+
 class QuotationSerializer(serializers.ModelSerializer):
     # user = UserSerializer(source="user_id", read_only=True)
     customer = CustomerSerializer(source="customer_id", read_only=True)
-    event = EventSerializer(source="event_id", read_only=True)
+    # event = EventSerializer(source="event_id", read_only=True)
     class Meta:
         model = Quotation
         fields = "__all__"
+
+class EventDaySerializer(serializers.ModelSerializer):
+    # quotation = QuotationSerializer(source="quotation_id", read_only=True)
+    class Meta:
+        model = EventDay
+        fields = "__all__"
+
+class InventoryDetailsSerializer(serializers.ModelSerializer):
+    # eventday = EventDaySerializer(source="eventday_id", read_only=True)
+    inventory = InventorySerializer(source="inventory_id", read_only=True)
+    class Meta:
+        model = InventoryDetails
+        fields = "__all__"
+
+class EventDetailsSerializer(serializers.ModelSerializer):
+    # eventday = EventDaySerializer(source="eventday_id", read_only=True)
+    # quotation = QuotationSerializer(source="quotation_id", read_only=True)
+    event = EventSerializer(source="event_id", read_only=True)
+    class Meta:
+        model = EventDetails
+        fields = "__all__"
+
+class ExposureDetailsSerializer(serializers.ModelSerializer):
+    # eventdetails = EventDetailsSerializer(source="eventdetails_id", read_only=True)
+    staff = StaffSerializer(source="staff_id", read_only=True)
+    class Meta:
+        model = ExposureDetails
+        fields = "__all__"
+
 
 
 class TransactionSerializer(serializers.ModelSerializer):

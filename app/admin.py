@@ -45,8 +45,24 @@ admin.site.register(Event, EventAdmin)
 
 
 class QuotationAdmin(admin.ModelAdmin):
-    list_display = ['user_id', 'event_id','final_amount', 'payment_status']
+    list_display = ['user_id', 'final_amount', 'payment_status']
 admin.site.register(Quotation, QuotationAdmin)
+
+class EventDayAdmin(admin.ModelAdmin):
+    list_display = ['quotation_id', 'event_date']
+admin.site.register(EventDay, EventDayAdmin)
+
+class InventoryDetailsAdmin(admin.ModelAdmin):
+    list_display = ['eventday_id', 'inventory_id', 'price']
+admin.site.register(InventoryDetails, InventoryDetailsAdmin)
+
+class EventDetailsAdmin(admin.ModelAdmin):
+    list_display = ['eventday_id', 'quotation_id', 'event_id']
+admin.site.register(EventDetails, EventDetailsAdmin)
+
+class ExposureDetailsAdmin(admin.ModelAdmin):
+    list_display = ['eventdetails_id', 'staff_id', 'price']
+admin.site.register(ExposureDetails, ExposureDetailsAdmin)
 
 
 class InventoryAdmin(admin.ModelAdmin):
