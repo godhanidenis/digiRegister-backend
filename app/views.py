@@ -147,6 +147,22 @@ class StaffViewSet(viewsets.ModelViewSet):
         # serializer = StaffSerializer(querysets, many=True)
         return Response({'data':data})
 
+    def retrieve(self, request, *args, **kwarge):
+        instance = self.get_object()
+        # print("INSTANCE ::", instance)
+        staff_id = instance.id
+        # print("STAFF ID ::", staff_id)
+
+        staffskill = StaffSkill.objects.filter(staff_id=staff_id)
+        # print("STAFFskill ::", staffskill)
+
+        data = {
+            "staff_data" : StaffSerializer(instance).data,
+            "staffskill_data" : StaffSkillSerializer(staffskill, many=True).data
+        }
+
+        return Response(data)
+
     def create(self, request, *args, **kwargs):
         staff = request.data.get('staff_data')
         # print("STAFF ::", staff)
