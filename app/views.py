@@ -367,10 +367,11 @@ class QuotationViewSet(viewsets.ModelViewSet):
     #     return Response(data)
 
     def retrieve(self, request, *args, **kwargs):
-
         instance = self.get_object()
-        data = {"quotation_data": QuotationSerializer(instance).data, 
-                "datas": []}
+        data = {
+            "quotation_data": QuotationSerializer(instance).data, 
+            "datas": []
+            }
 
         eventdays = EventDay.objects.filter(quotation_id=instance.id)
         for eventday in eventdays:
@@ -381,23 +382,19 @@ class QuotationViewSet(viewsets.ModelViewSet):
             }
 
             eventdetails = EventDetails.objects.filter(eventday_id=eventday.id)
-            # print("Event", eventdetails)
             for eventdetail in eventdetails:
                 eventday_data["event_details"].append(EventDetailsSerializer(eventdetail).data)
-                
-            inventorydetails = InventoryDetails.objects.filter(eventday_id = eventday.id)
-            # print("inventorydetails ::", inventorydetails)
 
+            inventorydetails = InventoryDetails.objects.filter(eventday_id = eventday.id)
+            
             for inventorydetail in inventorydetails:
-                # print("IDDDDD ::",inventorydetail)
                 exposuredetails = ExposureDetails.objects.filter(inventorydetails_id=inventorydetail.id)
                 exposure_details_list = []
-                # print("exposuredetails ::",exposuredetails)
+
                 grouped_exposure_details = exposuredetails.values('staff_id','inventorydetails_id','price').annotate(event_ids_list=ArrayAgg('eventdetails_id'))
-                # print("grouped_exposure_details ::",grouped_exposure_details)
                 exposure = {}
+
                 for entry in grouped_exposure_details:
-                    # print("ENTRY ::",entry)
                     exposure = {
                     "staff_id" : entry['staff_id'],
                     "inventorydetails_id" : entry['inventorydetails_id'],
@@ -405,21 +402,13 @@ class QuotationViewSet(viewsets.ModelViewSet):
                     "price" : entry['price'],
                     }
                     exposure_details_list.append(exposure)
-                    # Do something with the aggregated values
-                    print(f"Staff ID: {exposure['staff_id']}")
-                    print(f"Inventory Details ID: {exposure['inventorydetails_id']}")
-                    # print(f"Total Price: {total_price}")
-                    print(f"Event IDs: {exposure['event_ids_list']}")
-                    print(f"PRICE: {exposure['price']}")
 
                 eventday_data["description"].append({
                     "inventory_details": InventoryDetailsSerializer(inventorydetail).data,
                     "exposure_details": exposure_details_list
                 })
                 
-
             data["datas"].append(eventday_data)
-
         return Response(data)
 
 
@@ -736,12 +725,17 @@ class QuotationViewSet(viewsets.ModelViewSet):
         if delete_exposures is not None:
             for delete_exposure in delete_exposures:
                 print("Delete Exposure ::", delete_exposure)
-                # staff_id = delete_exposure['staff_id']
-                # print("staff_id :::",staff_id)
-                # eventdetail_id = delete_exposure['eventdetail_id']
-                # print("eventdetail_id :::",eventdetail_id)
-                d_exposure = ExposureDetails.objects.get(pk=delete_exposure)
-                print("Exposure ::", d_exposure)
+                staff_id = delete_exposure['staff_id']
+                print("staff_id :::",staff_id)
+                eventdetail_id = delete_exposure['eventdetails_id']
+                print("eventdetail_id :::",eventdetail_id)
+                inventorydetails_id = delete_exposure['inventorydetails_id']
+                print("inventorydetails_id :::",inventorydetails_id)
+
+                d_exposure = ExposureDetails.objects.get(staff_id=staff_id, eventdetails_id=eventdetail_id, inventorydetails_id=inventorydetails_id)
+                print("d_exposure :::",d_exposure)
+                # d_exposure = ExposureDetails.objects.get(pk=delete_exposure)
+                # print("Exposure ::", d_exposure)
                 d_exposure.delete()
 
         print("*************************************************")
