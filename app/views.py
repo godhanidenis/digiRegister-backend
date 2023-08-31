@@ -510,6 +510,8 @@ class QuotationViewSet(viewsets.ModelViewSet):
         transaction_data = request.data.get('transaction_data', None)
         print("Transaction Data :", transaction_data)
 
+        print("quotation_data['is_converted']",quotation_data['is_converted'])
+
         print("*************************************************")
         ### FOR UPDATE QUOTATION DATA ###
         quotation = Quotation.objects.get(pk=pk)
@@ -776,7 +778,102 @@ class QuotationViewSet(viewsets.ModelViewSet):
             else:
                 return Response(t_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        
+
+        if quotation_data['is_converted'] == 'True':
+            quotationSerializer1 = QuotationSerializer(data=quotation_data)
+            print("quotationSerializer1 :::", quotationSerializer1)
+            if quotationSerializer1.is_valid():
+                quotation_instance1 = quotationSerializer1.save()
+                # print("quotation_instance1 :::", quotation_instance1)
+            else:
+                return Response(quotationSerializer1.errors, status=status.HTTP_400_BAD_REQUEST)
+            
+            final_eventdetails_data1 = []
+            final_inventorydetails_data1 = []
+            final_exposuredetails_data1 = []
+
+            for data in datas:
+                ### FOR ADD EVENT DAY DATA ###
+                eventdate_data1 = {
+                    'event_date': data['event_date'],
+                    'quotation_id':quotation_instance1.id
+                }
+                print("eventdate_data1 :::", eventdate_data1)
+                eventdaySerializer1 = EventDaySerializer(data=eventdate_data1)
+                if eventdaySerializer1.is_valid():
+                    eventday_instance1 = eventdaySerializer1.save()
+                    print("eventday_instance1 :::", eventday_instance1)
+                else:
+                    return Response(eventdaySerializer1.errors, status=status.HTTP_400_BAD_REQUEST)
+                
+                ### FOR ADD EVENT DETAILS DATA ###
+                eventdetails_datas1 = data['event_details']
+                print("eventdetails_datas1 :::", eventdetails_datas1)
+                for eventdetails_data1 in eventdetails_datas1:
+                    eventdetails_data1['eventday_id'] = eventday_instance1.id
+                    eventdetails_data1['quotation_id'] = quotation_instance1.id
+                    print("eventdetails_data1 :::", eventdetails_data1)
+                    eventdetailsSerializer1 = EventDetailsSerializer(data=eventdetails_data1)
+                    if eventdetailsSerializer1.is_valid():
+                        eventdetails_instance1 = eventdetailsSerializer1.save()
+                        print("eventdetails_instance1 :::", eventdetails_instance1)
+                        final_eventdetails_data1.append(eventdetails_instance1)
+                    else:
+                        return Response(eventdetailsSerializer1.errors, status=status.HTTP_400_BAD_REQUEST)
+                
+                descriptions1 = data['descriptions']
+                print("descriptions1 :::", descriptions1)
+                for description1 in descriptions1:
+                    ### FOR INVENTORY DETAILS DATA ###
+                    inventorydetails_data1 = {
+                        'inventory_id':description1.pop('inventory_id'),
+                        'price':description1.pop('price'),
+                        'qty':description1.pop('qty'),
+                        'profit':description1.pop('profit'),
+                        'eventday_id':eventday_instance1.id
+                    }
+                    print("inventorydetails_data1 :::", inventorydetails_data1)
+                    inventorydetailsSerializer1 = InventoryDetailsSerializer(data=inventorydetails_data1)
+                    if inventorydetailsSerializer1.is_valid():
+                        inventorydetails_instance1 = inventorydetailsSerializer1.save()
+                        print("inventorydetails_instance1 :::", inventorydetails_instance1)
+                        final_inventorydetails_data1.append(inventorydetails_instance1)
+                    else:
+                        return Response(inventorydetailsSerializer1.errors, status=status.HTTP_400_BAD_REQUEST)
+                    
+                    inventory1 = Inventory.objects.get(pk=inventorydetails_data1['inventory_id'])
+                    print("INVENTORY ::", inventory1)
+                    if inventory1.type == 'service':
+
+                        ### FOR EXPOSURE DETAILS DATA ###
+                        exposuredetails1 = description1['exposure']
+                        print("exposuredetails1 :::", exposuredetails1)
+                        for exposuredetail1 in exposuredetails1:
+                            allocations1 = exposuredetail1['allocation']
+                            print("allocations1 :::", allocations1)
+                            for allocation1 in allocations1:
+                                for single_eventdetails1 in final_eventdetails_data1:
+                                    event_id1 = single_eventdetails1.event_id.id
+                                    print("event_id1 :::", event_id1)
+                                    if event_id1 == int(allocation1):
+                                        exposuredetails_data1 = {
+                                            'staff_id':exposuredetail1['staff_id'],
+                                            'price':exposuredetail1['price'],
+                                            'eventdetails_id':single_eventdetails1.id,
+                                            'inventorydetails_id':inventorydetails_instance1.id
+                                        }
+                                        print("exposuredetails_data1 :::", exposuredetails_data1)
+                                        exposuredetailsSerializer1 = ExposureDetailsSerializer(data=exposuredetails_data1)
+                                        if exposuredetailsSerializer1.is_valid():
+                                            exposuredetails_instance1 = exposuredetailsSerializer1.save()
+                                            print("exposuredetails_instance1 :::", exposuredetails_instance1)
+                                            final_exposuredetails_data1.append(exposuredetails_instance1)
+                                        else:
+                                            return Response(exposuredetailsSerializer1.errors, status=status.HTTP_400_BAD_REQUEST)                    
+                        
+                        # print("FINAL Exposure Details DATA :::",final_exposuredetails_data)
+
+
         return Response({"quotation_data":QuotationSerializer(quotation_instance).data})
 
 
