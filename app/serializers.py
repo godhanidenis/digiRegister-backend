@@ -117,15 +117,16 @@ class ExposureDetailsSerializer(serializers.ModelSerializer):
 
 class TransactionSerializer(serializers.ModelSerializer):
     # quotation = QuotationSerializer(source="quotation_id", read_only=True)
-    expense = ExpenseSerializer(source="expense_id", read_only=True)
+    # expense = ExpenseSerializer(source="expense_id", read_only=True)
+    # customer = CustomerSerializer(source="customer_id", read_only=True)
     class Meta:
         model = Transaction
         fields = "__all__"
 
 
-# class BalanceSerializer(serializers.ModelSerializer):
-#     staff = StaffSerializer(source="staff_id", read_only=True)
-#     customer = CustomerSerializer(source="customer_id", read_only=True)
-#     class Meta:
-#         model = Balance
-#         fields = "__all__"
+class BalanceSerializer(serializers.ModelSerializer):
+    # staff = StaffSerializer(source="staff_id", read_only=True)
+    # customer = CustomerSerializer(source="customer_id", read_only=True)
+    class Meta:
+        model = Balance
+        fields = "__all__"
