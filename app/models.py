@@ -239,13 +239,21 @@ class Transaction(models.Model):
     status = models.CharField(null=True, blank=True)
     
 
-class Balance(models.Model):
-    staff_id = models.ForeignKey(Staff, null=True, blank=True, on_delete=models.CASCADE)
-    customer_id = models.ForeignKey(Customer, null=True, blank=True, on_delete=models.CASCADE)
-    amount = models.FloatField(null=True, blank=True)
-
 # class LinkTransaction(models.Model):
 #     t1 = models.ForeignKey(Transaction, null=True, blank=True, on_delete=models.CASCADE)
 #     t2 = models.ForeignKey(Transaction, null=True, blank=True, on_delete=models.CASCADE)
 #     date = models.DateField(null=True, blank=True)
 #     amount = models.FloatField(max_length=10, default=0.0)
+
+
+# class Bill(models.Model):
+#     transaction_id = models.ForeignKey(Transaction, blank=True, null=True, on_delete=models.CASCADE)
+    # inventory_id = models.ForeignKey(Inventory, null=True, blank=True, on_delete=models.CASCADE)
+    # qty = models.IntegerField(default=0)
+    # price = models.FloatField(max_length=10, default=0.0)
+
+
+class Balance(models.Model):
+    staff_id = models.ForeignKey(Staff, null=True, blank=True, on_delete=models.CASCADE)
+    customer_id = models.ForeignKey(Customer, null=True, blank=True, on_delete=models.CASCADE)
+    amount = models.FloatField(null=True, blank=True)
