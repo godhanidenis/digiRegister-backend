@@ -134,19 +134,12 @@ class StaffViewSet(viewsets.ModelViewSet):
 
     def list(self, request):
         querysets = self.filter_queryset(self.get_queryset())
-        # print("queryset ::", querysets)
-        # print("LENGTH ::", len(querysets))
         data = []
         for queryset in querysets:
-            # print("Queryset ::", queryset)
-            # print("Queryset ID ::", queryset.id)
             q_skills = StaffSkill.objects.filter(staff_id__id=queryset.id)
-            # print("QUERTSET Skills ::", q_skills)
             staff = StaffSerializer(queryset)
             skills = StaffSkillSerializer(q_skills, many=True)
             data.append({'staff': staff.data, 'skills': skills.data}) 
-        # print("DATA ::::", data)
-        # serializer = StaffSerializer(querysets, many=True)
         return Response({'data':data})
 
     def retrieve(self, request, *args, **kwarge):
@@ -167,9 +160,7 @@ class StaffViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         staff = request.data.get('staff_data')
-        # print("STAFF ::", staff)
         skills = request.data.get('skill_data')
-        # print("SKILLS ::", skills)
 
         staffSerializer = StaffSerializer(data=staff)
         if staffSerializer.is_valid():
@@ -178,9 +169,7 @@ class StaffViewSet(viewsets.ModelViewSet):
             staff_skill_instances = []
             staff_skill_serializer = StaffSkillSerializer()
             for skill in skills:
-                # print("SKILL ::", skill)
                 skill["staff_id"] = staff_instance.id
-                # print("SKILL STAFF ID ::", skill["staff_id"])
                 staff_skill_serializer = StaffSkillSerializer(data=skill)
                 if staff_skill_serializer.is_valid():
                     staff_skill_instance = staff_skill_serializer.save()
@@ -198,17 +187,10 @@ class StaffViewSet(viewsets.ModelViewSet):
 
     def update(self, request, pk=None, *args, **kwargs):
         staff_data = request.data.get('staff_data', None)
-        # print("STAFF DATA :: ", staff_data)
         skills = request.data.get('skills', None)
-        # print("SKILLS :: ", skills)
         delete_skills = request.data.get('delete_skills', None)
-        # print("DELETE SKILLS :: ", delete_skills)
-        # print("--------------------------------------")
 
         staff = Staff.objects.get(pk=pk)
-        # print("STAFF :: ", staff)
-        # print("--------------------------------------")
-
         s_serializer = StaffSerializer(staff, data=staff_data, partial=True)
         if s_serializer.is_valid():
             s_serializer.save()
@@ -218,41 +200,27 @@ class StaffViewSet(viewsets.ModelViewSet):
         
         if delete_skills is not None:
             for delete_skill in delete_skills:
-                # print("ONE DELETE SKILL ::",delete_skill)
                 d_skill = StaffSkill.objects.get(id=delete_skill)
                 d_skill.delete()
-        # print("--------------------------------------")
 
         if skills is not None:
             for skill in skills:
-                # print("ONE SKILL ::",skill)
-                # print("STAFFSKILL ID ::", skill['id'])
-                # print("===================")
                 if skill['id'] == '':
-                    # print("NEW SKILL")
                     skill.pop("id")
-                    # print("SKILLLLL ::",skill)
                     ns_serializer = StaffSkillSerializer(data=skill)
                     if ns_serializer.is_valid():
                         ns_serializer.save()
                     else:
                         return Response(ns_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                    # print("--------------------------------------")
                 else:
-                    # print("OLD SKILL")
                     o_skill = StaffSkill.objects.get(id=skill['id'])
                     os_serializer = StaffSkillSerializer(o_skill, data=skill, partial=True)
                     if os_serializer.is_valid():
                         os_serializer.save()
                     else:
                         return Response(os_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                    # print("--------------------------------------")
 
-        return Response({
-            "staff_data":s_serializer.data,
-            # "new_skill":ns_serializer.data,
-            # "updated_skill":os_serializer.data
-                         })
+        return Response({"staff_data":s_serializer.data})
 
 
 class StaffSkillViewSet(viewsets.ModelViewSet):
@@ -302,15 +270,12 @@ class QuotationViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
         from_date = self.request.query_params.get('from_date')
-        # print("FROM DATE :: ",from_date)
         to_date = self.request.query_params.get('to_date')
-        # print("TO DATE :: ",to_date)
 
         if from_date and to_date:
             try:
                 print("LENGTH :: ",len(queryset))
                 queryset = queryset.filter(converted_on__range=[from_date, to_date])
-                # return queryset
             except ValueError:
                 pass
 
@@ -432,7 +397,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
         quotation =request.data['quotation_data']
         datas = request.data['datas']
         transaction = request.data['transaction_data']
-        print("TRANSACTION :::", transaction)
+        # print("TRANSACTION :::", transaction)
 
         ### FOR ADD QUOTATION DATA ###
         quotationSerializer = QuotationSerializer(data=quotation)
@@ -542,7 +507,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
         print("Delete Event :", delete_events)
         delete_eventdays = request.data.get('delete_eventday', None)
         print("Delete Eventday :", delete_eventdays)
-        transaction_data= request.data.get('transaction_data', None)
+        transaction_data = request.data.get('transaction_data', None)
         print("Transaction Data :", transaction_data)
 
         print("*************************************************")
@@ -798,99 +763,20 @@ class QuotationViewSet(viewsets.ModelViewSet):
                 d_eventday.delete()
 
         print("*************************************************")
-        ### UPDATE TRANSACTION DATA ###
+        ### UPDATE TRANSACTON DETAILS ###
         if transaction_data is not None:
-            transaction = Transaction.objects.get(pk=transaction_data['id'])
-            print("Transaction :::", transaction)
+            print("Transaction data :::", transaction_data)
             print("Transaction ID :::", transaction_data['id'])
 
+            transaction = Transaction.objects.get(pk=transaction_data['id'])
+            print("Transaction :::", transaction)
             t_serializer = TransactionSerializer(transaction, data=transaction_data, partial=True)
             if t_serializer.is_valid():
                 t_serializer.save()
             else:
                 return Response(t_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        # if quotation_data['is_converted'] == True:
-        #     quotationSerializer1 = QuotationSerializer(data=quotation)
-        #     if quotationSerializer1.is_valid():
-        #         quotation_instance1 = quotationSerializer1.save()
-        #     else:
-        #         return Response(quotationSerializer1.errors, status=status.HTTP_400_BAD_REQUEST)
-            
-        #     final_eventdetails_data1 = []
-        #     final_inventorydetails_data1 = []
-        #     final_exposuredetails_data1 = []
-
-        #     for data in datas:
-        #         ### FOR ADD EVENT DAY DATA ###
-        #         eventdate_data1 = {
-        #             'event_date': data['event_date'],
-        #             'quotation_id':quotation_instance1.id
-        #         }
-        #         eventdaySerializer1 = EventDaySerializer(data=eventdate_data1)
-        #         if eventdaySerializer1.is_valid():
-        #             eventday_instance = eventdaySerializer1.save()
-        #         else:
-        #             return Response(eventdaySerializer1.errors, status=status.HTTP_400_BAD_REQUEST)
-                
-        #         ### FOR ADD EVENT DETAILS DATA ###
-        #         eventdetails_datas1 = data['event_details']
-        #         for eventdetails_data in eventdetails_datas1:
-        #             eventdetails_data['eventday_id'] = eventday_instance.id
-        #             eventdetails_data['quotation_id'] = quotation_instance.id
-        #             eventdetailsSerializer = EventDetailsSerializer(data=eventdetails_data)
-        #             if eventdetailsSerializer.is_valid():
-        #                 eventdetails_instance = eventdetailsSerializer.save()
-        #                 final_eventdetails_data.append(eventdetails_instance)
-        #             else:
-        #                 return Response(eventdetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                
-        #         descriptions = data['descriptions']
-        #         for description in descriptions:
-        #             ### FOR INVENTORY DETAILS DATA ###
-        #             inventorydetails_data = {
-        #                 'inventory_id':description.pop('inventory_id'),
-        #                 'price':description.pop('price'),
-        #                 'qty':description.pop('qty'),
-        #                 'profit':description.pop('profit'),
-        #                 'eventday_id':eventday_instance.id
-        #             }
-
-        #             inventorydetailsSerializer = InventoryDetailsSerializer(data=inventorydetails_data)
-        #             if inventorydetailsSerializer.is_valid():
-        #                 inventorydetails_instance = inventorydetailsSerializer.save()
-        #                 final_inventorydetails_data.append(inventorydetails_instance)
-        #             else:
-        #                 return Response(inventorydetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                    
-        #             inventory = Inventory.objects.get(pk=inventorydetails_data['inventory_id'])
-        #             print("INVENTORY ::", inventory)
-        #             if inventory.type == 'service':
-
-        #                 ### FOR EXPOSURE DETAILS DATA ###
-        #                 exposuredetails = description['exposure']
-        #                 for exposuredetail in exposuredetails:
-        #                     allocations = exposuredetail['allocation']
-        #                     for allocation in allocations:
-        #                         for single_eventdetails in final_eventdetails_data:
-        #                             event_id = single_eventdetails.event_id.id
-        #                             if event_id == int(allocation):
-        #                                 exposuredetails_data = {
-        #                                     'staff_id':exposuredetail['staff_id'],
-        #                                     'price':exposuredetail['price'],
-        #                                     'eventdetails_id':single_eventdetails.id,
-        #                                     'inventorydetails_id':inventorydetails_instance.id
-        #                                 }
-        #                                 exposuredetailsSerializer = ExposureDetailsSerializer(data=exposuredetails_data)
-        #                                 if exposuredetailsSerializer.is_valid():
-        #                                     exposuredetails_instance = exposuredetailsSerializer.save()
-        #                                     final_exposuredetails_data.append(exposuredetails_instance)
-        #                                 else:
-        #                                     return Response(exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)                    
-                        
-        #                 # print("FINAL Exposure Details DATA :::",final_exposuredetails_data)
-
-
+        
         return Response({"quotation_data":QuotationSerializer(quotation_instance).data})
 
 
@@ -969,10 +855,8 @@ class TransactionViewSet(viewsets.ModelViewSet):
     #     #                  "received_amount":total_amount})
 
     # def update(self, request, pk=None, *args, **kwargs):
-    #     # print("POST DATA ::", request.data)
     #     data = {}
     #     transaction = Transaction.objects.get(pk=pk)
-    #     # print("DATA ::", transaction)
     #     t_serializer = TransactionSerializer(transaction, data=request.data, partial=True)
     #     if t_serializer.is_valid():
     #         t_serializer.save()
@@ -981,61 +865,38 @@ class TransactionViewSet(viewsets.ModelViewSet):
     #         return Response(t_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
     #     quotation_id = transaction.quotation_id.id if transaction.quotation_id is not None else None
-    #     # print("Quotation ID ::", quotation_id)
     #     if quotation_id is not None:
     #         quotation = Quotation.objects.get(id=quotation_id)
-    #         # print("Quotation ::", quotation)
     #         total_amount = Transaction.objects.filter(quotation_id=quotation_id).aggregate(Sum('amount'))['amount__sum']
     #         payable_amount = quotation.final_amount - quotation.discount
 
-    #         data['payable_amount'] = payable_amount
-    #         data['received_amount'] = total_amount
-
-    #         # print("Final amount :::", quotation.final_amount)
-    #         # print("Discount amount :::", quotation.discount)
-    #         # print("Total amount :::", total_amount)
-    #         # print("Payable amount :::",payable_amount)
+    # #         data['payable_amount'] = payable_amount
+    # #         data['received_amount'] = total_amount
 
     #         if payable_amount == total_amount:
-    #             # print("PAID")
     #             quotation.payment_status = 'paid'
     #             quotation.save()
     #         else:
-    #             # print("PENDING")
     #             quotation.payment_status = 'pending'
     #             quotation.save()
 
-    #     return Response(data)
-
-    #     # return Response({"transaction_data":t_serializer.data,
-    #     #                  "payable_amount":payable_amount,
-    #     #                  "received_amount":total_amount})
+    # #     return Response(data)
 
     # def destroy(self, request, pk=None, *args, **kwargs):
     #     transaction = Transaction.objects.get(pk=pk)
     #     transaction.delete()
-    #     # print("DATA ::", transaction)
         
     #     quotation_id = transaction.quotation_id.id if transaction.quotation_id is not None else None
-    #     # print("Quotation ID ::", quotation_id)
     #     if quotation_id is not None:
     #         quotation = Quotation.objects.get(id=quotation_id)
-    #         # print("Quotation ::", quotation)
     #         total_amount = Transaction.objects.filter(quotation_id=quotation_id).aggregate(Sum('amount'))['amount__sum']
     #         total_amount = total_amount if total_amount is not None else 0
     #         payable_amount = quotation.final_amount - quotation.discount
 
-    #         # print("Final amount :::", quotation.final_amount)
-    #         # print("Discount amount :::", quotation.discount)
-    #         # print("Total amount :::", total_amount)
-    #         # print("Payable amount :::",payable_amount)
-
     #         if payable_amount == total_amount:
-    #             # print("PAID")
     #             quotation.payment_status = 'paid'
     #             quotation.save()
     #         else:
-    #             # print("PENDING")
     #             quotation.payment_status = 'pending'
     #             quotation.save()
 
