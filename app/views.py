@@ -415,6 +415,8 @@ class QuotationViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         quotation =request.data['quotation_data']
         datas = request.data['datas']
+        # transaction = request.data['transaction_data']
+        # print("TRANSACTION :::", transaction)
 
         ### FOR ADD QUOTATION DATA ###
         quotationSerializer = QuotationSerializer(data=quotation)
@@ -468,35 +470,47 @@ class QuotationViewSet(viewsets.ModelViewSet):
                     final_inventorydetails_data.append(inventorydetails_instance)
                 else:
                     return Response(inventorydetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-                ### FOR EXPOSURE DETAILS DATA ###
-                exposuredetails = description['exposure']
-                for exposuredetail in exposuredetails:
-                    allocations = exposuredetail['allocation']
-                    for allocation in allocations:
-                        for single_eventdetails in final_eventdetails_data:
-                            event_id = single_eventdetails.event_id.id
-                            if event_id == int(allocation):
-                                exposuredetails_data = {
-                                    'staff_id':exposuredetail['staff_id'],
-                                    'price':exposuredetail['price'],
-                                    'eventdetails_id':single_eventdetails.id,
-                                    'inventorydetails_id':inventorydetails_instance.id
-                                }
-                                exposuredetailsSerializer = ExposureDetailsSerializer(data=exposuredetails_data)
-                                if exposuredetailsSerializer.is_valid():
-                                    exposuredetails_instance = exposuredetailsSerializer.save()
-                                    final_exposuredetails_data.append(exposuredetails_instance)
-                                else:
-                                    return Response(exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)                    
                 
-                # print("FINAL Exposure Details DATA :::",final_exposuredetails_data)
+                inventory = Inventory.objects.get(pk=inventorydetails_data['inventory_id'])
+                print("INVENTORY ::", inventory)
+
+                if inventory.type == 'service':
+                    ### FOR EXPOSURE DETAILS DATA ###
+                    exposuredetails = description['exposure']
+                    for exposuredetail in exposuredetails:
+                        allocations = exposuredetail['allocation']
+                        for allocation in allocations:
+                            for single_eventdetails in final_eventdetails_data:
+                                event_id = single_eventdetails.event_id.id
+                                if event_id == int(allocation):
+                                    exposuredetails_data = {
+                                        'staff_id':exposuredetail['staff_id'],
+                                        'price':exposuredetail['price'],
+                                        'eventdetails_id':single_eventdetails.id,
+                                        'inventorydetails_id':inventorydetails_instance.id
+                                    }
+                                    exposuredetailsSerializer = ExposureDetailsSerializer(data=exposuredetails_data)
+                                    if exposuredetailsSerializer.is_valid():
+                                        exposuredetails_instance = exposuredetailsSerializer.save()
+                                        final_exposuredetails_data.append(exposuredetails_instance)
+                                    else:
+                                        return Response(exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)                    
+                    
+                    # print("FINAL Exposure Details DATA :::",final_exposuredetails_data)
+
+        # transaction['quotation_id'] = quotation_instance.id
+        # transactionSerializer = TransactionSerializer(data = transaction)
+        # if transactionSerializer.is_valid():
+        #     transactionSerializer.save()
+        # else:
+        #     return Response(transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({"quotation_data":QuotationSerializer(quotation_instance).data,
                          "eventday_data":EventDaySerializer(eventday_instance).data,
                          "eventdetails_data":EventDetailsSerializer(final_eventdetails_data, many=True).data,
                          "inventorydetails_data":InventoryDetailsSerializer(final_inventorydetails_data, many=True).data,
-                         "exposuredetails_data":ExposureDetailsSerializer(final_exposuredetails_data, many=True).data})
+                         "exposuredetails_data":ExposureDetailsSerializer(final_exposuredetails_data, many=True).data,})
+                        #  "transaction_data":transactionSerializer.data})
 
 
     def update(self, request, pk=None, *args, **kwargs):
@@ -581,30 +595,35 @@ class QuotationViewSet(viewsets.ModelViewSet):
                             final_inventorydetails_data.append(inventorydetails_instance)
                         else:
                             return Response(inventorydetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                        
+                        inventory = Inventory.objects.get(pk=inventorydetails_data['inventory_id'])
+                        print("INVENTORY ::", inventory)
 
-                        ### FOR EXPOSURE DETAILS DATA ###
-                        exposuredetails = description['exposure']
-                        print("exposuredetails ::", exposuredetails)
-                        for exposuredetail in exposuredetails:
-                            allocations = exposuredetail['allocation']
-                            print("allocations ::", allocations)
-                            for allocation in allocations:
-                                for single_eventdetails in final_eventdetails_data:
-                                    event_id = single_eventdetails.event_id.id
-                                    if event_id == int(allocation):
-                                        exposuredetails_data = {
-                                            'staff_id':exposuredetail['staff_id'],
-                                            'price':exposuredetail['price'],
-                                            'eventdetails_id':single_eventdetails.id,
-                                            'inventorydetails_id':inventorydetails_instance.id
-                                        }
-                                        print("exposuredetails_data ::", exposuredetails_data)
-                                        exposuredetailsSerializer = ExposureDetailsSerializer(data=exposuredetails_data)
-                                        if exposuredetailsSerializer.is_valid():
-                                            exposuredetails_instance = exposuredetailsSerializer.save()
-                                            final_exposuredetails_data.append(exposuredetails_instance)
-                                        else:
-                                            return Response(exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                        if inventory.type == 'service':
+                            ### FOR EXPOSURE DETAILS DATA ###
+                            exposuredetails = description['exposure']
+                            print("exposuredetails ::", exposuredetails)
+                            for exposuredetail in exposuredetails:
+                                allocations = exposuredetail['allocation']
+                                print("allocations ::", allocations)
+                                for allocation in allocations:
+                                    for single_eventdetails in final_eventdetails_data:
+                                        event_id = single_eventdetails.event_id.id
+                                        if event_id == int(allocation):
+                                            exposuredetails_data = {
+                                                'staff_id':exposuredetail['staff_id'],
+                                                'price':exposuredetail['price'],
+                                                'eventdetails_id':single_eventdetails.id,
+                                                'inventorydetails_id':inventorydetails_instance.id
+                                            }
+                                            print("exposuredetails_data ::", exposuredetails_data)
+                                            exposuredetailsSerializer = ExposureDetailsSerializer(data=exposuredetails_data)
+                                            if exposuredetailsSerializer.is_valid():
+                                                exposuredetails_instance = exposuredetailsSerializer.save()
+                                                final_exposuredetails_data.append(exposuredetails_instance)
+                                            else:
+                                                return Response(exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
                 else:
                     print("*************************************************")
 
@@ -681,44 +700,48 @@ class QuotationViewSet(viewsets.ModelViewSet):
                                 # print("Inventory Details Instance saved ::::::", inventorydetails_instance)
                             else:
                                 return Response(o_inventorydetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                        
-                        exposuredetails = description['exposure']
-                        print("exposuredetails ::::: ",exposuredetails)
-                        for exposuredetail in exposuredetails:
-                            allocations = exposuredetail['allocation']
-                            for allocation in allocations:
-                                for single_eventdetails in final_eventdetails_data:
-                                    event_id = single_eventdetails.event_id.id
-                                    if event_id == int(allocation):
-                                        exposuredetails_data = {
-                                            'id':exposuredetail['id'],
-                                            'staff_id':exposuredetail['staff_id'],
-                                            'price':exposuredetail['price'],
-                                            'eventdetails_id':single_eventdetails.id
-                                        }
-                                        if exposuredetails_data['id'] == '':
-                                            print("::: NEW EXPOSURE DETAILS :::")
-                                            print("exposuredetails_data :::::",exposuredetails_data)
-                                            n_exposuredetailsSerializer = ExposureDetailsSerializer(data=exposuredetails_data)
-                                            if n_exposuredetailsSerializer.is_valid():
-                                                exposuredetails_instance = n_exposuredetailsSerializer.save()
-                                                final_exposuredetails_data.append(exposuredetails_instance)
-                                                # print("Inventory Details Instance saved ::::::::", exposuredetails_instance)
+                            
+                        inventory = Inventory.objects.get(pk=inventorydetails_data['inventory_id'])
+                        print("INVENTORY ::", inventory)
+
+                        if inventory.type == 'service': 
+                            exposuredetails = description['exposure']
+                            print("exposuredetails ::::: ",exposuredetails)
+                            for exposuredetail in exposuredetails:
+                                allocations = exposuredetail['allocation']
+                                for allocation in allocations:
+                                    for single_eventdetails in final_eventdetails_data:
+                                        event_id = single_eventdetails.event_id.id
+                                        if event_id == int(allocation):
+                                            exposuredetails_data = {
+                                                'id':exposuredetail['id'],
+                                                'staff_id':exposuredetail['staff_id'],
+                                                'price':exposuredetail['price'],
+                                                'eventdetails_id':single_eventdetails.id
+                                            }
+                                            if exposuredetails_data['id'] == '':
+                                                print("::: NEW EXPOSURE DETAILS :::")
+                                                print("exposuredetails_data :::::",exposuredetails_data)
+                                                n_exposuredetailsSerializer = ExposureDetailsSerializer(data=exposuredetails_data)
+                                                if n_exposuredetailsSerializer.is_valid():
+                                                    exposuredetails_instance = n_exposuredetailsSerializer.save()
+                                                    final_exposuredetails_data.append(exposuredetails_instance)
+                                                    # print("Inventory Details Instance saved ::::::::", exposuredetails_instance)
+                                                else:
+                                                    return Response(n_exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                                             else:
-                                                return Response(n_exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                                        else:
-                                            print("::: NEW OLD DETAILS :::")
-                                            print("exposuredetails_data ::::: ",exposuredetails_data)
-                                            o_exposuredetails = ExposureDetails.objects.get(pk=exposuredetails_data['id'])
-                                            print("o_exposuredetails ::::: ",o_exposuredetails)
-                                            o_exposuredetailsSerializer = ExposureDetailsSerializer(o_exposuredetails, data=exposuredetails_data, partial=True)
-                                            if o_exposuredetailsSerializer.is_valid():
-                                                exposuredetails_instance = o_exposuredetailsSerializer.save()
-                                                final_exposuredetails_data.append(exposuredetails_instance)
-                                                print("Inventory Details Instance saved ::::::::", exposuredetails_instance)
-                                            else:
-                                                return Response(o_exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
+                                                print("::: NEW OLD DETAILS :::")
+                                                print("exposuredetails_data ::::: ",exposuredetails_data)
+                                                o_exposuredetails = ExposureDetails.objects.get(pk=exposuredetails_data['id'])
+                                                print("o_exposuredetails ::::: ",o_exposuredetails)
+                                                o_exposuredetailsSerializer = ExposureDetailsSerializer(o_exposuredetails, data=exposuredetails_data, partial=True)
+                                                if o_exposuredetailsSerializer.is_valid():
+                                                    exposuredetails_instance = o_exposuredetailsSerializer.save()
+                                                    final_exposuredetails_data.append(exposuredetails_instance)
+                                                    print("Inventory Details Instance saved ::::::::", exposuredetails_instance)
+                                                else:
+                                                    return Response(o_exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
         print("*************************************************")
         ### DELETE EXPOSURES DETAILS ###
