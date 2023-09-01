@@ -75,6 +75,13 @@ class EventSerializer(serializers.ModelSerializer):
 #         model = Quotation
 #         fields = "__all__"
 
+class TransactionSerializer(serializers.ModelSerializer):
+    # quotation = QuotationSerializer(source="quotation_id", read_only=True)
+    # expense = ExpenseSerializer(source="expense_id", read_only=True)
+    # customer = CustomerSerializer(source="customer_id", read_only=True)
+    class Meta:
+        model = Transaction
+        fields = "__all__"
 
 
 class QuotationSerializer(serializers.ModelSerializer):
@@ -115,13 +122,6 @@ class ExposureDetailsSerializer(serializers.ModelSerializer):
 
 
 
-class TransactionSerializer(serializers.ModelSerializer):
-    # quotation = QuotationSerializer(source="quotation_id", read_only=True)
-    # expense = ExpenseSerializer(source="expense_id", read_only=True)
-    # customer = CustomerSerializer(source="customer_id", read_only=True)
-    class Meta:
-        model = Transaction
-        fields = "__all__"
 
 
 class BalanceSerializer(serializers.ModelSerializer):
