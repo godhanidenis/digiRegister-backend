@@ -462,6 +462,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
 
         transaction['type'] = 'estimate'
         transaction['quotation_id'] = quotation_instance.id
+        transaction['customer_id'] = quotation_instance.customer_id.id
         transactionSerializer = TransactionSerializer(data = transaction)
         if transactionSerializer.is_valid():
             transaction_instance = transactionSerializer.save()
@@ -499,13 +500,13 @@ class QuotationViewSet(viewsets.ModelViewSet):
         # print("Transaction Data :", transaction_data)
 
         transaction = Transaction.objects.get(quotation_id = pk)
-        print("Transaction :", transaction)
-        print("transaction.is_converted ::",type(transaction.is_converted) , transaction.is_converted)
-        print("GGGGG ::",transaction.is_converted == False)
+        # print("Transaction :", transaction)
+        # print("transaction.is_converted ::",type(transaction.is_converted) , transaction.is_converted)
+        # print("GGGGG ::",transaction.is_converted == False)
 
         ### NOT CONVERTED TRANSACTION ###
         if transaction.is_converted == False:
-            print("NOT CONVERTED TRANSACTION")
+            # print("NOT CONVERTED TRANSACTION")
             convert_status = transaction_data['is_converted']
             # print("*************************************************")
             ### FOR UPDATE QUOTATION DATA ###
@@ -749,7 +750,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                     # d_exposure = ExposureDetails.objects.get(staff_id=staff_id, eventdetails_id=eventdetail_id, inventorydetails_id=inventorydetails_id)
                     # print("d_exposure :::",d_exposure)
                     d_exposure = ExposureDetails.objects.get(pk=delete_exposure)
-                    print("Exposure ::", d_exposure)
+                    # print("Exposure ::", d_exposure)
                     d_exposure.delete()
 
             # print("*************************************************")
@@ -812,9 +813,9 @@ class QuotationViewSet(viewsets.ModelViewSet):
                 copy_final_inventorydetails_data = []
                 copy_final_exposuredetails_data = []
 
-                print("COPY DATASSSSS :::",copy_datas)
+                # print("COPY DATASSSSS :::",copy_datas)
                 for copy_data in copy_datas:
-                    print("SINGL DATAAAA :::",copy_data)
+                    # print("SINGL DATAAAA :::",copy_data)
                     ### FOR ADD EVENT DAY DATA ###
                     copy_eventdate_data = {
                         'event_date': copy_data['event_date'],
@@ -844,9 +845,9 @@ class QuotationViewSet(viewsets.ModelViewSet):
                             return Response(copy_eventdetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                     
                     copy_descriptions = copy_data['descriptions']
-                    print("COPY descriptions :::", copy_descriptions)
+                    # print("COPY descriptions :::", copy_descriptions)
                     for copy_description in copy_descriptions:
-                        print("COPY SINGAL description :::", copy_description)
+                        # print("COPY SINGAL description :::", copy_description)
                         ### FOR INVENTORY DETAILS DATA ###
                         copy_inventorydetails_data = {
                             'inventory_id':description['inventory_id'],
@@ -855,7 +856,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                             'profit':copy_description['profit'],
                             'eventday_id':copy_eventday_instance.id
                         }
-                        print("inventorydetails_data :::", copy_inventorydetails_data)
+                        # print("inventorydetails_data :::", copy_inventorydetails_data)
                         copy_inventorydetailsSerializer = InventoryDetailsSerializer(data=copy_inventorydetails_data)
                         if copy_inventorydetailsSerializer.is_valid():
                             copy_inventorydetails_instance = copy_inventorydetailsSerializer.save()
@@ -865,20 +866,20 @@ class QuotationViewSet(viewsets.ModelViewSet):
                             return Response(copy_inventorydetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                         
                         copy_inventory = Inventory.objects.get(pk=copy_inventorydetails_data['inventory_id'])
-                        print("INVENTORY ::", copy_inventory)
+                        # print("INVENTORY ::", copy_inventory)
                         if copy_inventory.type == 'service':
 
                             ### FOR EXPOSURE DETAILS DATA ###
                             copy_exposuredetails = copy_description['exposure']
-                            print("exposuredetails :::", copy_exposuredetails)
+                            # print("exposuredetails :::", copy_exposuredetails)
                             for copy_exposuredetail in copy_exposuredetails:
                                 copy_evnetdetials =[]
                                 copy_allocations = copy_exposuredetail['allocation']
-                                print("allocations :::", copy_allocations)
+                                # print("allocations :::", copy_allocations)
                                 for copy_allocation in copy_allocations:
                                     for copy_single_eventdetails in copy_final_eventdetails_data:
                                         copy_event_id = copy_single_eventdetails.event_id.id
-                                        print("event_id :::", copy_event_id)
+                                        # print("event_id :::", copy_event_id)
                                         if copy_event_id == int(copy_allocation):
                                             copy_evnetdetials.append(copy_single_eventdetails.id)
 
@@ -888,11 +889,11 @@ class QuotationViewSet(viewsets.ModelViewSet):
                                     'eventdetails':copy_evnetdetials,
                                     'inventorydetails_id':copy_inventorydetails_instance.id
                                 }
-                                print("exposuredetails_data :::", copy_exposuredetails_data)
+                                # print("exposuredetails_data :::", copy_exposuredetails_data)
                                 copy_exposuredetailsSerializer = ExposureDetailsSerializer(data=copy_exposuredetails_data)
                                 if copy_exposuredetailsSerializer.is_valid():
                                     copy_exposuredetails_instance = copy_exposuredetailsSerializer.save()
-                                    print("exposuredetails_instance :::", copy_exposuredetails_instance)
+                                    # print("exposuredetails_instance :::", copy_exposuredetails_instance)
                                     copy_final_exposuredetails_data.append(copy_exposuredetails_instance)
                                 else:
                                     return Response(copy_exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)                    
@@ -904,6 +905,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                 transaction_data['is_converted'] = True
                 transaction_data['type'] = 'sale'
                 transaction_data['quotation_id'] = copy_quotation_instance.id
+                transaction_data['customer_id'] = copy_quotation_instance.customer_id.id
                 copy_transactionSerializer = TransactionSerializer(data=transaction_data)
                 if copy_transactionSerializer.is_valid():
                     copy_transaction_instance = copy_transactionSerializer.save()
@@ -911,13 +913,13 @@ class QuotationViewSet(viewsets.ModelViewSet):
                     return Response(copy_transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                 
                 ### ADD BILL FOR EXOISURE ###
-                print("copy_final_exposuredetails_data :: ",copy_final_exposuredetails_data)
+                # print("copy_final_exposuredetails_data :: ",copy_final_exposuredetails_data)
                 finall_instance = []
                 for i in copy_final_exposuredetails_data:
-                    print("iiiii :: ",i)
-                    print("ID :: ",i.id)
-                    print("Staff ID :::",i.staff_id.id)
-                    print("Price :::",i.price)
+                    # print("iiiii :: ",i)
+                    # print("ID :: ",i.id)
+                    # print("Staff ID :::",i.staff_id.id)
+                    # print("Price :::",i.price)
 
                     i_transaction_data = {
                         'type' : "purchase_order",
@@ -934,11 +936,11 @@ class QuotationViewSet(viewsets.ModelViewSet):
                         finall_instance.append(t_instance)
                     else:
                         return Response(i_transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                print("FINAL INSTANCE :: ", finall_instance)
+                # print("FINAL INSTANCE :: ", finall_instance)
         
         ### CONVERTED TRANSACTION ###
         else:
-            print("CONVERTED TRANSACTION")
+            # print("CONVERTED TRANSACTION")
             quotation = Quotation.objects.get(pk=pk)
             # print("Quotation ::", quotation)
             q_serializer = QuotationSerializer(quotation, data=quotation_data, partial=True)
@@ -1179,7 +1181,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                     # d_exposure = ExposureDetails.objects.get(staff_id=staff_id, eventdetails_id=eventdetail_id, inventorydetails_id=inventorydetails_id)
                     # print("d_exposure :::",d_exposure)
                     d_exposure = ExposureDetails.objects.get(pk=delete_exposure)
-                    print("Exposure ::", d_exposure)
+                    # print("Exposure ::", d_exposure)
                     d_exposure.delete()
 
             # print("*************************************************")
@@ -1224,17 +1226,17 @@ class QuotationViewSet(viewsets.ModelViewSet):
                 else:
                     return Response(t_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
-            print("final_exposuredetails_data :: ",final_exposuredetails_data)
+            # print("final_exposuredetails_data :: ",final_exposuredetails_data)
             finall_instance = []
             for i in final_exposuredetails_data:
-                print("iiiii :: ",i)
-                print("ID :: ",i.id)
-                print("Staff ID :::",i.staff_id.id)
-                print("Price :::",i.price)
+                # print("iiiii :: ",i)
+                # print("ID :: ",i.id)
+                # print("Staff ID :::",i.staff_id.id)
+                # print("Price :::",i.price)
 
                 try:
                     bill = Transaction.objects.get(exposuredetails_id = i.id)
-                    print("Bill :",bill)
+                    # print("Bill :",bill)
                 except:
                     bill = None
 
@@ -1249,7 +1251,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                     }
 
                 if bill is not None:
-                    print("OLD BILL")
+                    # print("OLD BILL")
                     i_transactionSerializer = TransactionSerializer(bill, data=i_transaction_data, partial=True)
                     if i_transactionSerializer.is_valid():
                         t_instance = i_transactionSerializer.save()
@@ -1257,14 +1259,14 @@ class QuotationViewSet(viewsets.ModelViewSet):
                     else:
                         return Response(i_transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                 else:
-                    print("NEW BILL")
+                    # print("NEW BILL")
                     i_transactionSerializer = TransactionSerializer(data=i_transaction_data)
                     if i_transactionSerializer.is_valid():
                         t_instance = i_transactionSerializer.save()
                         finall_instance.append(t_instance)
                     else:
                         return Response(i_transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            print("FINAL INSTANCE :: ", finall_instance)
+            # print("FINAL INSTANCE :: ", finall_instance)
 
         return Response({"quotation_data":QuotationSerializer(quotation_instance).data,})
                         #  "quotation_copy":QuotationSerializer(copy_quotation_instance).data
