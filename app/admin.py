@@ -33,10 +33,6 @@ class EventAdmin(admin.ModelAdmin):
     list_display = ['event_name']
 admin.site.register(Event, EventAdmin)
 
-class TransactionAdmin(admin.ModelAdmin):
-    list_display = ['notes', 'amount','payment_type']
-admin.site.register(Transaction, TransactionAdmin)
-
 class QuotationAdmin(admin.ModelAdmin):
     list_display = ['user_id', 'final_amount', 'payment_status']
 admin.site.register(Quotation, QuotationAdmin)
@@ -57,6 +53,9 @@ class ExposureDetailsAdmin(admin.ModelAdmin):
     list_display = ['staff_id', 'price']
 admin.site.register(ExposureDetails, ExposureDetailsAdmin)
 
+class TransactionAdmin(admin.ModelAdmin):
+    list_display = ['type','payment_type','balance_amount']
+admin.site.register(Transaction, TransactionAdmin)
 
 class InventoryAdmin(admin.ModelAdmin):
     list_display = ['name', 'type', 'base_price', 'sell_price']
