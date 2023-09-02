@@ -251,7 +251,7 @@ class ExposureDetails(models.Model):
 #     amount = models.FloatField(max_length=10, default=0.0)
 
 
-# class Bill(models.Model):
+# class TransactionDescription(models.Model):
 #     transaction_id = models.ForeignKey(Transaction, blank=True, null=True, on_delete=models.CASCADE)
     # inventory_id = models.ForeignKey(Inventory, null=True, blank=True, on_delete=models.CASCADE)
     # qty = models.IntegerField(default=0)

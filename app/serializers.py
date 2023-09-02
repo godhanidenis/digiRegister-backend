@@ -120,9 +120,16 @@ class ExposureDetailsSerializer(serializers.ModelSerializer):
         model = ExposureDetails
         fields = "__all__"
 
+# class LinkTransaction(serializers.ModelSerializer):
+#     class Meta:
+#         model = LinkTransaction
+#         field = "__all__"
 
 
-
+# class TransactionDescription(serializers.ModelSerializer):
+#     class Meta:
+#         model = TransactionDescription
+#         fields = "__all__"
 
 class BalanceSerializer(serializers.ModelSerializer):
     # staff = StaffSerializer(source="staff_id", read_only=True)

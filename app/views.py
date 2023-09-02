@@ -401,52 +401,6 @@ class QuotationViewSet(viewsets.ModelViewSet):
 
     #     return paginator.get_paginated_response(data)
 
-    # def retrieve(self, request, *args, **kwargs):
-    #     instance = self.get_object()
-    #     # print("INSTANCE :",instance)
-
-    #     data = {}
-    #     data['quotation_data'] = QuotationSerializer(instance).data
-    #     quotation_id = instance.id
-    #     # print("QUOTATION ID :",quotation_id)
-
-    #     datas = []
-    #     eventdays = EventDay.objects.filter(quotation_id = instance.id)
-    #     # print("EVENT DAY ::",eventdays)
-    #     for eventday in eventdays:
-    #         eventday_data = {
-    #             "event_data": EventDaySerializer(eventday).data,
-    #             "event_details": [],
-    #             "descriptions": {
-    #                 "inventory_details":[],
-    #                 "exposure_details":[]
-    #             }
-    #         }
-    #         eventday_id = eventday.id
-    #         # print("Event Day ID ::",eventday_id)
-    #         eventdetails = EventDetails.objects.filter(quotation_id = instance.id)
-    #         # print("Event Detail ::",eventdetails)
-    #         eventday_data['event_details'].append(EventDetailsSerializer(eventdetails, many=True).data)
-    #         inventorydetails = InventoryDetails.objects.filter(eventday_id = eventday_id)
-    #         # print("Inventory Details ::",inventorydetails)
-    #         # eventday_data['descriptions']['inventory_details']:{}
-    #         eventday_data['descriptions']['inventory_details'].append(InventoryDetailsSerializer(inventorydetails, many=True).data)            
-    #         # eventday_data['descriptions']['exposure_details'].append([])
-    #         for eventdetail in eventdetails:
-    #             eventdetail_id = eventdetail.id
-    #             # print("Event Detail ::",eventdetail_id)
-    #             exposuredetails = ExposureDetails.objects.filter(eventdetails_id = eventdetail_id)
-    #             # print("Exposure Details ::",exposuredetails)
-    #             eventday_data['descriptions']['exposure_details'].append(ExposureDetailsSerializer(exposuredetails, many=True).data)
-
-    #         datas.append(eventday_data)
-    #     data['datas'] = datas
-
-    #     # data['eventdays_data'] = EventDaySerializer(eventdays, many=True).data
-    #     # data['event_details'] = EventDetailsSerializer(eventdetails, many=True).data
-    #     # data['inventory_details'] = InventoryDetailsSerializer(inventorydetails, many=True).data
-    #     # data['exposure_details'] = ExposureDetailsSerializer(exposuredetails, many=True).data
-    #     return Response(data)
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -502,6 +456,8 @@ class QuotationViewSet(viewsets.ModelViewSet):
         datas = request.data['datas']
         # print("datas ::", datas)
 
+
+        transaction['status'] = 'estimate' 
         transactionSerializer = TransactionSerializer(data = transaction)
         if transactionSerializer.is_valid():
             transaction_instance = transactionSerializer.save()
@@ -641,16 +597,19 @@ class QuotationViewSet(viewsets.ModelViewSet):
         delete_eventdays = request.data.get('delete_eventday', None)
         # print("Delete Eventday :", delete_eventdays)
         transaction_data = request.data.get('transaction_data', None)
-        # print("Transaction Data :", transaction_data)
+        print("Transaction Data :", transaction_data)
 
+        convert_status = transaction_data['is_converted']
         # print("*************************************************")
         ## UPDATE TRANSACTON DETAILS ###
         if transaction_data is not None:
             # print("Transaction data :::", transaction_data)
             # print("Transaction ID :::", transaction_data['id'])
-
+            
             transaction = Transaction.objects.get(pk=transaction_data['id'])
             # print("Transaction :::", transaction)
+            transaction_data['is_converted'] = False
+            transaction_data['status'] = 'estimate'
             t_serializer = TransactionSerializer(transaction, data=transaction_data, partial=True)
             if t_serializer.is_valid():
                 t_serializer.save()
@@ -936,10 +895,12 @@ class QuotationViewSet(viewsets.ModelViewSet):
         # print("COPY DATA ::::", copy_datas)
 
         ### MAKE A COPY OF TRANSACTION AND QUOTATION ###
-        if transaction_data['is_converted'] == 'true':
+        if convert_status == 'true':
 
             ### TRANSACTION COPY ###
             transaction_data.pop('id')
+            transaction_data['is_converted'] = True
+            transaction_data['status'] = 'sale'
             copy_transactionSerializer = TransactionSerializer(data=transaction_data)
             if copy_transactionSerializer.is_valid():
                 copy_transaction_instance = copy_transactionSerializer.save()
@@ -1071,6 +1032,18 @@ class ExposureDetailsViewSet(viewsets.ModelViewSet):
     queryset = ExposureDetails.objects.all().order_by('-id').distinct()
     serializer_class = ExposureDetailsSerializer
 
+
+# class LinkTransactionViewSet(viewsets.ModelViewSet):
+#     queryset = LinkTransaction.objects.all().order_by('-id').distinct()
+#     serializer_class = LinkTransactionSerializer
+
+
+# class TransactionDescriptionViewSet(viewsets.ModelViewSet):
+#     queryset = TransactionDescription.objects.all().order_by('-id').distinct()
+#     serializer_class = TransactionDescriptionSerializer
+
+    # def create(self, request, *args, **kwargs):
+    #     pass
 
 
 class BalanceViewSet(viewsets.ModelViewSet):
