@@ -900,7 +900,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
             ### TRANSACTION COPY ###
             transaction_data.pop('id')
             transaction_data['is_converted'] = True
-            transaction_data['status'] = 'sale'
+            transaction_data['type'] = 'sale'
             copy_transactionSerializer = TransactionSerializer(data=transaction_data)
             if copy_transactionSerializer.is_valid():
                 copy_transaction_instance = copy_transactionSerializer.save()
@@ -1008,6 +1008,24 @@ class QuotationViewSet(viewsets.ModelViewSet):
                         
                         # print("FINAL Exposure Details DATA :::",final_exposuredetails_data)
 
+            # T_instance
+            # for i in copy_final_exposuredetails_data:
+            #     print("iiiii :: ",i)
+            #     print("Staff ID :::",i.staff_id)
+            #     print("Price :::",i.price)
+
+            #     i_transaction_data = {
+            #         'type' : "",
+            #         'staff_id' : i.staff_id,
+            #         'date' : "",
+            #         'amount' : i.price,
+            #         'status' : "",
+            #     }
+            #     i_transactionSerializer = TransactionSerializer(data=i_transaction_data)
+            #     if i_transactionSerializer.is_valid():
+            #         t_instance = i_transactionSerializer.save()
+            #     else:
+            #         return Response(i_transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({"quotation_data":QuotationSerializer(quotation_instance).data,
                          "quotation_copy":QuotationSerializer(copy_quotation_instance).data})

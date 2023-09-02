@@ -157,16 +157,19 @@ class Transaction(models.Model):
     )
     TYPE_CHOICES = (
         ("sale","SALE"),
+        ("purchase","PURCHASE"),
         ("payment_in","PAYMENT IN"),
         ("payment_out","PAYMENT OUT"),
+        ("sale_order","SALE ORDER"),
+        ("purchase_order","PURCHASE ORDER"),
+        ("estimate","ESTIMATE"),
         ("expense","EXPENSE"),
-        ("purchase","PURCHASE"),
     )
     type = models.CharField(max_length=15, choices=TYPE_CHOICES, default="payment_in")
     # quotation_id = models.ForeignKey(Quotation, null=True, blank=True, on_delete=models.CASCADE)
     expense_id = models.ForeignKey(Expense, null=True, blank=True, on_delete=models.CASCADE)
     customer_id = models.ForeignKey(Customer, null=True, blank=True, on_delete=models.CASCADE)
-    # staff_id =models.ForeignKey(Staff, null=True, blank=True, on_delete=models.CASCADE)
+    staff_id =models.ForeignKey(Staff, null=True, blank=True, on_delete=models.CASCADE)
     notes = models.CharField(max_length=250, null=True, blank=True)
     date = models.DateField(null=True, blank=True)
     created_date = models.DateTimeField(auto_now_add=True, null=True, blank=True)
