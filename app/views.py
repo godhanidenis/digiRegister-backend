@@ -935,7 +935,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                     # print("Price :::",i.price)
 
                     i_transaction_data = {
-                        'type' : "purchase_order",
+                        'type' : "event_purchase",
                         'staff_id' : i.staff_id.id,
                         # 'date' : "",
                         'balance_amount' : i.price,
@@ -1256,7 +1256,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                     bill = None
 
                 i_transaction_data = {
-                        'type' : "purchase_order",
+                        'type' : "event_purchase",
                         'staff_id' : i.staff_id.id,
                         # 'date' : "",
                         'balance_amount' : i.price,
@@ -1361,7 +1361,64 @@ class TransactionViewSet(viewsets.ModelViewSet):
         'is_converted':['exact'],
     }
 
-    # def create(self, request, *args, **kwargs):
+    # def retrieve(self, request, *args, **kwargs):
+    #     instance = self.get_object()
+    #     print("Instance ::", instance)
+
+    #     all_inventory = []
+    #     inventorydescription_ids = instance.inventorydescription
+    #     print("Inventory Description IDs :: ",inventorydescription_ids)
+
+    #     for inventorydescription_id in inventorydescription_ids:
+    #         print("Inventory Description ID :: ",inventorydescription_id)
+    #         inventory = InventoryDescription.objects.get(pk=inventorydescription_id)
+    #         print("Inventory :: ",inventory)
+    #         all_inventory.append(inventory)
+
+    #     return Response({
+    #         "transaction_data": TransactionSerializer(instance).data,
+    #         "inventory_data": InventoryDescription(all_inventory, many=True).data
+    #     })
+
+
+
+    def create(self, request, *args, **kwargs):
+        print("POST DATA ::", request.data)
+        data = {}
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        data['transaction_data'] = serializer.data
+
+        type = request.data.get('type')
+
+        if type == 'payment_in':
+            staff_id = request.data.get('staff_id', None)
+            if staff_id is not None:
+                balance_data = {
+                    'staff_id' : staff_id,
+                    'amount' : request.data.get('balance_amount')
+                }
+                balanceSerializer = BalanceSerializer(data=balance_data)
+                if balanceSerializer.is_valid():
+                    balanceSerializer.save()
+                else:
+                    return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+            customer_id = request.data.get('customer_id', None)
+            if customer_id is not None:
+                balance_data = {
+                    'customer_id' : customer_id,
+                    'amount' : request.data.get('balance_amount')
+                }
+                balanceSerializer = BalanceSerializer(data=balance_data)
+                if balanceSerializer.is_valid():
+                    balanceSerializer.save()
+                else:
+                    return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
     #     # print("POST DATA ::", request.data)
     #     data = {}
     #     serializer = self.get_serializer(data=request.data)
