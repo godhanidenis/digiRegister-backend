@@ -114,6 +114,13 @@ class ExposureDetailsSerializer(serializers.ModelSerializer):
         model = ExposureDetails
         fields = "__all__"
 
+
+class InventoryDescriptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InventoryDescription
+        fields = "__all__"
+
+
 class TransactionSerializer(serializers.ModelSerializer):
     # quotation = QuotationSerializer(source="quotation_id", read_only=True)
     # expense = ExpenseSerializer(source="expense_id", read_only=True)
@@ -127,11 +134,6 @@ class TransactionSerializer(serializers.ModelSerializer):
 #         model = LinkTransaction
 #         field = "__all__"
 
-
-# class TransactionDescription(serializers.ModelSerializer):
-#     class Meta:
-#         model = TransactionDescription
-#         fields = "__all__"
 
 class BalanceSerializer(serializers.ModelSerializer):
     # staff = StaffSerializer(source="staff_id", read_only=True)

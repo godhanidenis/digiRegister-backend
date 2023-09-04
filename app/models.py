@@ -147,10 +147,6 @@ class Event(models.Model):
         return self.event_name
 
 
-
- 
-
-
 class Quotation(models.Model):
     PAYMENT_STATUS_CHOICES = (
         ("paid","PAID"),
@@ -209,6 +205,19 @@ class ExposureDetails(models.Model):
     price = models.FloatField(max_length=10, default=0.0)
 
 
+# class TransactionDescription(models.Model):
+#     # transaction_id = models.ForeignKey(Transaction, blank=True, null=True, on_delete=models.CASCADE)
+#     inventory_id = models.ForeignKey(Inventory, null=True, blank=True, on_delete=models.CASCADE)
+#     qty = models.IntegerField(default=0)
+#     price = models.FloatField(max_length=10, default=0.0)
+
+
+class InventoryDescription(models.Model):
+    inventory_id = models.ForeignKey(Inventory, null=True, blank=True, on_delete=models.CASCADE)
+    qty = models.IntegerField(default=0)
+    price = models.FloatField(max_length=10, default=0.0)
+
+
 from expense.models import Expense
 class Transaction(models.Model):
     PAYMENT_TYPE_CHOICES = (
@@ -226,6 +235,8 @@ class Transaction(models.Model):
         ("purchase_order","PURCHASE ORDER"),
         ("estimate","ESTIMATE"),
         ("expense","EXPENSE"),
+        ("event_sale","EVENT SALE"),
+        ("event_purchase","EVENT PURCHASE")
     )
     type = models.CharField(max_length=15, choices=TYPE_CHOICES, default="payment_in")
     quotation_id = models.ForeignKey(Quotation, null=True, blank=True, on_delete=models.CASCADE)
@@ -233,6 +244,8 @@ class Transaction(models.Model):
     customer_id = models.ForeignKey(Customer, null=True, blank=True, on_delete=models.CASCADE)
     staff_id =models.ForeignKey(Staff, null=True, blank=True, on_delete=models.CASCADE)
     exposuredetails_id = models.ForeignKey(ExposureDetails, null=True, blank=True, on_delete=models.CASCADE)
+    # transactiondescription_id = models.ForeignKey(TransactionDescription, null=True, blank=True, on_delete=models.CASCADE)
+    inventorydescription = models.ManyToManyField(InventoryDescription, blank=True)
     notes = models.CharField(max_length=250, null=True, blank=True)
     date = models.DateField(null=True, blank=True)
     created_date = models.DateTimeField(auto_now_add=True, null=True, blank=True)
@@ -242,6 +255,7 @@ class Transaction(models.Model):
     balance_amount = models.FloatField(max_length=10, default=0.0)
     discount_amount = models.FloatField(max_length=10, default=0.0)
     recived_amount = models.FloatField(max_length=10, default=0.0)
+    # used_amount = models.FloatField(max_length=10)
     profit = models.FloatField(max_length=10, default=0.0)
     round_off = models.FloatField(max_length=10, default=0.0)
     # is_orderConverted = models.BooleanField(default=False)
@@ -250,17 +264,13 @@ class Transaction(models.Model):
    
 
 # class LinkTransaction(models.Model):
-#     t1 = models.ForeignKey(Transaction, null=True, blank=True, on_delete=models.CASCADE)
-#     t2 = models.ForeignKey(Transaction, null=True, blank=True, on_delete=models.CASCADE)
+#     from_transaction_id = models.ForeignKey(Transaction, null=True, blank=True, on_delete=models.CASCADE)
+#     to_transaction_id = models.ForeignKey(Transaction, null=True, blank=True, on_delete=models.CASCADE)
 #     date = models.DateField(null=True, blank=True)
-#     amount = models.FloatField(max_length=10, default=0.0)
+#     linked_amount = models.FloatField(max_length=10, default=0.0)
 
 
-# class TransactionDescription(models.Model):
-#     transaction_id = models.ForeignKey(Transaction, blank=True, null=True, on_delete=models.CASCADE)
-    # inventory_id = models.ForeignKey(Inventory, null=True, blank=True, on_delete=models.CASCADE)
-    # qty = models.IntegerField(default=0)
-    # price = models.FloatField(max_length=10, default=0.0)
+
 
 
 class Balance(models.Model):
