@@ -1363,14 +1363,18 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
+        data = {}
         print("Instance ::", instance)
+
         inventory_descriptions = instance.inventorydescription.all()
         print("Inventory Description IDs :: ",inventory_descriptions)
 
-        return Response({
-            "transaction_data": TransactionSerializer(instance).data,
-            "inventory_data": InventoryDescriptionSerializer(inventory_descriptions, many=True).data
-        })
+        if len(inventory_descriptions) != 0:
+            data['inventory_data'] = InventoryDescriptionSerializer(inventory_descriptions, many=True).data
+
+        data['transaction_data'] = TransactionSerializer(instance).data
+
+        return Response(data)
 
 
     # def create(self, request, *args, **kwargs):
