@@ -255,7 +255,7 @@ class Transaction(models.Model):
     balance_amount = models.FloatField(max_length=10, default=0.0)
     discount_amount = models.FloatField(max_length=10, default=0.0)
     recived_amount = models.FloatField(max_length=10, default=0.0)
-    # used_amount = models.FloatField(max_length=10)
+    used_amount = models.FloatField(max_length=10, default=0.0)
     profit = models.FloatField(max_length=10, default=0.0)
     round_off = models.FloatField(max_length=10, default=0.0)
     # is_orderConverted = models.BooleanField(default=False)

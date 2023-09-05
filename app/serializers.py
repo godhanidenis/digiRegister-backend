@@ -134,7 +134,7 @@ class TransactionSerializer(serializers.ModelSerializer):
 class LinkTransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = LinkTransaction
-        field = "__all__"
+        fields = "__all__"
 
 
 class BalanceSerializer(serializers.ModelSerializer):
