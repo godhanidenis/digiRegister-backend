@@ -263,11 +263,11 @@ class Transaction(models.Model):
     is_converted = models.BooleanField(default=False)
    
 
-# class LinkTransaction(models.Model):
-#     from_transaction_id = models.ForeignKey(Transaction, null=True, blank=True, on_delete=models.CASCADE)
-#     to_transaction_id = models.ForeignKey(Transaction, null=True, blank=True, on_delete=models.CASCADE)
-#     date = models.DateField(null=True, blank=True)
-#     linked_amount = models.FloatField(max_length=10, default=0.0)
+class LinkTransaction(models.Model):
+    from_transaction_id = models.ForeignKey(Transaction, related_name='from_transaction', null=True, blank=True, on_delete=models.CASCADE)
+    to_transaction_id = models.ForeignKey(Transaction, related_name='to_transaction', null=True, blank=True, on_delete=models.CASCADE)
+    date = models.DateField(null=True, blank=True)
+    linked_amount = models.FloatField(max_length=10, default=0.0)
 
 
 

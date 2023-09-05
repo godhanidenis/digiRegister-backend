@@ -73,11 +73,11 @@ class TransactionAdmin(admin.ModelAdmin):
 admin.site.register(Transaction, TransactionAdmin)
 
 
-# class LinkTransactionAdmin(admin.ModelAdmin):
-#     list_display = ['type','payment_type','balance_amount']
-# admin.site.register(LinkTransaction, LinkTransactionAdmin)
+class LinkTransactionAdmin(admin.ModelAdmin):
+    list_display = ['from_transaction_id', 'to_transaction_id', 'date', 'linked_amount']
+admin.site.register(LinkTransaction, LinkTransactionAdmin)
 
 
-# class BalanceAdmin(admin.ModelAdmin):
-#     list_display = ['staff_id', 'customer_id', 'amount']
-# admin.site.register(Balance, BalanceAdmin)
+class BalanceAdmin(admin.ModelAdmin):
+    list_display = ['amount', 'staff_id', 'customer_id']
+admin.site.register(Balance, BalanceAdmin)

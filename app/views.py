@@ -1352,11 +1352,15 @@ class TransactionViewSet(viewsets.ModelViewSet):
     serializer_class = TransactionSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = {
-        'customer_id__id':['exact'],
+        'type':['exact'],
+        'quotation_id__id':['exact'],
         'expense_id__id':['exact'],
+        'customer_id__id':['exact'],
+        'customer_id__full_name':['icontains'],
+        'staff_id__id':['exact'],
+        'exposuredetails_id__id':['exact'],
         'notes':['icontains'],
         'payment_type':['exact'],
-        'type':['exact'],
         'status':['exact'],
         'is_converted':['exact'],
     }
@@ -1377,41 +1381,96 @@ class TransactionViewSet(viewsets.ModelViewSet):
         return Response(data)
 
 
-    # def create(self, request, *args, **kwargs):
-    #     print("POST DATA ::", request.data)
-    #     data = {}
-    #     serializer = self.get_serializer(data=request.data)
-    #     serializer.is_valid(raise_exception=True)
-    #     self.perform_create(serializer)
-    #     data['transaction_data'] = serializer.data
+    def create(self, request, *args, **kwargs):
+        transaction_data = request.data['transaction_data']
+        print("transaction_data :: ", transaction_data)
+        linktransaction_data = request.data.get('link_transaction_data', None)
+        print("link_transaction_data :: ", linktransaction_data)
 
-    #     type = request.data.get('type')
+        data = {}
 
-    #     if type == 'payment_in':
-    #         staff_id = request.data.get('staff_id', None)
-    #         if staff_id is not None:
-    #             balance_data = {
-    #                 'staff_id' : staff_id,
-    #                 'amount' : request.data.get('balance_amount')
-    #             }
-    #             balanceSerializer = BalanceSerializer(data=balance_data)
-    #             if balanceSerializer.is_valid():
-    #                 balanceSerializer.save()
-    #             else:
-    #                 return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-    #         customer_id = request.data.get('customer_id', None)
-    #         if customer_id is not None:
-    #             balance_data = {
-    #                 'customer_id' : customer_id,
-    #                 'amount' : request.data.get('balance_amount')
-    #             }
-    #             balanceSerializer = BalanceSerializer(data=balance_data)
-    #             if balanceSerializer.is_valid():
-    #                 balanceSerializer.save()
-    #             else:
-    #                 return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        transactionSerializer = TransactionSerializer(data=transaction_data)
+        if transactionSerializer.is_valid():
+            transaction_instance = transactionSerializer.save()
+        else:
+            return Response(transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+        data['transaction_data'] = TransactionSerializer(transaction_instance).data
+        print("TRANSACTION ID :: ",transaction_instance.id)
+
+        staff_id = transaction_data.get('staff_id', None)
+        print("STAFF ID :: ",staff_id)
+        if staff_id is not None:
+            try:
+                balance = Balance.objects.get(staff_id=staff_id)
+            except:
+                balance = None
+
+            print("BALANCE :: ",balance)
+            print("Amount :: ", balance.amount)
+            if balance is None:
+                balance_data = {
+                    'staff_id' : staff_id,
+                    'amount' : transaction_data.get('balance_amount')
+                }
+                print("Balance Data :: ", balance_data)
+                
+                balanceSerializer = BalanceSerializer(data=balance_data)
+                if balanceSerializer.is_valid():
+                    balanceSerializer.save()
+                else:
+                    return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                balance_data = {
+                    'staff_id' : staff_id,
+                    'amount' : balance.amount + float(transaction_data.get('balance_amount'))
+                }
+                print("Balance Data :: ", balance_data)
+                balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+                if balanceSerializer.is_valid():
+                    balanceSerializer.save()
+                else:
+                    return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+        customer_id = transaction_data.get('customer_id', None)
+        print("CUSTOMER ID :: ", customer_id)
+        if customer_id is not None:
+            try:
+                balance = Balance.objects.get(customer_id=customer_id)
+            except:
+                balance = None
+
+            print("BALANCE :: ",balance)
+
+            if balance is None:
+                balance_data = {
+                    'customer_id' : customer_id,
+                    'amount' : transaction_data.get('balance_amount')
+                }
+                print("Balance Data :: ", balance_data)
+                balanceSerializer = BalanceSerializer(data=balance_data)
+                if balanceSerializer.is_valid():
+                    balanceSerializer.save()
+                else:
+                    return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                balance_data = {
+                    'customer_id' : customer_id,
+                    'amount' : balance.amount + float(transaction_data.get('balance_amount'))
+                }
+                print("Balance Data :: ", balance_data)
+                balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+                if balanceSerializer.is_valid():
+                    balanceSerializer.save()
+                else:
+                    return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+        # if linktransaction_data is not None:
+        #     linktransaction_data['from_transaction_id'] = transaction_instance.id
+
+        #     linktransactionSerializer = LinkTransactionSerializer
+
+        return Response(data)
 
 
     #     # print("POST DATA ::", request.data)
@@ -1570,9 +1629,9 @@ class TransactionViewSet(viewsets.ModelViewSet):
     
 
 
-# class LinkTransactionViewSet(viewsets.ModelViewSet):
-#     queryset = LinkTransaction.objects.all().order_by('-id').distinct()
-#     serializer_class = LinkTransactionSerializer
+class LinkTransactionViewSet(viewsets.ModelViewSet):
+    queryset = LinkTransaction.objects.all().order_by('-id').distinct()
+    serializer_class = LinkTransactionSerializer
 
 
 class BalanceViewSet(viewsets.ModelViewSet):
