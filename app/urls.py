@@ -22,7 +22,7 @@ router.register(r'inventorydetails',views.InventoryDetailsViewSet)
 router.register(r'eventdetails',views.EventDetailsViewSet)
 router.register(r'exposuredetails',views.ExposureDetailsViewSet)
 
-# router.register(r'linktransaction',views.LinkTransactionViewSet)
+router.register(r'linktransaction',views.LinkTransactionViewSet)
 router.register(r'inventorydescription',views.InventoryDescriptionViewSet)
 router.register(r'balance',views.BalanceViewSet)
 

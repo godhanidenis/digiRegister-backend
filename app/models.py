@@ -270,9 +270,6 @@ class LinkTransaction(models.Model):
     linked_amount = models.FloatField(max_length=10, default=0.0)
 
 
-
-
-
 class Balance(models.Model):
     staff_id = models.ForeignKey(Staff, null=True, blank=True, on_delete=models.CASCADE)
     customer_id = models.ForeignKey(Customer, null=True, blank=True, on_delete=models.CASCADE)
