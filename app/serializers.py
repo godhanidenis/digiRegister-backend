@@ -125,6 +125,8 @@ class TransactionSerializer(serializers.ModelSerializer):
     # quotation = QuotationSerializer(source="quotation_id", read_only=True)
     # expense = ExpenseSerializer(source="expense_id", read_only=True)
     # customer = CustomerSerializer(source="customer_id", read_only=True)
+    # staff = StaffSerializer(source="staff_id", read_only=True)
+    # exposuredetails= StaffSerializer(source="exposuredetails_id", read_only=True)
     class Meta:
         model = Transaction
         fields = "__all__"
