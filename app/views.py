@@ -467,7 +467,11 @@ class QuotationViewSet(viewsets.ModelViewSet):
                     
                     # print("FINAL Exposure Details DATA :::",final_exposuredetails_data)
 
-        transaction['type'] = 'estimate'
+
+        if transaction['is_converted'] == 'true':
+            transaction['type'] = 'event_sale'
+        else:
+            transaction['type'] = 'estimate'
         transaction['quotation_id'] = quotation_instance.id
         transaction['customer_id'] = quotation_instance.customer_id.id
         transactionSerializer = TransactionSerializer(data = transaction)
