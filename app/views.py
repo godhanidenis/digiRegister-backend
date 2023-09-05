@@ -1361,25 +1361,16 @@ class TransactionViewSet(viewsets.ModelViewSet):
         'is_converted':['exact'],
     }
 
-    # def retrieve(self, request, *args, **kwargs):
-    #     instance = self.get_object()
-    #     print("Instance ::", instance)
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        print("Instance ::", instance)
+        inventory_descriptions = instance.inventorydescription.all()
+        print("Inventory Description IDs :: ",inventory_descriptions)
 
-    #     all_inventory = []
-    #     inventorydescription_ids = instance.inventorydescription
-    #     print("Inventory Description IDs :: ",inventorydescription_ids)
-
-    #     for inventorydescription_id in inventorydescription_ids:
-    #         print("Inventory Description ID :: ",inventorydescription_id)
-    #         inventory = InventoryDescription.objects.get(pk=inventorydescription_id)
-    #         print("Inventory :: ",inventory)
-    #         all_inventory.append(inventory)
-
-    #     return Response({
-    #         "transaction_data": TransactionSerializer(instance).data,
-    #         "inventory_data": InventoryDescription(all_inventory, many=True).data
-    #     })
-
+        return Response({
+            "transaction_data": TransactionSerializer(instance).data,
+            "inventory_data": InventoryDescriptionSerializer(inventory_descriptions, many=True).data
+        })
 
 
     def create(self, request, *args, **kwargs):
