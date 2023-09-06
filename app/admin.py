@@ -39,7 +39,7 @@ admin.site.register(Event, EventAdmin)
 
 
 class QuotationAdmin(admin.ModelAdmin):
-    list_display = ['user_id', 'final_amount', 'payment_status']
+    list_display = ['customer_id', 'final_amount', 'payment_status']
 admin.site.register(Quotation, QuotationAdmin)
 
 
