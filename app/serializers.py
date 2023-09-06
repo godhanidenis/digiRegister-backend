@@ -3,6 +3,7 @@ from rest_framework import serializers
 from expense.serializers import ExpenseSerializer
 from .models import *
 
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -53,31 +54,6 @@ class EventSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-# class CategorySerializer(serializers.ModelSerializer):
-#     # user = UserSerializer(source="user_id", read_only=True)
-#     class Meta:
-#         model = Category
-#         fields = "__all__"
-
-
-# class ItemSerializer(serializers.ModelSerializer):
-#     category = CategorySerializer(source="category_id", read_only=True)
-#     class Meta:
-#         model = Item
-#         fields = "__all__"
-
-
-# class QuotationSerializer(serializers.ModelSerializer):
-#     # user = UserSerializer(source="user_id", read_only=True)
-#     customer = CustomerSerializer(source="customer_id", read_only=True)
-#     event = EventSerializer(source="event_id", read_only=True)
-#     class Meta:
-#         model = Quotation
-#         fields = "__all__"
-
-
-
-
 class QuotationSerializer(serializers.ModelSerializer):
     # user = UserSerializer(source="user_id", read_only=True)
     customer = CustomerSerializer(source="customer_id", read_only=True)
@@ -86,11 +62,13 @@ class QuotationSerializer(serializers.ModelSerializer):
         model = Quotation
         fields = "__all__"
 
+
 class EventDaySerializer(serializers.ModelSerializer):
     # quotation = QuotationSerializer(source="quotation_id", read_only=True)
     class Meta:
         model = EventDay
         fields = "__all__"
+
 
 class InventoryDetailsSerializer(serializers.ModelSerializer):
     # eventday = EventDaySerializer(source="eventday_id", read_only=True)
@@ -98,6 +76,7 @@ class InventoryDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = InventoryDetails
         fields = "__all__"
+
 
 class EventDetailsSerializer(serializers.ModelSerializer):
     # eventday = EventDaySerializer(source="eventday_id", read_only=True)
@@ -107,15 +86,18 @@ class EventDetailsSerializer(serializers.ModelSerializer):
         model = EventDetails
         fields = "__all__"
 
+
 class ExposureDetailsSerializer(serializers.ModelSerializer):
     # eventdetails = EventDetailsSerializer(source="eventdetails_id", read_only=True)
     staff = StaffSerializer(source="staff_id", read_only=True)
+    # inventorydetails = StaffSerializer(source="inventorydetails_id", read_only=True)
     class Meta:
         model = ExposureDetails
         fields = "__all__"
 
 
 class InventoryDescriptionSerializer(serializers.ModelSerializer):
+    # inventory = Inventory(source='inventory_id', read_only=True)
     class Meta:
         model = InventoryDescription
         fields = "__all__"
@@ -131,7 +113,10 @@ class TransactionSerializer(serializers.ModelSerializer):
         model = Transaction
         fields = "__all__"
 
+
 class LinkTransactionSerializer(serializers.ModelSerializer):
+    # from_transaction = TransactionSerializer(source="from_transaction_id", read_only=True)
+    # to_transaction = TransactionSerializer(source="to_transaction_id", read_only=True)
     class Meta:
         model = LinkTransaction
         fields = "__all__"

@@ -1,7 +1,5 @@
 from django.shortcuts import render
-from django.db.models import Sum, Count, F, Q , Value, CharField
-from django.db.models.functions import Concat
-from django.contrib.postgres.aggregates import ArrayAgg
+from django.db.models import Sum, Count
 from django.http import  HttpResponse
 from django.db.models.functions import TruncMonth, TruncYear
 
@@ -22,7 +20,9 @@ import boto3
 import uuid
 import os
 
+
 # Create your views here.
+
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all().order_by('-id').distinct()
@@ -469,6 +469,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
 
 
         if transaction['is_converted'] == 'true':
+            print("EVENT SALE")
             transaction['type'] = 'event_sale'
         else:
             transaction['type'] = 'estimate'
@@ -1406,7 +1407,14 @@ class TransactionViewSet(viewsets.ModelViewSet):
         if len(inventory_descriptions) != 0:
             data['inventory_data'] = InventoryDescriptionSerializer(inventory_descriptions, many=True).data
 
+        linktransaction = LinkTransaction.objects.filter(from_transaction_id=instance.id)
+        print("LinkTransaction :: ", linktransaction)
+        print("Length :: ", len(linktransaction))
+        if len(linktransaction) != 0:
+            data['linktransaction_data'] = LinkTransactionSerializer(linktransaction, many=True).data
+
         data['transaction_data'] = TransactionSerializer(instance).data
+
 
         return Response(data)
 
