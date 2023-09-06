@@ -1388,7 +1388,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = {
         'user_id__id':['exact'],
-        'type':['exact'],
+        'type':['in'],
         'quotation_id__id':['exact'],
         'expense_id__id':['exact'],
         'customer_id__id':['exact'],
