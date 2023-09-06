@@ -1400,19 +1400,19 @@ class TransactionViewSet(viewsets.ModelViewSet):
         'is_converted':['exact'],
     }
 
-    # def get_queryset(self):
-    #     queryset = super().get_queryset()
-    #     from_date = self.request.query_params.get('from_date')
-    #     to_date = self.request.query_params.get('to_date')
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
 
-    #     if from_date and to_date:
-    #         try:
-    #             print("LENGTH :: ",len(queryset))
-    #             queryset = queryset.filter(created_date__range=[from_date, to_date])
-    #         except ValueError:
-    #             pass
+        if start_date and end_date:
+            try:
+                print("LENGTH :: ",len(queryset))
+                queryset = queryset.filter(created_date__range=[start_date, end_date])
+            except ValueError:
+                pass
 
-    #     return queryset
+        return queryset
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -1522,7 +1522,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 else:
                     return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-
+        all_linktransaction = []
         if linktransaction_datas is not None:
             print("ADD LINK TRANSACTION")
             for linktransaction_data in linktransaction_datas:
@@ -1530,9 +1530,21 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 print("linktransaction_data :: ", linktransaction_data)
                 linktransactionSerializer = LinkTransactionSerializer(data=linktransaction_data)
                 if linktransactionSerializer.is_valid():
-                    linktransactionSerializer.save()
+                    linktransaction_instance = linktransactionSerializer.save()
+                    all_linktransaction.append(linktransaction_instance)
                 else:
                     return Response(linktransactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                
+        for linktransaction in all_linktransaction:
+            print("Single transaction :: ", linktransaction)
+            print("TO TRANSACTION ID :: ",linktransaction.to_transaction_id.id)
+            print("AMOUNT :: ", linktransaction.linked_amount, "TYPE :: ", type(linktransaction.linked_amount))
+
+            transaction = Transaction.objects.get(id = linktransaction.to_transaction_id.id)
+            print("Transaction :: ", transaction)
+            print("RESCIVED AMOUNT :: ", transaction.recived_amount, "TYPE :: ", type(transaction.recived_amount))
+            transaction.recived_amount = transaction.recived_amount + linktransaction.linked_amount
+            transaction.save()
 
         return Response(data)
 
@@ -1641,11 +1653,11 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
         if key == 'transaction_update':
             transaction_data = request.data.get('transaction_data')
-            print("Trnasaction Data :: ",transaction_data)
+            # print("Trnasaction Data :: ",transaction_data)
             linktransaction_datas = request.data.get('linktransaction_data', None)
-            print("Link Transaction Data :: ",linktransaction_datas)
+            # print("Link Transaction Data :: ",linktransaction_datas)
             delete_linktransaction_datas = request.data.get('delete_linktransaction', None)
-            print("Delete Transaction Data :: ",delete_linktransaction_datas)
+            # print("Delete Transaction Data :: ",delete_linktransaction_datas)
 
             transactionSerializer = TransactionSerializer(transaction, data=transaction_data, partial=True)
             if transactionSerializer.is_valid():
@@ -1657,26 +1669,61 @@ class TransactionViewSet(viewsets.ModelViewSet):
             for linktransaction_data in linktransaction_datas:
                 print("Single link transaction :: ", linktransaction_data)
                 if linktransaction_data['id'] == '':
-                    print("New Link Transaction")
+                    # print("New Link Transaction")
                     linktransaction_data['from_transaction_id'] = transaction_instance.id
-                    print("linktransaction_data :: ", linktransaction_data)
+                    # print("linktransaction_data :: ", linktransaction_data)
                     linktransactionSerializer = LinkTransactionSerializer(data=linktransaction_data)
                     if linktransactionSerializer.is_valid():
                         linktransaction_instance = linktransactionSerializer.save()
                         all_linktransaction.append(linktransaction_instance)
                     else:
                         return Response(linktransactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    
+                    transaction = Transaction.objects.get(id = linktransaction_instance.to_transaction_id.id)
+                    # print("Transaction :: ", transaction)
+                    # print("RESCIVED AMOUNT :: ", transaction.recived_amount, "TYPE :: ", type(transaction.recived_amount))
+                    transaction.recived_amount = transaction.recived_amount + linktransaction_instance.linked_amount
+                    transaction.save()
+
                 else:
-                    print("Old Link Transaction")
+                    # print("Old Link Transaction")
+                    # print("linktransaction_data :: ", linktransaction_data)
                     link = LinkTransaction.objects.get(pk=linktransaction_data['id'])
-                    print("LINK TRANSACTION :: ",link)
-                    print("linktransaction_data :: ", linktransaction_data)
+                    # print("LINK TRANSACTION :: ",link)
+                    old_amount = link.linked_amount
+                    # print("OLD AMOUNT :: ",old_amount)
+
                     linktransactionSerializer = LinkTransactionSerializer(link, data=linktransaction_data, partial=True)
                     if linktransactionSerializer.is_valid():
                         linktransaction_instance = linktransactionSerializer.save()
+                        # print("linktransaction_instance ::: ",linktransaction_instance)
                         all_linktransaction.append(linktransaction_instance)
                     else:
                         return Response(linktransactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    
+                    new_amount = linktransaction_instance.linked_amount
+                    # print("NEW AMOUNT :: ",new_amount)
+                    
+                    transaction = Transaction.objects.get(id = linktransaction_instance.to_transaction_id.id)
+                    # print("Transaction :: ", transaction)
+                    # print("RESCIVED AMOUNT :: ", transaction.recived_amount, "TYPE :: ", type(transaction.recived_amount))
+
+                    # print("old_amount - new_amount :: ",old_amount - new_amount)
+                    # print("(old_amount - new_amount) > 0 :: ", (old_amount - new_amount) > 0)
+                    differnece =  old_amount - new_amount
+                    if (old_amount - new_amount) > 0:
+                        # print("IF BLOCK")
+                        updated_amount = transaction.recived_amount + differnece
+                        # print("UPDATED AMOUNT :: ", updated_amount)
+                        transaction.recived_amount = transaction.recived_amount - (old_amount - new_amount)
+                        transaction.save()
+                    else:
+                        # print("ELSE BLOCK")
+                        updated_amount = transaction.recived_amount + differnece
+                        # print("UPDATED AMOUNT :: ", updated_amount)
+                        transaction.recived_amount = transaction.recived_amount + (old_amount - new_amount)
+                        transaction.save()
+
 
             data['tranasaction_data'] = TransactionSerializer(transaction_instance).data
             data['linktransaction_data'] = LinkTransactionSerializer(all_linktransaction, many=True).data
@@ -1686,6 +1733,13 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     print("Delete Link Transaction :: ", delete_linktransaction_data)
                     d_linktransaction = LinkTransaction(pk = delete_linktransaction_data)
                     print("Link Transaction :: ", d_linktransaction)
+
+                    transaction = Transaction.objects.get(id = d_linktransaction.to_transaction_id.id)
+                    print("Transaction :: ", transaction)
+                    print("RESCIVED AMOUNT :: ", transaction.recived_amount, "TYPE :: ", type(transaction.recived_amount))
+                    transaction.recived_amount = transaction.recived_amount - d_linktransaction.linked_amount
+                    transaction.save()
+
                     d_linktransaction.delete()
 
             staff_id = transaction_data.get('staff_id', None)
@@ -1757,6 +1811,17 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     else:
                         return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+            # for linktransaction in all_linktransaction:
+            #     print("Single transaction :: ", linktransaction)
+            #     print("TO TRANSACTION ID :: ",linktransaction.to_transaction_id.id)
+            #     print("AMOUNT :: ", linktransaction.linked_amount, "TYPE :: ", type(linktransaction.linked_amount))
+
+            #     transaction = Transaction.objects.get(id = linktransaction.to_transaction_id.id)
+            #     print("Transaction :: ", transaction)
+            #     print("RESCIVED AMOUNT :: ", transaction.recived_amount, "TYPE :: ", type(transaction.recived_amount))
+            #     transaction.recived_amount = transaction.recived_amount + linktransaction.linked_amount
+            #     transaction.save()
+
                     
         return Response(data)
 
