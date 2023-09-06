@@ -433,37 +433,37 @@ class QuotationViewSet(viewsets.ModelViewSet):
                 if inventory.type == 'service':
 
                     ### FOR EXPOSURE DETAILS DATA ###
-                    exposuredetails = description['exposure']
+                    exposuredetails = description.get('exposure', None)
                     # print("EXPOSUREDETAILS ::",exposuredetails)
-                        
-                    for exposuredetail in exposuredetails:
-                        evnetdetials =[]
-                        # print("Single exposure ::",exposuredetail)
-                        allocations = exposuredetail['allocation']
-                        # print("Allocations ::",allocations)
-                        for allocation in allocations:
-                            # print("Single allocation ::",allocation)
-                            for single_eventdetails in final_eventdetails_data:
-                                # print("Single eventdetail ::",single_eventdetails)
-                                event_id = single_eventdetails.event_id.id
-                                # print("Event id ::",event_id)
-                                if event_id == int(allocation):
-                                    evnetdetials.append(single_eventdetails.id)
+                    if exposuredetails is not None:
+                        for exposuredetail in exposuredetails:
+                            evnetdetials =[]
+                            # print("Single exposure ::",exposuredetail)
+                            allocations = exposuredetail['allocation']
+                            # print("Allocations ::",allocations)
+                            for allocation in allocations:
+                                # print("Single allocation ::",allocation)
+                                for single_eventdetails in final_eventdetails_data:
+                                    # print("Single eventdetail ::",single_eventdetails)
+                                    event_id = single_eventdetails.event_id.id
+                                    # print("Event id ::",event_id)
+                                    if event_id == int(allocation):
+                                        evnetdetials.append(single_eventdetails.id)
 
-                        print("Event Detail List ::", evnetdetials)
-                        exposuredetails_data = {
-                            'staff_id':exposuredetail['staff_id'],
-                            'price':exposuredetail['price'],
-                            'eventdetails':evnetdetials,
-                            'inventorydetails_id':inventorydetails_instance.id
-                        }
-                        print("ExposureDetails Data ::", exposuredetails_data)
-                        exposuredetailsSerializer = ExposureDetailsSerializer(data=exposuredetails_data)
-                        if exposuredetailsSerializer.is_valid():
-                            exposuredetails_instance = exposuredetailsSerializer.save()
-                            final_exposuredetails_data.append(exposuredetails_instance)
-                        else:
-                            return Response(exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)                    
+                            print("Event Detail List ::", evnetdetials)
+                            exposuredetails_data = {
+                                'staff_id':exposuredetail['staff_id'],
+                                'price':exposuredetail['price'],
+                                'eventdetails':evnetdetials,
+                                'inventorydetails_id':inventorydetails_instance.id
+                            }
+                            print("ExposureDetails Data ::", exposuredetails_data)
+                            exposuredetailsSerializer = ExposureDetailsSerializer(data=exposuredetails_data)
+                            if exposuredetailsSerializer.is_valid():
+                                exposuredetails_instance = exposuredetailsSerializer.save()
+                                final_exposuredetails_data.append(exposuredetails_instance)
+                            else:
+                                return Response(exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)                    
                     
                     # print("FINAL Exposure Details DATA :::",final_exposuredetails_data)
 
@@ -621,36 +621,37 @@ class QuotationViewSet(viewsets.ModelViewSet):
                             if inventory.type == 'service':
 
                                 ### FOR EXPOSURE DETAILS DATA ###
-                                exposuredetails = description['exposure']
-                                # print("exposuredetails ::", exposuredetails)
-                                for exposuredetail in exposuredetails:
-                                    evnetdetials =[]
-                                    # print("Single exposure ::",exposuredetail)
-                                    allocations = exposuredetail['allocation']
-                                    # print("Allocations ::",allocations)
-                                    for allocation in allocations:
-                                        # print("Single allocation ::",allocation)
-                                        for single_eventdetails in final_eventdetails_data:
-                                            # print("Single eventdetail ::",single_eventdetails)
-                                            event_id = single_eventdetails.event_id.id
-                                            # print("Event id ::",event_id)
-                                            if event_id == int(allocation):
-                                                evnetdetials.append(single_eventdetails.id)
+                                exposuredetails = description.get('exposure', None)
+                                if exposuredetails is not None:
+                                    # print("exposuredetails ::", exposuredetails)
+                                    for exposuredetail in exposuredetails:
+                                        evnetdetials =[]
+                                        # print("Single exposure ::",exposuredetail)
+                                        allocations = exposuredetail['allocation']
+                                        # print("Allocations ::",allocations)
+                                        for allocation in allocations:
+                                            # print("Single allocation ::",allocation)
+                                            for single_eventdetails in final_eventdetails_data:
+                                                # print("Single eventdetail ::",single_eventdetails)
+                                                event_id = single_eventdetails.event_id.id
+                                                # print("Event id ::",event_id)
+                                                if event_id == int(allocation):
+                                                    evnetdetials.append(single_eventdetails.id)
 
-                                    # print("Event Detail List ::", evnetdetials)
-                                    exposuredetails_data = {
-                                        'staff_id':exposuredetail['staff_id'],
-                                        'price':exposuredetail['price'],
-                                        'eventdetails':evnetdetials,
-                                        'inventorydetails_id':inventorydetails_instance.id
-                                    }
-                                    # print("ExposureDetails Data ::", exposuredetails_data)
-                                    exposuredetailsSerializer = ExposureDetailsSerializer(data=exposuredetails_data)
-                                    if exposuredetailsSerializer.is_valid():
-                                        exposuredetails_instance = exposuredetailsSerializer.save()
-                                        final_exposuredetails_data.append(exposuredetails_instance)
-                                    else:
-                                        return Response(exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)                    
+                                        # print("Event Detail List ::", evnetdetials)
+                                        exposuredetails_data = {
+                                            'staff_id':exposuredetail['staff_id'],
+                                            'price':exposuredetail['price'],
+                                            'eventdetails':evnetdetials,
+                                            'inventorydetails_id':inventorydetails_instance.id
+                                        }
+                                        # print("ExposureDetails Data ::", exposuredetails_data)
+                                        exposuredetailsSerializer = ExposureDetailsSerializer(data=exposuredetails_data)
+                                        if exposuredetailsSerializer.is_valid():
+                                            exposuredetails_instance = exposuredetailsSerializer.save()
+                                            final_exposuredetails_data.append(exposuredetails_instance)
+                                        else:
+                                            return Response(exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)                    
                             
                     else:
                         # print("*************************************************")
@@ -733,47 +734,48 @@ class QuotationViewSet(viewsets.ModelViewSet):
                             # print("INVENTORY ::", inventory)
                             if inventory.type == 'service':
 
-                                exposuredetails = description['exposure']
+                                exposuredetails = description.get('exposure', None)
                                 # print("exposuredetails ::::: ",exposuredetails)
-                                for exposuredetail in exposuredetails:
-                                    evnetdetials =[]
-                                    allocations = exposuredetail['allocation']
-                                    for allocation in allocations:
-                                        for single_eventdetails in final_eventdetails_data:
-                                            event_id = single_eventdetails.event_id.id
-                                            if event_id == int(allocation):
-                                                evnetdetials.append(single_eventdetails.id)
+                                if exposuredetails is not None:
+                                    for exposuredetail in exposuredetails:
+                                        evnetdetials =[]
+                                        allocations = exposuredetail['allocation']
+                                        for allocation in allocations:
+                                            for single_eventdetails in final_eventdetails_data:
+                                                event_id = single_eventdetails.event_id.id
+                                                if event_id == int(allocation):
+                                                    evnetdetials.append(single_eventdetails.id)
 
-                                    exposuredetails_data = {
-                                        'id':exposuredetail['id'],
-                                        'staff_id':exposuredetail['staff_id'],
-                                        'price':exposuredetail['price'],
-                                        'inventorydetails_id':inventorydetails_instance.id,
-                                        'eventdetails':evnetdetials
-                                    }
-                                    if exposuredetails_data['id'] == '':
-                                        # print("::: NEW EXPOSURE DETAILS :::")
-                                        # print("exposuredetails_data :::::",exposuredetails_data)
-                                        exposuredetails_data.pop('id')
-                                        n_exposuredetailsSerializer = ExposureDetailsSerializer(data=exposuredetails_data)
-                                        if n_exposuredetailsSerializer.is_valid():
-                                            exposuredetails_instance = n_exposuredetailsSerializer.save()
-                                            final_exposuredetails_data.append(exposuredetails_instance)
-                                            # print("Inventory Details Instance saved ::::::::", exposuredetails_instance)
+                                        exposuredetails_data = {
+                                            'id':exposuredetail['id'],
+                                            'staff_id':exposuredetail['staff_id'],
+                                            'price':exposuredetail['price'],
+                                            'inventorydetails_id':inventorydetails_instance.id,
+                                            'eventdetails':evnetdetials
+                                        }
+                                        if exposuredetails_data['id'] == '':
+                                            # print("::: NEW EXPOSURE DETAILS :::")
+                                            # print("exposuredetails_data :::::",exposuredetails_data)
+                                            exposuredetails_data.pop('id')
+                                            n_exposuredetailsSerializer = ExposureDetailsSerializer(data=exposuredetails_data)
+                                            if n_exposuredetailsSerializer.is_valid():
+                                                exposuredetails_instance = n_exposuredetailsSerializer.save()
+                                                final_exposuredetails_data.append(exposuredetails_instance)
+                                                # print("Inventory Details Instance saved ::::::::", exposuredetails_instance)
+                                            else:
+                                                return Response(n_exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                                         else:
-                                            return Response(n_exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                                    else:
-                                        # print("::: NEW OLD DETAILS :::")
-                                        # print("exposuredetails_data ::::: ",exposuredetails_data)
-                                        o_exposuredetails = ExposureDetails.objects.get(pk=exposuredetails_data['id'])
-                                        # print("o_exposuredetails ::::: ",o_exposuredetails)
-                                        o_exposuredetailsSerializer = ExposureDetailsSerializer(o_exposuredetails, data=exposuredetails_data, partial=True)
-                                        if o_exposuredetailsSerializer.is_valid():
-                                            exposuredetails_instance = o_exposuredetailsSerializer.save()
-                                            final_exposuredetails_data.append(exposuredetails_instance)
-                                            # print("Inventory Details Instance saved ::::::::", exposuredetails_instance)
-                                        else:
-                                            return Response(o_exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                                            # print("::: NEW OLD DETAILS :::")
+                                            # print("exposuredetails_data ::::: ",exposuredetails_data)
+                                            o_exposuredetails = ExposureDetails.objects.get(pk=exposuredetails_data['id'])
+                                            # print("o_exposuredetails ::::: ",o_exposuredetails)
+                                            o_exposuredetailsSerializer = ExposureDetailsSerializer(o_exposuredetails, data=exposuredetails_data, partial=True)
+                                            if o_exposuredetailsSerializer.is_valid():
+                                                exposuredetails_instance = o_exposuredetailsSerializer.save()
+                                                final_exposuredetails_data.append(exposuredetails_instance)
+                                                # print("Inventory Details Instance saved ::::::::", exposuredetails_instance)
+                                            else:
+                                                return Response(o_exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
             # print("*************************************************")
             ### DELETE EXPOSURES DETAILS ###
@@ -910,34 +912,35 @@ class QuotationViewSet(viewsets.ModelViewSet):
                         if copy_inventory.type == 'service':
 
                             ### FOR EXPOSURE DETAILS DATA ###
-                            copy_exposuredetails = copy_description['exposure']
-                            # print("exposuredetails :::", copy_exposuredetails)
-                            for copy_exposuredetail in copy_exposuredetails:
-                                copy_evnetdetials =[]
-                                copy_allocations = copy_exposuredetail['allocation']
-                                # print("allocations :::", copy_allocations)
-                                for copy_allocation in copy_allocations:
-                                    for copy_single_eventdetails in copy_final_eventdetails_data:
-                                        copy_event_id = copy_single_eventdetails.event_id.id
-                                        # print("event_id :::", copy_event_id)
-                                        if copy_event_id == int(copy_allocation):
-                                            copy_evnetdetials.append(copy_single_eventdetails.id)
+                            copy_exposuredetails = copy_description.get('exposure', None)
+                            if copy_exposuredetails is not None:
+                                # print("exposuredetails :::", copy_exposuredetails)
+                                for copy_exposuredetail in copy_exposuredetails:
+                                    copy_evnetdetials =[]
+                                    copy_allocations = copy_exposuredetail['allocation']
+                                    # print("allocations :::", copy_allocations)
+                                    for copy_allocation in copy_allocations:
+                                        for copy_single_eventdetails in copy_final_eventdetails_data:
+                                            copy_event_id = copy_single_eventdetails.event_id.id
+                                            # print("event_id :::", copy_event_id)
+                                            if copy_event_id == int(copy_allocation):
+                                                copy_evnetdetials.append(copy_single_eventdetails.id)
 
-                                copy_exposuredetails_data = {
-                                    'staff_id':copy_exposuredetail['staff_id'],
-                                    'price':copy_exposuredetail['price'],
-                                    'eventdetails':copy_evnetdetials,
-                                    'inventorydetails_id':copy_inventorydetails_instance.id
-                                }
-                                # print("exposuredetails_data :::", copy_exposuredetails_data)
-                                copy_exposuredetailsSerializer = ExposureDetailsSerializer(data=copy_exposuredetails_data)
-                                if copy_exposuredetailsSerializer.is_valid():
-                                    copy_exposuredetails_instance = copy_exposuredetailsSerializer.save()
-                                    # print("exposuredetails_instance :::", copy_exposuredetails_instance)
-                                    copy_final_exposuredetails_data.append(copy_exposuredetails_instance)
-                                else:
-                                    return Response(copy_exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)                    
-                            
+                                    copy_exposuredetails_data = {
+                                        'staff_id':copy_exposuredetail['staff_id'],
+                                        'price':copy_exposuredetail['price'],
+                                        'eventdetails':copy_evnetdetials,
+                                        'inventorydetails_id':copy_inventorydetails_instance.id
+                                    }
+                                    # print("exposuredetails_data :::", copy_exposuredetails_data)
+                                    copy_exposuredetailsSerializer = ExposureDetailsSerializer(data=copy_exposuredetails_data)
+                                    if copy_exposuredetailsSerializer.is_valid():
+                                        copy_exposuredetails_instance = copy_exposuredetailsSerializer.save()
+                                        # print("exposuredetails_instance :::", copy_exposuredetails_instance)
+                                        copy_final_exposuredetails_data.append(copy_exposuredetails_instance)
+                                    else:
+                                        return Response(copy_exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)                    
+                                
                             # print("FINAL Exposure Details DATA :::",final_exposuredetails_data)
 
                 ### TRANSACTION COPY ###
@@ -1058,36 +1061,37 @@ class QuotationViewSet(viewsets.ModelViewSet):
                             if inventory.type == 'service':
 
                                 ### FOR EXPOSURE DETAILS DATA ###
-                                exposuredetails = description['exposure']
+                                exposuredetails = description.get('exposure', None)
                                 # print("exposuredetails ::", exposuredetails)
-                                for exposuredetail in exposuredetails:
-                                    evnetdetials =[]
-                                    # print("Single exposure ::",exposuredetail)
-                                    allocations = exposuredetail['allocation']
-                                    # print("Allocations ::",allocations)
-                                    for allocation in allocations:
-                                        # print("Single allocation ::",allocation)
-                                        for single_eventdetails in final_eventdetails_data:
-                                            # print("Single eventdetail ::",single_eventdetails)
-                                            event_id = single_eventdetails.event_id.id
-                                            # print("Event id ::",event_id)
-                                            if event_id == int(allocation):
-                                                evnetdetials.append(single_eventdetails.id)
+                                if exposuredetails is not None:
+                                    for exposuredetail in exposuredetails:
+                                        evnetdetials =[]
+                                        # print("Single exposure ::",exposuredetail)
+                                        allocations = exposuredetail['allocation']
+                                        # print("Allocations ::",allocations)
+                                        for allocation in allocations:
+                                            # print("Single allocation ::",allocation)
+                                            for single_eventdetails in final_eventdetails_data:
+                                                # print("Single eventdetail ::",single_eventdetails)
+                                                event_id = single_eventdetails.event_id.id
+                                                # print("Event id ::",event_id)
+                                                if event_id == int(allocation):
+                                                    evnetdetials.append(single_eventdetails.id)
 
-                                    # print("Event Detail List ::", evnetdetials)
-                                    exposuredetails_data = {
-                                        'staff_id':exposuredetail['staff_id'],
-                                        'price':exposuredetail['price'],
-                                        'eventdetails':evnetdetials,
-                                        'inventorydetails_id':inventorydetails_instance.id
-                                    }
-                                    # print("ExposureDetails Data ::", exposuredetails_data)
-                                    exposuredetailsSerializer = ExposureDetailsSerializer(data=exposuredetails_data)
-                                    if exposuredetailsSerializer.is_valid():
-                                        exposuredetails_instance = exposuredetailsSerializer.save()
-                                        final_exposuredetails_data.append(exposuredetails_instance)
-                                    else:
-                                        return Response(exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)                    
+                                        # print("Event Detail List ::", evnetdetials)
+                                        exposuredetails_data = {
+                                            'staff_id':exposuredetail['staff_id'],
+                                            'price':exposuredetail['price'],
+                                            'eventdetails':evnetdetials,
+                                            'inventorydetails_id':inventorydetails_instance.id
+                                        }
+                                        # print("ExposureDetails Data ::", exposuredetails_data)
+                                        exposuredetailsSerializer = ExposureDetailsSerializer(data=exposuredetails_data)
+                                        if exposuredetailsSerializer.is_valid():
+                                            exposuredetails_instance = exposuredetailsSerializer.save()
+                                            final_exposuredetails_data.append(exposuredetails_instance)
+                                        else:
+                                            return Response(exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)                    
                             
                     else:
                         # print("*************************************************")
@@ -1383,6 +1387,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
     serializer_class = TransactionSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = {
+        # 'user_id__id':['exact'],
         'type':['exact'],
         'quotation_id__id':['exact'],
         'expense_id__id':['exact'],
@@ -1395,6 +1400,20 @@ class TransactionViewSet(viewsets.ModelViewSet):
         'status':['exact'],
         'is_converted':['exact'],
     }
+
+    # def get_queryset(self):
+    #     queryset = super().get_queryset()
+    #     from_date = self.request.query_params.get('from_date')
+    #     to_date = self.request.query_params.get('to_date')
+
+    #     if from_date and to_date:
+    #         try:
+    #             print("LENGTH :: ",len(queryset))
+    #             queryset = queryset.filter(created_date__range=[from_date, to_date])
+    #         except ValueError:
+    #             pass
+
+    #     return queryset
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -1417,7 +1436,6 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
 
         return Response(data)
-
 
     def create(self, request, *args, **kwargs):
         transaction_data = request.data['transaction_data']
