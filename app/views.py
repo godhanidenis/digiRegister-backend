@@ -270,7 +270,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
 
         if from_date and to_date:
             try:
-                print("LENGTH :: ",len(queryset))
+                # print("LENGTH :: ",len(queryset))
                 queryset = queryset.filter(converted_on__range=[from_date, to_date])
             except ValueError:
                 pass
@@ -299,14 +299,14 @@ class QuotationViewSet(viewsets.ModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
-        print("Instance ::", instance)
+        # print("Instance ::", instance)
         data = {
             "quotation_data": QuotationSerializer(instance).data, 
             "datas": []
             }
 
         eventdays = EventDay.objects.filter(quotation_id=instance.id)
-        print("EventDays ::", eventdays)
+        # print("EventDays ::", eventdays)
         for eventday in eventdays:
             eventday_data = {
                 "event_day": EventDaySerializer(eventday).data,
@@ -347,10 +347,10 @@ class QuotationViewSet(viewsets.ModelViewSet):
             data["datas"].append(eventday_data)
 
         transaction_data = Transaction.objects.get(quotation_id=instance.id)
-        print("Transaction data :: ", transaction_data)
+        # print("Transaction data :: ", transaction_data)
         data['transaction_data'] = TransactionSerializer(transaction_data).data
 
-        print(data)
+        # print(data)
         return Response(data)
 
 
@@ -360,7 +360,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
         datas = request.data['datas']
         # print("datas ::", datas)
         transaction = request.data['transaction_data']
-        print("TRANSACTION :::", transaction)
+        # print("TRANSACTION :::", transaction)
 
 
         ### FOR ADD QUOTATION DATA ###
@@ -469,7 +469,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
 
 
         if transaction['is_converted'] == 'true':
-            print("EVENT SALE")
+            # print("EVENT SALE")
             transaction['type'] = 'event_sale'
         else:
             transaction['type'] = 'estimate'
@@ -483,7 +483,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
 
         if transaction['is_converted'] == 'true':
             ### ADD BILL FOR EXOISURE ###
-            print("final_exposuredetails_data :: ",final_exposuredetails_data)
+            # print("final_exposuredetails_data :: ",final_exposuredetails_data)
             finall_instance = []
             for i in final_exposuredetails_data:
                 # print("iiiii :: ",i)
@@ -841,13 +841,13 @@ class QuotationViewSet(viewsets.ModelViewSet):
             # print("COPY DATA ::::", copy_datas)
             ### MAKE A COPY OF TRANSACTION AND QUOTATION ###
             if convert_status == 'true':
-                print("COPY COPY COPY COPY")
+                # print("COPY COPY COPY COPY")
                 ### QUOTATION COPY ###
                 copy_quotationSerializer = QuotationSerializer(data=copy_quotation_data)
-                print("quotationSerializer :::", copy_quotationSerializer)
+                # print("quotationSerializer :::", copy_quotationSerializer)
                 if copy_quotationSerializer.is_valid():
                     copy_quotation_instance = copy_quotationSerializer.save()
-                    print("quotation_instance :::", quotation_instance)
+                    # print("quotation_instance :::", quotation_instance)
                 else:
                     return Response(copy_quotationSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                 
@@ -857,7 +857,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
 
                 # print("COPY DATASSSSS :::",copy_datas)
                 for copy_data in copy_datas:
-                    print("SINGL DATAAAA :::",copy_data)
+                    # print("SINGL DATAAAA :::",copy_data)
                     ### FOR ADD EVENT DAY DATA ###
                     copy_eventdate_data = {
                         'event_date': copy_data['event_date'],
@@ -944,20 +944,20 @@ class QuotationViewSet(viewsets.ModelViewSet):
                             # print("FINAL Exposure Details DATA :::",final_exposuredetails_data)
 
                 ### TRANSACTION COPY ###
-                print("ADD TRANSACTION COPY")
+                # print("ADD TRANSACTION COPY")
                 transaction_data.pop('id')
                 transaction_data['is_converted'] = True
                 transaction_data['type'] = 'sale'
                 transaction_data['quotation_id'] = copy_quotation_instance.id
                 transaction_data['customer_id'] = copy_quotation_instance.customer_id.id
-                print("Transaction Data :: ", transaction_data)
+                # print("Transaction Data :: ", transaction_data)
                 copy_transactionSerializer = TransactionSerializer(data=transaction_data)
                 if copy_transactionSerializer.is_valid():
                     copy_transaction_instance = copy_transactionSerializer.save()
                 else:
                     return Response(copy_transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                 
-                print("copy_transaction_instance :: ",copy_transaction_instance) 
+                # print("copy_transaction_instance :: ",copy_transaction_instance) 
                 
                 ### ADD BILL FOR EXOISURE ###
                 # print("copy_final_exposuredetails_data :: ",copy_final_exposuredetails_data)
@@ -1348,15 +1348,15 @@ class InventoryDescriptionViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         inventory_datas = request.data['inventory_data']
-        print("Inventory Data :: ",inventory_datas)
+        # print("Inventory Data :: ",inventory_datas)
         transaction_data = request.data['transaction_data']
-        print("Trnasaction Data :: ",transaction_data)
+        # print("Trnasaction Data :: ",transaction_data)
 
         all_instance = []
         inventorydescription_ids = []
 
         for inventory_data in inventory_datas:
-            print("Single Inventory Data :: ", inventory_data)
+            # print("Single Inventory Data :: ", inventory_data)
 
             inventorySerializer = InventoryDescriptionSerializer(data=inventory_data)
             if inventorySerializer.is_valid():
@@ -1365,11 +1365,11 @@ class InventoryDescriptionViewSet(viewsets.ModelViewSet):
             else:
                 return Response(inventorySerializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
-            print("Inventory Description ID ::", inventory_instance.id)
+            # print("Inventory Description ID ::", inventory_instance.id)
             inventorydescription_ids.append(inventory_instance.id)
 
         transaction_data['inventorydescription'] = inventorydescription_ids
-        print("Transaction Data ::", transaction_data)
+        # print("Transaction Data ::", transaction_data)
         transactionSerializer = TransactionSerializer(data = transaction_data)
         if transactionSerializer.is_valid():
             trnasaction_instance = transactionSerializer.save()
@@ -1407,7 +1407,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
         if start_date and end_date:
             try:
-                print("LENGTH :: ",len(queryset))
+                # print("LENGTH :: ",len(queryset))
                 queryset = queryset.filter(created_date__range=[start_date, end_date])
             except ValueError:
                 pass
@@ -1417,17 +1417,17 @@ class TransactionViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         data = {}
-        print("Instance ::", instance)
+        # print("Instance ::", instance)
 
         inventory_descriptions = instance.inventorydescription.all()
-        print("Inventory Description IDs :: ",inventory_descriptions)
+        # print("Inventory Description IDs :: ",inventory_descriptions)
 
         if len(inventory_descriptions) != 0:
             data['inventory_data'] = InventoryDescriptionSerializer(inventory_descriptions, many=True).data
 
         linktransaction = LinkTransaction.objects.filter(from_transaction_id=instance.id)
-        print("LinkTransaction :: ", linktransaction)
-        print("Length :: ", len(linktransaction))
+        # print("LinkTransaction :: ", linktransaction)
+        # print("Length :: ", len(linktransaction))
         if len(linktransaction) != 0:
             data['linktransaction_data'] = LinkTransactionSerializer(linktransaction, many=True).data
 
@@ -1438,9 +1438,9 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         transaction_data = request.data['transaction_data']
-        print("transaction_data :: ", transaction_data)
+        # print("transaction_data :: ", transaction_data)
         linktransaction_datas = request.data.get('linktransaction_data', None)
-        print("link_transaction_data :: ", linktransaction_datas)
+        # print("link_transaction_data :: ", linktransaction_datas)
 
         data = {}
 
@@ -1451,10 +1451,10 @@ class TransactionViewSet(viewsets.ModelViewSet):
             return Response(transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         data['transaction_data'] = TransactionSerializer(transaction_instance).data
-        print("TRANSACTION ID :: ",transaction_instance.id)
+        # print("TRANSACTION ID :: ",transaction_instance.id)
 
         staff_id = transaction_data.get('staff_id', None)
-        print("STAFF ID :: ",staff_id)
+        # print("STAFF ID :: ",staff_id)
         if staff_id is not None:
             print("ADD BALANCE FOR STAFF")
             try:
@@ -1489,7 +1489,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
         customer_id = transaction_data.get('customer_id', None)
-        print("CUSTOMER ID :: ", customer_id)
+        # print("CUSTOMER ID :: ", customer_id)
         if customer_id is not None:
             print("ADD BALANCE FOR CUSTOMER")
             try:
@@ -1524,10 +1524,10 @@ class TransactionViewSet(viewsets.ModelViewSet):
     
         all_linktransaction = []
         if linktransaction_datas is not None:
-            print("ADD LINK TRANSACTION")
+            # print("ADD LINK TRANSACTION")
             for linktransaction_data in linktransaction_datas:
                 linktransaction_data['from_transaction_id'] = transaction_instance.id
-                print("linktransaction_data :: ", linktransaction_data)
+                # print("linktransaction_data :: ", linktransaction_data)
                 linktransactionSerializer = LinkTransactionSerializer(data=linktransaction_data)
                 if linktransactionSerializer.is_valid():
                     linktransaction_instance = linktransactionSerializer.save()
@@ -1536,13 +1536,13 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     return Response(linktransactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                 
         for linktransaction in all_linktransaction:
-            print("Single transaction :: ", linktransaction)
-            print("TO TRANSACTION ID :: ",linktransaction.to_transaction_id.id)
-            print("AMOUNT :: ", linktransaction.linked_amount, "TYPE :: ", type(linktransaction.linked_amount))
+            # print("Single transaction :: ", linktransaction)
+            # print("TO TRANSACTION ID :: ",linktransaction.to_transaction_id.id)
+            # print("AMOUNT :: ", linktransaction.linked_amount, "TYPE :: ", type(linktransaction.linked_amount))
 
             transaction = Transaction.objects.get(id = linktransaction.to_transaction_id.id)
-            print("Transaction :: ", transaction)
-            print("RESCIVED AMOUNT :: ", transaction.recived_amount, "TYPE :: ", type(transaction.recived_amount))
+            # print("Transaction :: ", transaction)
+            # print("RESCIVED AMOUNT :: ", transaction.recived_amount, "TYPE :: ", type(transaction.recived_amount))
             transaction.recived_amount = transaction.recived_amount + linktransaction.linked_amount
             transaction.save()
 
@@ -1591,50 +1591,50 @@ class TransactionViewSet(viewsets.ModelViewSet):
         key = request.data.get('key')
 
         transaction = Transaction.objects.get(pk=pk)
-        print("Transaction :: ", transaction)
+        # print("Transaction :: ", transaction)
         data={}
 
         if key == 'inventorydescription_update':
             inventory_datas = request.data.get('inventory_data', None)
-            print("Inventory Data :: ",inventory_datas)
+            # print("Inventory Data :: ",inventory_datas)
             transaction_data = request.data.get('transaction_data')
-            print("Trnasaction Data :: ",transaction_data)
+            # print("Trnasaction Data :: ",transaction_data)
             delete_inventorys = request.data.get('delete_inventory', None)
-            print("Delete Inventory :: ",delete_inventorys)
+            # print("Delete Inventory :: ",delete_inventorys)
 
             all_inventory = []
             inventorydescription_ids = []
             
             if delete_inventorys is not None:
                 for delete_inventory in delete_inventorys:
-                    print("Delete Inventory ID :: ", delete_inventory)
+                    # print("Delete Inventory ID :: ", delete_inventory)
                     d_inventory = InventoryDescription.objects.get(pk=delete_inventory)
-                    print("Object :: ", d_inventory)
+                    # print("Object :: ", d_inventory)
                     d_inventory.delete()
             
             for inventory_data in inventory_datas:
-                print("Inventory Data :: ",inventory_data)
-                print("Inventory Description ID :: ", inventory_data['id'])
+                # print("Inventory Data :: ",inventory_data)
+                # print("Inventory Description ID :: ", inventory_data['id'])
                 if inventory_data['id'] == '':
-                    print("New Inventory")
+                    # print("New Inventory")
                     inventory_data.pop('id')
                     n_inventory = InventoryDescriptionSerializer(data=inventory_data)
                     if n_inventory.is_valid():
                         new_inventory = n_inventory.save()
-                        print("Inventory Description ID ::", new_inventory.id)
+                        # print("Inventory Description ID ::", new_inventory.id)
                         inventorydescription_ids.append(new_inventory.id)
                         all_inventory.append(new_inventory)
                     else:
                         return Response(n_inventory.errors, status=status.HTTP_400_BAD_REQUEST)
                 else:
-                    print("Old Inventory")
-                    print("Inventory ID :: ", inventory_data['id'])
+                    # print("Old Inventory")
+                    # print("Inventory ID :: ", inventory_data['id'])
                     inventory = InventoryDescription.objects.get(id=inventory_data['id'])
-                    print("Inventory Object :: ", inventory)
+                    # print("Inventory Object :: ", inventory)
                     o_inventory = InventoryDescriptionSerializer(inventory, data=inventory_data, partial=True)
                     if o_inventory.is_valid():
                         old_inventory = o_inventory.save()
-                        print("Inventory Description ID ::", old_inventory.id)
+                        # print("Inventory Description ID ::", old_inventory.id)
                         inventorydescription_ids.append(old_inventory.id)
                         all_inventory.append(old_inventory)
                     else:
@@ -1665,94 +1665,100 @@ class TransactionViewSet(viewsets.ModelViewSet):
             else:
                 return Response(transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
-            all_linktransaction = []
-            for linktransaction_data in linktransaction_datas:
-                print("Single link transaction :: ", linktransaction_data)
-                if linktransaction_data['id'] == '':
-                    # print("New Link Transaction")
-                    linktransaction_data['from_transaction_id'] = transaction_instance.id
-                    # print("linktransaction_data :: ", linktransaction_data)
-                    linktransactionSerializer = LinkTransactionSerializer(data=linktransaction_data)
-                    if linktransactionSerializer.is_valid():
-                        linktransaction_instance = linktransactionSerializer.save()
-                        all_linktransaction.append(linktransaction_instance)
-                    else:
-                        return Response(linktransactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                    
-                    transaction = Transaction.objects.get(id = linktransaction_instance.to_transaction_id.id)
-                    # print("Transaction :: ", transaction)
-                    # print("RESCIVED AMOUNT :: ", transaction.recived_amount, "TYPE :: ", type(transaction.recived_amount))
-                    transaction.recived_amount = transaction.recived_amount + linktransaction_instance.linked_amount
-                    transaction.save()
-
-                else:
-                    # print("Old Link Transaction")
-                    # print("linktransaction_data :: ", linktransaction_data)
-                    link = LinkTransaction.objects.get(pk=linktransaction_data['id'])
-                    # print("LINK TRANSACTION :: ",link)
-                    old_amount = link.linked_amount
-                    # print("OLD AMOUNT :: ",old_amount)
-
-                    linktransactionSerializer = LinkTransactionSerializer(link, data=linktransaction_data, partial=True)
-                    if linktransactionSerializer.is_valid():
-                        linktransaction_instance = linktransactionSerializer.save()
-                        # print("linktransaction_instance ::: ",linktransaction_instance)
-                        all_linktransaction.append(linktransaction_instance)
-                    else:
-                        return Response(linktransactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                    
-                    new_amount = linktransaction_instance.linked_amount
-                    # print("NEW AMOUNT :: ",new_amount)
-                    
-                    transaction = Transaction.objects.get(id = linktransaction_instance.to_transaction_id.id)
-                    # print("Transaction :: ", transaction)
-                    # print("RESCIVED AMOUNT :: ", transaction.recived_amount, "TYPE :: ", type(transaction.recived_amount))
-
-                    # print("old_amount - new_amount :: ",old_amount - new_amount)
-                    # print("(old_amount - new_amount) > 0 :: ", (old_amount - new_amount) > 0)
-                    differnece =  old_amount - new_amount
-                    if (old_amount - new_amount) > 0:
-                        # print("IF BLOCK")
-                        updated_amount = transaction.recived_amount + differnece
-                        # print("UPDATED AMOUNT :: ", updated_amount)
-                        transaction.recived_amount = transaction.recived_amount - (old_amount - new_amount)
-                        transaction.save()
-                    else:
-                        # print("ELSE BLOCK")
-                        updated_amount = transaction.recived_amount + differnece
-                        # print("UPDATED AMOUNT :: ", updated_amount)
-                        transaction.recived_amount = transaction.recived_amount + (old_amount - new_amount)
+            if linktransaction_datas is not None:
+                all_linktransaction = []
+                for linktransaction_data in linktransaction_datas:
+                    # print("Single link transaction :: ", linktransaction_data)
+                    if linktransaction_data['id'] == '':
+                        # print("New Link Transaction")
+                        linktransaction_data['from_transaction_id'] = transaction_instance.id
+                        # print("linktransaction_data :: ", linktransaction_data)
+                        linktransactionSerializer = LinkTransactionSerializer(data=linktransaction_data)
+                        if linktransactionSerializer.is_valid():
+                            linktransaction_instance = linktransactionSerializer.save()
+                            all_linktransaction.append(linktransaction_instance)
+                        else:
+                            return Response(linktransactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                        
+                        transaction = Transaction.objects.get(id = linktransaction_instance.to_transaction_id.id)
+                        # print("Transaction :: ", transaction)
+                        # print("RESCIVED AMOUNT :: ", transaction.recived_amount, "TYPE :: ", type(transaction.recived_amount))
+                        transaction.recived_amount = transaction.recived_amount + linktransaction_instance.linked_amount
                         transaction.save()
 
+                    else:
+                        # print("Old Link Transaction")
+                        # print("linktransaction_data :: ", linktransaction_data)
+                        link = LinkTransaction.objects.get(pk=linktransaction_data['id'])
+                        # print("LINK TRANSACTION :: ",link)
+                        old_amount = link.linked_amount
+                        # print("OLD AMOUNT :: ",old_amount)
+
+                        linktransactionSerializer = LinkTransactionSerializer(link, data=linktransaction_data, partial=True)
+                        if linktransactionSerializer.is_valid():
+                            linktransaction_instance = linktransactionSerializer.save()
+                            # print("linktransaction_instance ::: ",linktransaction_instance)
+                            all_linktransaction.append(linktransaction_instance)
+                        else:
+                            return Response(linktransactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                        
+                        new_amount = linktransaction_instance.linked_amount
+                        # print("NEW AMOUNT :: ",new_amount)
+                        
+                        transaction = Transaction.objects.get(id = linktransaction_instance.to_transaction_id.id)
+                        # print("Transaction :: ", transaction)
+                        # print("RESCIVED AMOUNT :: ", transaction.recived_amount, "TYPE :: ", type(transaction.recived_amount))
+
+                        # print("old_amount - new_amount :: ",old_amount - new_amount)
+                        # print("(old_amount - new_amount) > 0 :: ", (old_amount - new_amount) > 0)
+                        
+                        
+                        if (old_amount - new_amount) > 0:
+                            differnece =  old_amount - new_amount
+                            # print("DIFFERNECE :: ", differnece)
+                            updated_amount = transaction.recived_amount - differnece
+                            # print("UPDATED AMOUNT :: ", updated_amount)
+                            transaction.recived_amount = transaction.recived_amount - differnece
+                            transaction.save()
+                            
+                        if (new_amount - old_amount) > 0:
+                            differnece =  new_amount - old_amount
+                            # print("DIFFERNECE :: ", differnece)
+                            updated_amount = transaction.recived_amount + differnece
+                            # print("UPDATED AMOUNTTTTTT :: ", updated_amount)
+                            transaction.recived_amount = transaction.recived_amount + differnece
+                            transaction.save()
+                            
+
+                data['linktransaction_data'] = LinkTransactionSerializer(all_linktransaction, many=True).data
 
             data['tranasaction_data'] = TransactionSerializer(transaction_instance).data
-            data['linktransaction_data'] = LinkTransactionSerializer(all_linktransaction, many=True).data
 
             if delete_linktransaction_datas is not None:
                 for delete_linktransaction_data in delete_linktransaction_datas:
-                    print("Delete Link Transaction :: ", delete_linktransaction_data)
-                    d_linktransaction = LinkTransaction(pk = delete_linktransaction_data)
-                    print("Link Transaction :: ", d_linktransaction)
+                    # print("Delete Link Transaction :: ", delete_linktransaction_data)
+                    d_linktransaction = LinkTransaction.objects.get(pk = delete_linktransaction_data)
+                    # print("Link Transaction :: ", d_linktransaction.to_transaction_id.id)
 
                     transaction = Transaction.objects.get(id = d_linktransaction.to_transaction_id.id)
-                    print("Transaction :: ", transaction)
-                    print("RESCIVED AMOUNT :: ", transaction.recived_amount, "TYPE :: ", type(transaction.recived_amount))
+                    # print("Transaction :: ", transaction)
+                    # print("RESCIVED AMOUNT :: ", transaction.recived_amount, "TYPE :: ", type(transaction.recived_amount))
                     transaction.recived_amount = transaction.recived_amount - d_linktransaction.linked_amount
                     transaction.save()
 
                     d_linktransaction.delete()
 
             staff_id = transaction_data.get('staff_id', None)
-            print("STAFF ID :: ",staff_id)
+            # print("STAFF ID :: ",staff_id)
             if staff_id is not None:
-                print("ADD BALANCE FOR STAFF")
+                # print("ADD BALANCE FOR STAFF")
                 try:
                     balance = Balance.objects.get(staff_id=staff_id)
                 except:
                     balance = None
 
-                print("BALANCE :: ",balance)
-                print("Amount :: ", balance.amount)
+                # print("BALANCE :: ",balance)
+                # print("Amount :: ", balance.amount)
                 if balance is None:
                     balance_data = {
                         'staff_id' : staff_id,
@@ -1778,22 +1784,22 @@ class TransactionViewSet(viewsets.ModelViewSet):
                         return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
             customer_id = transaction_data.get('customer_id', None)
-            print("CUSTOMER ID :: ", customer_id)
+            # print("CUSTOMER ID :: ", customer_id)
             if customer_id is not None:
-                print("ADD BALANCE FOR CUSTOMER")
+                # print("ADD BALANCE FOR CUSTOMER")
                 try:
                     balance = Balance.objects.get(customer_id=customer_id)
                 except:
                     balance = None
 
-                print("BALANCE :: ",balance)
+                # print("BALANCE :: ",balance)
 
                 if balance is None:
                     balance_data = {
                         'customer_id' : customer_id,
                         'amount' : transaction_data.get('balance_amount')
                     }
-                    print("Balance Data :: ", balance_data)
+                    # print("Balance Data :: ", balance_data)
                     balanceSerializer = BalanceSerializer(data=balance_data)
                     if balanceSerializer.is_valid():
                         balanceSerializer.save()
@@ -1804,25 +1810,13 @@ class TransactionViewSet(viewsets.ModelViewSet):
                         'customer_id' : customer_id,
                         'amount' : balance.amount + float(transaction_data.get('balance_amount'))
                     }
-                    print("Balance Data :: ", balance_data)
+                    # print("Balance Data :: ", balance_data)
                     balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
                     if balanceSerializer.is_valid():
                         balanceSerializer.save()
                     else:
                         return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-            # for linktransaction in all_linktransaction:
-            #     print("Single transaction :: ", linktransaction)
-            #     print("TO TRANSACTION ID :: ",linktransaction.to_transaction_id.id)
-            #     print("AMOUNT :: ", linktransaction.linked_amount, "TYPE :: ", type(linktransaction.linked_amount))
-
-            #     transaction = Transaction.objects.get(id = linktransaction.to_transaction_id.id)
-            #     print("Transaction :: ", transaction)
-            #     print("RESCIVED AMOUNT :: ", transaction.recived_amount, "TYPE :: ", type(transaction.recived_amount))
-            #     transaction.recived_amount = transaction.recived_amount + linktransaction.linked_amount
-            #     transaction.save()
-
-                    
+               
         return Response(data)
 
     #     data = {}
