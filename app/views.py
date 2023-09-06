@@ -253,7 +253,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
     pagination_class = MyPagination
     filter_backends = [DjangoFilterBackend]
     filterset_fields = {
-        'user_id__id':['exact'],
+        # 'user_id__id':['exact'],
         'customer_id__id':['exact'],
         'customer_id__full_name':['icontains'],
         'customer_id__mobile_no':['icontains'],
@@ -1387,7 +1387,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
     serializer_class = TransactionSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = {
-        # 'user_id__id':['exact'],
+        'user_id__id':['exact'],
         'type':['exact'],
         'quotation_id__id':['exact'],
         'expense_id__id':['exact'],
@@ -1395,7 +1395,6 @@ class TransactionViewSet(viewsets.ModelViewSet):
         'customer_id__full_name':['icontains'],
         'staff_id__id':['exact'],
         'exposuredetails_id__id':['exact'],
-        'notes':['icontains'],
         'payment_type':['exact'],
         'status':['exact'],
         'is_converted':['exact'],
