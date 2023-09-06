@@ -238,6 +238,7 @@ class Transaction(models.Model):
         ("event_sale","EVENT SALE"),
         ("event_purchase","EVENT PURCHASE")
     )
+    # user_id = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE)
     type = models.CharField(max_length=15, choices=TYPE_CHOICES, default="payment_in")
     quotation_id = models.ForeignKey(Quotation, null=True, blank=True, on_delete=models.CASCADE)
     expense_id = models.ForeignKey(Expense, null=True, blank=True, on_delete=models.CASCADE)
@@ -247,6 +248,7 @@ class Transaction(models.Model):
     # transactiondescription_id = models.ForeignKey(TransactionDescription, null=True, blank=True, on_delete=models.CASCADE)
     inventorydescription = models.ManyToManyField(InventoryDescription, blank=True)
     notes = models.CharField(max_length=250, null=True, blank=True)
+    # description = models.CharField(max_length=1000, null=True, blank=True)
     date = models.DateField(null=True, blank=True)
     created_date = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     due_date = models.DateField(null=True, blank=True)

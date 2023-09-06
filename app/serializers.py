@@ -104,6 +104,7 @@ class InventoryDescriptionSerializer(serializers.ModelSerializer):
 
 
 class TransactionSerializer(serializers.ModelSerializer):
+    # user = UserSerializer(source="user_id", read_only=True)
     # quotation = QuotationSerializer(source="quotation_id", read_only=True)
     # expense = ExpenseSerializer(source="expense_id", read_only=True)
     customer = CustomerSerializer(source="customer_id", read_only=True)
