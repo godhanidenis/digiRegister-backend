@@ -962,7 +962,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                     # print("Price :::",i.price)
 
                     i_transaction_data = {
-                        'user_id': transaction.user_id,
+                        'user_id': transaction.user_id.id,
                         'type' : "event_purchase",
                         'staff_id' : i.staff_id.id,
                         # 'date' : "",
@@ -1277,7 +1277,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                     bill = None
 
                 i_transaction_data = {
-                        'user_id': transaction.user_id,
+                        'user_id': transaction.user_id.id,
                         'type' : "event_purchase",
                         'staff_id' : i.staff_id.id,
                         # 'date' : "",
