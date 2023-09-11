@@ -1558,7 +1558,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
             ### NOT CONVERTED TRANSACTION ###
             if transaction.is_converted == False:
                 print("CONVERTED FALSE")
-                convert_status = transaction_data['is_converted']
+                convert_status = transaction_data.get('is_converted', None)
                 print("CONVERTED STATUS :: ", convert_status)
 
                 if delete_inventorys is not None:
@@ -1606,36 +1606,37 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     return Response(transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
                 print("convert_status == 'true' ::: ", convert_status == 'true')
-                if convert_status == 'true':
-                    print("MAKE A NEW COPY")
-                    copy_all_instance = []
-                    copy_inventorydescription_ids = []
+                if convert_status is not None:
+                    if convert_status == 'true':
+                        print("MAKE A NEW COPY")
+                        copy_all_instance = []
+                        copy_inventorydescription_ids = []
 
-                    for copy_inventory_data in copy_inventory_datas:
-                        print("Single Inventory Data :: ", inventory_data)
+                        for copy_inventory_data in copy_inventory_datas:
+                            print("Single Inventory Data :: ", inventory_data)
 
-                        copy_inventorySerializer = InventoryDescriptionSerializer(data=copy_inventory_data)
-                        if copy_inventorySerializer.is_valid():
-                            copy_inventory_instance = copy_inventorySerializer.save()
-                            copy_all_instance.append(copy_inventory_instance)
+                            copy_inventorySerializer = InventoryDescriptionSerializer(data=copy_inventory_data)
+                            if copy_inventorySerializer.is_valid():
+                                copy_inventory_instance = copy_inventorySerializer.save()
+                                copy_all_instance.append(copy_inventory_instance)
+                            else:
+                                return Response(copy_inventorySerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                            
+                            print("Inventory Description ID ::", copy_inventory_instance.id)
+                            copy_inventorydescription_ids.append(copy_inventory_instance.id)
+
+                        if transaction_data['type'] == 'purchase_order':
+                            transaction_data['type'] = 'purchase'
+                        if transaction_data['type'] == 'sale_order':
+                            transaction_data['type'] = 'sale'
+                        transaction_data['is_converted'] = True
+                        transaction_data['inventorydescription'] = copy_inventorydescription_ids
+                        print("Transaction Data ::", transaction_data)
+                        copy_transactionSerializer = TransactionSerializer(data = transaction_data)
+                        if copy_transactionSerializer.is_valid():
+                            copy_trnasaction_instance = copy_transactionSerializer.save()
                         else:
-                            return Response(copy_inventorySerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                        
-                        print("Inventory Description ID ::", copy_inventory_instance.id)
-                        copy_inventorydescription_ids.append(copy_inventory_instance.id)
-
-                    if transaction_data['type'] == 'purchase_order':
-                        transaction_data['type'] = 'purchase'
-                    if transaction_data['type'] == 'sale_order':
-                        transaction_data['type'] = 'sale'
-                    transaction_data['is_converted'] = True
-                    transaction_data['inventorydescription'] = copy_inventorydescription_ids
-                    print("Transaction Data ::", transaction_data)
-                    copy_transactionSerializer = TransactionSerializer(data = transaction_data)
-                    if copy_transactionSerializer.is_valid():
-                        copy_trnasaction_instance = copy_transactionSerializer.save()
-                    else:
-                        return Response(copy_transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                            return Response(copy_transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
             else:
                 if delete_inventorys is not None:
