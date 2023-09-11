@@ -1595,7 +1595,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                             return Response(o_inventory.errors, status=status.HTTP_400_BAD_REQUEST)
                         
 
-                transaction_data['is_converted'] = False
+                transaction_data['is_converted'] = True
                 transaction_data['inventorydescription'] = inventorydescription_ids 
                 transactionSerializer = TransactionSerializer(transaction, data=transaction_data, partial=True)
                 if transactionSerializer.is_valid():
