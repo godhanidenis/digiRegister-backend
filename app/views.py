@@ -14,6 +14,7 @@ from .serializers import *
 from .pagination import MyPagination
 from .resource import *
 
+from datetime import date
 from decouple import config
 import pandas as pd
 import boto3
@@ -782,15 +783,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
             if delete_exposures is not None:
                 for delete_exposure in delete_exposures:
                     # print("Delete Exposure ::", delete_exposure)
-                    # staff_id = delete_exposure['staff_id']
-                    # print("staff_id :::",staff_id)
-                    # eventdetail_id = delete_exposure['eventdetails_id']
-                    # print("eventdetail_id :::",eventdetail_id)
-                    # inventorydetails_id = delete_exposure['inventorydetails_id']
-                    # print("inventorydetails_id :::",inventorydetails_id)
 
-                    # d_exposure = ExposureDetails.objects.get(staff_id=staff_id, eventdetails_id=eventdetail_id, inventorydetails_id=inventorydetails_id)
-                    # print("d_exposure :::",d_exposure)
                     d_exposure = ExposureDetails.objects.get(pk=delete_exposure)
                     # print("Exposure ::", d_exposure)
                     d_exposure.delete()
@@ -830,7 +823,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                 
                 # print("Transaction :::", transaction)
                 transaction_data['is_converted'] = False
-                transaction_data['status'] = 'estimate'
+                transaction_data['type'] = 'estimate'
                 t_serializer = TransactionSerializer(transaction, data=transaction_data, partial=True)
                 if t_serializer.is_valid():
                     t_serializer.save()
@@ -975,6 +968,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                         'balance_amount' : i.price,
                         # 'quotation_id':copy_quotation_instance.id,
                         'exposuredetails_id':i.id,
+                        'date': date.today()
                         # 'status' : "",
                     }
                     i_transactionSerializer = TransactionSerializer(data=i_transaction_data)
@@ -1221,15 +1215,6 @@ class QuotationViewSet(viewsets.ModelViewSet):
             if delete_exposures is not None:
                 for delete_exposure in delete_exposures:
                     # print("Delete Exposure ::", delete_exposure)
-                    # staff_id = delete_exposure['staff_id']
-                    # print("staff_id :::",staff_id)
-                    # eventdetail_id = delete_exposure['eventdetails_id']
-                    # print("eventdetail_id :::",eventdetail_id)
-                    # inventorydetails_id = delete_exposure['inventorydetails_id']
-                    # print("inventorydetails_id :::",inventorydetails_id)
-
-                    # d_exposure = ExposureDetails.objects.get(staff_id=staff_id, eventdetails_id=eventdetail_id, inventorydetails_id=inventorydetails_id)
-                    # print("d_exposure :::",d_exposure)
                     d_exposure = ExposureDetails.objects.get(pk=delete_exposure)
                     # print("Exposure ::", d_exposure)
                     d_exposure.delete()
@@ -1548,45 +1533,6 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
         return Response(data)
 
-
-    #     # print("POST DATA ::", request.data)
-    #     data = {}
-    #     serializer = self.get_serializer(data=request.data)
-    #     serializer.is_valid(raise_exception=True)
-    #     self.perform_create(serializer)
-    #     data['transaction_data'] = serializer.data
-
-    #     quotation_id = request.data.get('quotation_id', None)
-    #     # print("Quotation ID ::", quotation_id)
-    #     if quotation_id is not None:
-    #         quotation = Quotation.objects.get(id=quotation_id)
-    #         # print("Quotation ::", quotation)
-    #         total_amount = Transaction.objects.filter(quotation_id=quotation_id).aggregate(Sum('amount'))['amount__sum']
-    #         payable_amount = quotation.final_amount - quotation.discount
-
-    #         data['payable_amount'] = payable_amount
-    #         data['received_amount'] = total_amount
-
-    #         # print("Final amount :::", quotation.final_amount)
-    #         # print("Discount amount :::", quotation.discount)
-    #         # print("Total amount :::", total_amount)
-    #         # print("Payable amount :::",payable_amount)
-
-    #         if payable_amount == total_amount:
-    #             # print("PAID")
-    #             quotation.payment_status = 'paid'
-    #             quotation.save()
-    #         else:
-    #             # print("PENDING")
-    #             quotation.payment_status = 'pending'
-    #             quotation.save()
-
-    #     return Response(data)
-
-    #     # return Response({"transaction_data":serializer.data,
-    #     #                  "payable_amount":payable_amount,
-    #     #                  "received_amount":total_amount})
-
     def update(self, request, pk=None, *args, **kwargs):
         key = request.data.get('key')
 
@@ -1597,6 +1543,8 @@ class TransactionViewSet(viewsets.ModelViewSet):
         if key == 'inventorydescription_update':
             inventory_datas = request.data.get('inventory_data', None)
             # print("Inventory Data :: ",inventory_datas)
+            copy_inventory_datas = inventory_datas
+            print("Copy Inventory Data :: ",copy_inventory_datas)
             transaction_data = request.data.get('transaction_data')
             # print("Trnasaction Data :: ",transaction_data)
             delete_inventorys = request.data.get('delete_inventory', None)
@@ -1604,49 +1552,133 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
             all_inventory = []
             inventorydescription_ids = []
-            
-            if delete_inventorys is not None:
-                for delete_inventory in delete_inventorys:
-                    # print("Delete Inventory ID :: ", delete_inventory)
-                    d_inventory = InventoryDescription.objects.get(pk=delete_inventory)
-                    # print("Object :: ", d_inventory)
-                    d_inventory.delete()
-            
-            for inventory_data in inventory_datas:
-                # print("Inventory Data :: ",inventory_data)
-                # print("Inventory Description ID :: ", inventory_data['id'])
-                if inventory_data['id'] == '':
-                    # print("New Inventory")
-                    inventory_data.pop('id')
-                    n_inventory = InventoryDescriptionSerializer(data=inventory_data)
-                    if n_inventory.is_valid():
-                        new_inventory = n_inventory.save()
-                        # print("Inventory Description ID ::", new_inventory.id)
-                        inventorydescription_ids.append(new_inventory.id)
-                        all_inventory.append(new_inventory)
-                    else:
-                        return Response(n_inventory.errors, status=status.HTTP_400_BAD_REQUEST)
-                else:
-                    # print("Old Inventory")
-                    # print("Inventory ID :: ", inventory_data['id'])
-                    inventory = InventoryDescription.objects.get(id=inventory_data['id'])
-                    # print("Inventory Object :: ", inventory)
-                    o_inventory = InventoryDescriptionSerializer(inventory, data=inventory_data, partial=True)
-                    if o_inventory.is_valid():
-                        old_inventory = o_inventory.save()
-                        # print("Inventory Description ID ::", old_inventory.id)
-                        inventorydescription_ids.append(old_inventory.id)
-                        all_inventory.append(old_inventory)
-                    else:
-                        return Response(o_inventory.errors, status=status.HTTP_400_BAD_REQUEST)
-                    
 
-            transaction_data['inventorydescription'] = inventorydescription_ids 
-            transactionSerializer = TransactionSerializer(transaction, data=transaction_data, partial=True)
-            if transactionSerializer.is_valid():
-                transaction_instance = transactionSerializer.save()
+            ### NOT CONVERTED TRANSACTION ###
+            if transaction.is_converted == False:
+                print("CONVERTED FALSE")
+                convert_status = transaction_data['is_converted']
+                print("CONVERTED STATUS :: ", convert_status)
+
+                if delete_inventorys is not None:
+                    for delete_inventory in delete_inventorys:
+                        # print("Delete Inventory ID :: ", delete_inventory)
+                        d_inventory = InventoryDescription.objects.get(pk=delete_inventory)
+                        # print("Object :: ", d_inventory)
+                        d_inventory.delete()
+                
+                for inventory_data in inventory_datas:
+                    # print("Inventory Data :: ",inventory_data)
+                    # print("Inventory Description ID :: ", inventory_data['id'])
+                    if inventory_data['id'] == '':
+                        # print("New Inventory")
+                        inventory_data.pop('id')
+                        n_inventory = InventoryDescriptionSerializer(data=inventory_data)
+                        if n_inventory.is_valid():
+                            new_inventory = n_inventory.save()
+                            # print("Inventory Description ID ::", new_inventory.id)
+                            inventorydescription_ids.append(new_inventory.id)
+                            all_inventory.append(new_inventory)
+                        else:
+                            return Response(n_inventory.errors, status=status.HTTP_400_BAD_REQUEST)
+                    else:
+                        # print("Old Inventory")
+                        # print("Inventory ID :: ", inventory_data['id'])
+                        inventory = InventoryDescription.objects.get(id=inventory_data['id'])
+                        # print("Inventory Object :: ", inventory)
+                        o_inventory = InventoryDescriptionSerializer(inventory, data=inventory_data, partial=True)
+                        if o_inventory.is_valid():
+                            old_inventory = o_inventory.save()
+                            # print("Inventory Description ID ::", old_inventory.id)
+                            inventorydescription_ids.append(old_inventory.id)
+                            all_inventory.append(old_inventory)
+                        else:
+                            return Response(o_inventory.errors, status=status.HTTP_400_BAD_REQUEST)
+                        
+
+                transaction_data['is_converted'] = False
+                transaction_data['inventorydescription'] = inventorydescription_ids 
+                transactionSerializer = TransactionSerializer(transaction, data=transaction_data, partial=True)
+                if transactionSerializer.is_valid():
+                    transaction_instance = transactionSerializer.save()
+                else:
+                    return Response(transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+                print("convert_status == 'true' ::: ", convert_status == 'true')
+                if convert_status == 'true':
+                    print("MAKE A NEW COPY")
+                    copy_all_instance = []
+                    copy_inventorydescription_ids = []
+
+                    for copy_inventory_data in copy_inventory_datas:
+                        print("Single Inventory Data :: ", inventory_data)
+
+                        copy_inventorySerializer = InventoryDescriptionSerializer(data=copy_inventory_data)
+                        if copy_inventorySerializer.is_valid():
+                            copy_inventory_instance = copy_inventorySerializer.save()
+                            copy_all_instance.append(copy_inventory_instance)
+                        else:
+                            return Response(copy_inventorySerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                        
+                        print("Inventory Description ID ::", copy_inventory_instance.id)
+                        copy_inventorydescription_ids.append(copy_inventory_instance.id)
+
+                    if transaction_data['type'] == 'purchase_order':
+                        transaction_data['type'] = 'purchase'
+                    if transaction_data['type'] == 'sale_order':
+                        transaction_data['type'] = 'sale'
+                    transaction_data['is_converted'] = True
+                    transaction_data['inventorydescription'] = copy_inventorydescription_ids
+                    print("Transaction Data ::", transaction_data)
+                    copy_transactionSerializer = TransactionSerializer(data = transaction_data)
+                    if copy_transactionSerializer.is_valid():
+                        copy_trnasaction_instance = copy_transactionSerializer.save()
+                    else:
+                        return Response(copy_transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
             else:
-                return Response(transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                if delete_inventorys is not None:
+                    for delete_inventory in delete_inventorys:
+                        # print("Delete Inventory ID :: ", delete_inventory)
+                        d_inventory = InventoryDescription.objects.get(pk=delete_inventory)
+                        # print("Object :: ", d_inventory)
+                        d_inventory.delete()
+                
+                for inventory_data in inventory_datas:
+                    # print("Inventory Data :: ",inventory_data)
+                    # print("Inventory Description ID :: ", inventory_data['id'])
+                    if inventory_data['id'] == '':
+                        # print("New Inventory")
+                        inventory_data.pop('id')
+                        n_inventory = InventoryDescriptionSerializer(data=inventory_data)
+                        if n_inventory.is_valid():
+                            new_inventory = n_inventory.save()
+                            # print("Inventory Description ID ::", new_inventory.id)
+                            inventorydescription_ids.append(new_inventory.id)
+                            all_inventory.append(new_inventory)
+                        else:
+                            return Response(n_inventory.errors, status=status.HTTP_400_BAD_REQUEST)
+                    else:
+                        # print("Old Inventory")
+                        # print("Inventory ID :: ", inventory_data['id'])
+                        inventory = InventoryDescription.objects.get(id=inventory_data['id'])
+                        # print("Inventory Object :: ", inventory)
+                        o_inventory = InventoryDescriptionSerializer(inventory, data=inventory_data, partial=True)
+                        if o_inventory.is_valid():
+                            old_inventory = o_inventory.save()
+                            # print("Inventory Description ID ::", old_inventory.id)
+                            inventorydescription_ids.append(old_inventory.id)
+                            all_inventory.append(old_inventory)
+                        else:
+                            return Response(o_inventory.errors, status=status.HTTP_400_BAD_REQUEST)
+                        
+
+                transaction_data['inventorydescription'] = inventorydescription_ids 
+                transactionSerializer = TransactionSerializer(transaction, data=transaction_data, partial=True)
+                if transactionSerializer.is_valid():
+                    transaction_instance = transactionSerializer.save()
+                else:
+                    return Response(transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
             data['tranasaction_data'] = TransactionSerializer(transaction_instance).data
             data['inventorydescription_data'] = InventoryDescriptionSerializer(all_inventory, many=True).data
@@ -1819,56 +1851,6 @@ class TransactionViewSet(viewsets.ModelViewSet):
                
         return Response(data)
 
-    #     data = {}
-    #     transaction = Transaction.objects.get(pk=pk)
-    #     t_serializer = TransactionSerializer(transaction, data=request.data, partial=True)
-    #     if t_serializer.is_valid():
-    #         t_serializer.save()
-    #         data['transaction_data'] = t_serializer.data
-    #     else:
-    #         return Response(t_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-    #     quotation_id = transaction.quotation_id.id if transaction.quotation_id is not None else None
-    #     if quotation_id is not None:
-    #         quotation = Quotation.objects.get(id=quotation_id)
-    #         total_amount = Transaction.objects.filter(quotation_id=quotation_id).aggregate(Sum('amount'))['amount__sum']
-    #         payable_amount = quotation.final_amount - quotation.discount
-
-    # #         data['payable_amount'] = payable_amount
-    # #         data['received_amount'] = total_amount
-
-    #         if payable_amount == total_amount:
-    #             quotation.payment_status = 'paid'
-    #             quotation.save()
-    #         else:
-    #             quotation.payment_status = 'pending'
-    #             quotation.save()
-
-    #    return Response(data)
-
-    # def destroy(self, request, pk=None, *args, **kwargs):
-    #     transaction = Transaction.objects.get(pk=pk)
-    #     transaction.delete()
-        
-    #     quotation_id = transaction.quotation_id.id if transaction.quotation_id is not None else None
-    #     if quotation_id is not None:
-    #         quotation = Quotation.objects.get(id=quotation_id)
-    #         total_amount = Transaction.objects.filter(quotation_id=quotation_id).aggregate(Sum('amount'))['amount__sum']
-    #         total_amount = total_amount if total_amount is not None else 0
-    #         payable_amount = quotation.final_amount - quotation.discount
-
-    #         if payable_amount == total_amount:
-    #             quotation.payment_status = 'paid'
-    #             quotation.save()
-    #         else:
-    #             quotation.payment_status = 'pending'
-    #             quotation.save()
-
-    #         return Response({"payable_amount":payable_amount,
-    #                         "received_amount":total_amount})
-        
-    #     return Response(status=status.HTTP_204_NO_CONTENT)
-    
 
 class LinkTransactionViewSet(viewsets.ModelViewSet):
     queryset = LinkTransaction.objects.all().order_by('-id').distinct()
