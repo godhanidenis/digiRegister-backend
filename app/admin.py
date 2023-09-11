@@ -69,7 +69,7 @@ admin.site.register(InventoryDescription, InventoryDescriptionAdmin)
 
 
 class TransactionAdmin(admin.ModelAdmin):
-    list_display = ['type','payment_type','balance_amount']
+    list_display = ['type','payment_type','total_amount']
 admin.site.register(Transaction, TransactionAdmin)
 
 

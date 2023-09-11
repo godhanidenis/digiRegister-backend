@@ -496,7 +496,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                     'type' : "event_purchase",
                     'staff_id' : i.staff_id.id,
                     # 'date' : "",
-                    'balance_amount' : i.price,
+                    'total_amount' : i.price,
                     # 'quotation_id':copy_quotation_instance.id,
                     'exposuredetails_id':i.id,
                     # 'status' : "",
@@ -962,10 +962,11 @@ class QuotationViewSet(viewsets.ModelViewSet):
                     # print("Price :::",i.price)
 
                     i_transaction_data = {
+                        'user_id': transaction.user_id,
                         'type' : "event_purchase",
                         'staff_id' : i.staff_id.id,
                         # 'date' : "",
-                        'balance_amount' : i.price,
+                        'total_amount' : i.price,
                         # 'quotation_id':copy_quotation_instance.id,
                         'exposuredetails_id':i.id,
                         'date': date.today()
@@ -1276,10 +1277,11 @@ class QuotationViewSet(viewsets.ModelViewSet):
                     bill = None
 
                 i_transaction_data = {
+                        'user_id': transaction.user_id,
                         'type' : "event_purchase",
                         'staff_id' : i.staff_id.id,
                         # 'date' : "",
-                        'balance_amount' : i.price,
+                        'total_amount' : i.price,
                         # 'quotation_id':quotation_instance.id,
                         'exposuredetails_id':i.id,
                         # 'status' : "",
@@ -1452,7 +1454,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
             if balance is None:
                 balance_data = {
                     'staff_id' : staff_id,
-                    'amount' : transaction_data.get('balance_amount')
+                    'amount' : transaction_data.get('total_amount')
                 }
                 print("Balance Data :: ", balance_data)
                 
@@ -1464,7 +1466,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
             else:
                 balance_data = {
                     'staff_id' : staff_id,
-                    'amount' : balance.amount + float(transaction_data.get('balance_amount'))
+                    'amount' : balance.amount + float(transaction_data.get('total_amount'))
                 }
                 print("Balance Data :: ", balance_data)
                 balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
@@ -1487,7 +1489,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
             if balance is None:
                 balance_data = {
                     'customer_id' : customer_id,
-                    'amount' : transaction_data.get('balance_amount')
+                    'amount' : transaction_data.get('total_amount')
                 }
                 print("Balance Data :: ", balance_data)
                 balanceSerializer = BalanceSerializer(data=balance_data)
@@ -1498,7 +1500,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
             else:
                 balance_data = {
                     'customer_id' : customer_id,
-                    'amount' : balance.amount + float(transaction_data.get('balance_amount'))
+                    'amount' : balance.amount + float(transaction_data.get('total_amount'))
                 }
                 print("Balance Data :: ", balance_data)
                 balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
@@ -1527,8 +1529,8 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
             transaction = Transaction.objects.get(id = linktransaction.to_transaction_id.id)
             # print("Transaction :: ", transaction)
-            # print("RESCIVED AMOUNT :: ", transaction.recived_amount, "TYPE :: ", type(transaction.recived_amount))
-            transaction.recived_amount = transaction.recived_amount + linktransaction.linked_amount
+            # print("RESCIVED AMOUNT :: ", transaction.recived_or_paid_amount, "TYPE :: ", type(transaction.recived_or_paid_amount))
+            transaction.recived_or_paid_amount = transaction.recived_or_paid_amount + linktransaction.linked_amount
             transaction.save()
 
         return Response(data)
@@ -1714,8 +1716,8 @@ class TransactionViewSet(viewsets.ModelViewSet):
                         
                         transaction = Transaction.objects.get(id = linktransaction_instance.to_transaction_id.id)
                         # print("Transaction :: ", transaction)
-                        # print("RESCIVED AMOUNT :: ", transaction.recived_amount, "TYPE :: ", type(transaction.recived_amount))
-                        transaction.recived_amount = transaction.recived_amount + linktransaction_instance.linked_amount
+                        # print("RESCIVED AMOUNT :: ", transaction.recived_or_paid_amount, "TYPE :: ", type(transaction.recived_or_paid_amount))
+                        transaction.recived_or_paid_amount = transaction.recived_or_paid_amount + linktransaction_instance.linked_amount
                         transaction.save()
 
                     else:
@@ -1739,7 +1741,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                         
                         transaction = Transaction.objects.get(id = linktransaction_instance.to_transaction_id.id)
                         # print("Transaction :: ", transaction)
-                        # print("RESCIVED AMOUNT :: ", transaction.recived_amount, "TYPE :: ", type(transaction.recived_amount))
+                        # print("RESCIVED AMOUNT :: ", transaction.recived_or_paid_amount, "TYPE :: ", type(transaction.recived_or_paid_amount))
 
                         # print("old_amount - new_amount :: ",old_amount - new_amount)
                         # print("(old_amount - new_amount) > 0 :: ", (old_amount - new_amount) > 0)
@@ -1748,17 +1750,17 @@ class TransactionViewSet(viewsets.ModelViewSet):
                         if (old_amount - new_amount) > 0:
                             differnece =  old_amount - new_amount
                             # print("DIFFERNECE :: ", differnece)
-                            updated_amount = transaction.recived_amount - differnece
+                            updated_amount = transaction.recived_or_paid_amount - differnece
                             # print("UPDATED AMOUNT :: ", updated_amount)
-                            transaction.recived_amount = transaction.recived_amount - differnece
+                            transaction.recived_or_paid_amount = transaction.recived_or_paid_amount - differnece
                             transaction.save()
                             
                         if (new_amount - old_amount) > 0:
                             differnece =  new_amount - old_amount
                             # print("DIFFERNECE :: ", differnece)
-                            updated_amount = transaction.recived_amount + differnece
+                            updated_amount = transaction.recived_or_paid_amount + differnece
                             # print("UPDATED AMOUNTTTTTT :: ", updated_amount)
-                            transaction.recived_amount = transaction.recived_amount + differnece
+                            transaction.recived_or_paid_amount = transaction.recived_or_paid_amount + differnece
                             transaction.save()
                             
 
@@ -1774,8 +1776,8 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
                     transaction = Transaction.objects.get(id = d_linktransaction.to_transaction_id.id)
                     # print("Transaction :: ", transaction)
-                    # print("RESCIVED AMOUNT :: ", transaction.recived_amount, "TYPE :: ", type(transaction.recived_amount))
-                    transaction.recived_amount = transaction.recived_amount - d_linktransaction.linked_amount
+                    # print("RESCIVED AMOUNT :: ", transaction.recived_or_paid_amount, "TYPE :: ", type(transaction.recived_or_paid_amount))
+                    transaction.recived_or_paid_amount = transaction.recived_or_paid_amount - d_linktransaction.linked_amount
                     transaction.save()
 
                     d_linktransaction.delete()
@@ -1794,7 +1796,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 if balance is None:
                     balance_data = {
                         'staff_id' : staff_id,
-                        'amount' : transaction_data.get('balance_amount')
+                        'amount' : transaction_data.get('total_amount')
                     }
                     print("Balance Data :: ", balance_data)
                     
@@ -1806,7 +1808,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 else:
                     balance_data = {
                         'staff_id' : staff_id,
-                        'amount' : balance.amount + float(transaction_data.get('balance_amount'))
+                        'amount' : balance.amount + float(transaction_data.get('total_amount'))
                     }
                     print("Balance Data :: ", balance_data)
                     balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
@@ -1829,7 +1831,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 if balance is None:
                     balance_data = {
                         'customer_id' : customer_id,
-                        'amount' : transaction_data.get('balance_amount')
+                        'amount' : transaction_data.get('total_amount')
                     }
                     # print("Balance Data :: ", balance_data)
                     balanceSerializer = BalanceSerializer(data=balance_data)
@@ -1840,7 +1842,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 else:
                     balance_data = {
                         'customer_id' : customer_id,
-                        'amount' : balance.amount + float(transaction_data.get('balance_amount'))
+                        'amount' : balance.amount + float(transaction_data.get('total_amount'))
                     }
                     # print("Balance Data :: ", balance_data)
                     balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
