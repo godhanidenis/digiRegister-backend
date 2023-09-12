@@ -101,15 +101,18 @@ class CustomerViewSet(viewsets.ModelViewSet):
 
     def list(self, request):
         querysets = self.filter_queryset(self.get_queryset())
+        paginator = MyPagination()  
+        paginated_queryset = paginator.paginate_queryset(querysets, request)
+
         data = []
-        for queryset in querysets:
+        for queryset in paginated_queryset:
             print("QUERYSET :: ", queryset)
 
             total_amount = Balance.objects.filter(customer_id=queryset.id).aggregate(Sum('amount'))['amount__sum']
             data.append({'customer': CustomerSerializer(queryset).data,
                          'total_amount': total_amount })
         
-        return Response(data)
+        return paginator.get_paginated_response(data)
 
 class InventoryViewSet(viewsets.ModelViewSet):
     queryset = Inventory.objects.all().order_by('-id').distinct()
