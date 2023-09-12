@@ -821,7 +821,10 @@ class QuotationViewSet(viewsets.ModelViewSet):
                 # print("Transaction ID :::", transaction_data['id'])
                 
                 # print("Transaction :::", transaction)
-                transaction_data['is_converted'] = False
+                if convert_status == 'true':
+                    transaction_data['is_converted'] = True
+                else:
+                    transaction_data['is_converted'] = False
                 transaction_data['type'] = 'estimate'
                 t_serializer = TransactionSerializer(transaction, data=transaction_data, partial=True)
                 if t_serializer.is_valid():
