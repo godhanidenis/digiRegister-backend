@@ -99,6 +99,17 @@ class CustomerViewSet(viewsets.ModelViewSet):
         'address':['icontains']
     }
 
+    def list(self, request):
+        querysets = self.filter_queryset(self.get_queryset())
+        data = []
+        for queryset in querysets:
+            print("QUERYSET :: ", queryset)
+
+            total_amount = Balance.objects.filter(customer_id=queryset.id).aggregate(Sum('amount'))['amount__sum']
+            data.append({'customer': CustomerSerializer(queryset).data,
+                         'total_amount': total_amount })
+        
+        return Response(data)
 
 class InventoryViewSet(viewsets.ModelViewSet):
     queryset = Inventory.objects.all().order_by('-id').distinct()
@@ -128,10 +139,15 @@ class StaffViewSet(viewsets.ModelViewSet):
         data = []
         for queryset in querysets:
             q_skills = StaffSkill.objects.filter(staff_id__id=queryset.id)
-            staff = StaffSerializer(queryset)
-            skills = StaffSkillSerializer(q_skills, many=True)
-            data.append({'staff': staff.data, 'skills': skills.data}) 
-        return Response({'data':data})
+            total_amount = Balance.objects.filter(staff_id=queryset.id).aggregate(Sum('amount'))['amount__sum']
+            # staff = StaffSerializer(queryset)
+            # skills = StaffSkillSerializer(q_skills, many=True)
+
+            data.append({'staff': StaffSerializer(queryset).data, 
+                         'skills': StaffSkillSerializer(q_skills, many=True).data,
+                         'total_amount': total_amount}) 
+            
+        return Response(data)
 
     def retrieve(self, request, *args, **kwarge):
         instance = self.get_object()
