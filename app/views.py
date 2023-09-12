@@ -953,7 +953,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                     return Response(copy_transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                 # print("copy_transaction_instance :: ",copy_transaction_instance) 
 
-                advance_amount = transaction.get('recived_or_paid_amount', None)
+                advance_amount = transaction_data.get('recived_or_paid_amount', None)
                 if advance_amount is not None:
                     balance_data = {
                         'customer_id': transaction['customer_id'],
@@ -1276,18 +1276,18 @@ class QuotationViewSet(viewsets.ModelViewSet):
                 else:
                     return Response(t_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
-                advance_amount = transaction.get('recived_or_paid_amount', None)
-                if advance_amount is not None:
-                    balance_data = {
-                        'customer_id': transaction['customer_id'],
-                        'amount': advance_amount
-                    }
+                # advance_amount = transaction_data.get('recived_or_paid_amount', None)
+                # if advance_amount is not None:
+                #     balance_data = {
+                #         'customer_id': transaction['customer_id'],
+                #         'amount': advance_amount
+                #     }
 
-                    balanceSerializer = BalanceSerializer(data=balance_data)
-                    if balanceSerializer.is_valid():
-                        balanceSerializer.save()
-                    else:
-                        return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                #     balanceSerializer = BalanceSerializer(data=balance_data)
+                #     if balanceSerializer.is_valid():
+                #         balanceSerializer.save()
+                #     else:
+                #         return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
             # print("final_exposuredetails_data :: ",final_exposuredetails_data)
             finall_instance = []
