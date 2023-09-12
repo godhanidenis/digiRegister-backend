@@ -956,7 +956,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                 advance_amount = transaction_data.get('recived_or_paid_amount', None)
                 if advance_amount is not None:
                     balance_data = {
-                        'customer_id': transaction['customer_id'],
+                        'customer_id': copy_quotation_instance.customer_id.id,
                         'amount': advance_amount
                     }
 
