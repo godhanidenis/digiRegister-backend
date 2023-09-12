@@ -103,16 +103,14 @@ class CustomerViewSet(viewsets.ModelViewSet):
         querysets = self.filter_queryset(self.get_queryset())
         paginator = MyPagination()  
         paginated_queryset = paginator.paginate_queryset(querysets, request)
-
         data = []
         for queryset in paginated_queryset:
-            print("QUERYSET :: ", queryset)
-
             total_amount = Balance.objects.filter(customer_id=queryset.id).aggregate(Sum('amount'))['amount__sum']
             data.append({'customer': CustomerSerializer(queryset).data,
                          'total_amount': total_amount })
         
         return paginator.get_paginated_response(data)
+
 
 class InventoryViewSet(viewsets.ModelViewSet):
     queryset = Inventory.objects.all().order_by('-id').distinct()
@@ -155,9 +153,7 @@ class StaffViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwarge):
         instance = self.get_object()
         staff_id = instance.id
-
         staffskill = StaffSkill.objects.filter(staff_id=staff_id)
-
         data = {
             "staff_data" : StaffSerializer(instance).data,
             "staffskill_data" : StaffSkillSerializer(staffskill, many=True).data
@@ -1496,7 +1492,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 balance = None
 
             print("BALANCE :: ",balance)
-            print("Amount :: ", balance.amount)
+            # print("Amount :: ", balance.amount)
             if balance is None:
                 balance_data = {
                     'staff_id' : staff_id,
