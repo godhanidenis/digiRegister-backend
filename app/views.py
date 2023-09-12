@@ -37,21 +37,15 @@ class UserViewSet(viewsets.ModelViewSet):
     }
 
     def update(self, request, pk=None, *args, **kwargs):
-        # print(" POST DATA ::", request.data)
         user = User.objects.get(pk=pk)
-        # print("USER ::", user)
         old_pic = f"digi_profile_pic/{os.path.basename(user.profile_pic)}" if user.profile_pic else None
-        # print("OLD PIC URL :: ", old_pic)
 
         if 'password' in request.data:
-            # print("PASSWORD ::", request.data['password'])
-            # user.password = request.data['password']
             user.set_password(request.data['password'])
             user.save()
             request.data.pop('password')
 
         if 'profile_pic' in request.data:
-            # print("::: PROFILE PIC :::")
             bucket_name = config('wasabisys_bucket_name')
             region = config('wasabisys_region')
             s3 = boto3.client('s3',
@@ -72,10 +66,8 @@ class UserViewSet(viewsets.ModelViewSet):
             s3.upload_fileobj(file, bucket_name, file_name)
 
             s3_file_url = f"https://s3.{region}.wasabisys.com/{bucket_name}/{file_name}"
-            # print("S3 File URL :: ",s3_file_url)
             request.data['profile_pic'] = s3_file_url
 
-        # print("UPDATED DATA :: ",request.data)
         serializer = UserSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -122,7 +114,6 @@ class InventoryViewSet(viewsets.ModelViewSet):
 class StaffViewSet(viewsets.ModelViewSet):
     queryset = Staff.objects.all().order_by('-id').distinct()
     serializer_class = StaffSerializer
-    # pagination_class = MyPagination
     filter_backends = [DjangoFilterBackend]
     filterset_fields = {
         'user_id__id':['exact'],
@@ -130,8 +121,6 @@ class StaffViewSet(viewsets.ModelViewSet):
         'mobile_no':['icontains'],
         'email':['icontains'],
         'is_eposure':['exact'],
-        # 'skill_id__id':['exact'],
-        # 'skill_id__inventory_id__name':['icontains'],
     }
 
     def list(self, request):
@@ -146,12 +135,9 @@ class StaffViewSet(viewsets.ModelViewSet):
 
     def retrieve(self, request, *args, **kwarge):
         instance = self.get_object()
-        # print("INSTANCE ::", instance)
         staff_id = instance.id
-        # print("STAFF ID ::", staff_id)
 
         staffskill = StaffSkill.objects.filter(staff_id=staff_id)
-        # print("STAFFskill ::", staffskill)
 
         data = {
             "staff_data" : StaffSerializer(instance).data,
@@ -1596,8 +1582,10 @@ class TransactionViewSet(viewsets.ModelViewSet):
                         else:
                             return Response(o_inventory.errors, status=status.HTTP_400_BAD_REQUEST)
                         
-
-                transaction_data['is_converted'] = True
+                if convert_status == True:
+                    transaction_data['is_converted'] = True
+                else:
+                    transaction_data['is_converted'] = False
                 transaction_data['inventorydescription'] = inventorydescription_ids 
                 transactionSerializer = TransactionSerializer(transaction, data=transaction_data, partial=True)
                 if transactionSerializer.is_valid():
