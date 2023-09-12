@@ -138,13 +138,13 @@ class StaffViewSet(viewsets.ModelViewSet):
         querysets = self.filter_queryset(self.get_queryset())
         data = []
         for queryset in querysets:
-            q_skills = StaffSkill.objects.filter(staff_id__id=queryset.id)
+            # q_skills = StaffSkill.objects.filter(staff_id__id=queryset.id)
             total_amount = Balance.objects.filter(staff_id=queryset.id).aggregate(Sum('amount'))['amount__sum']
             # staff = StaffSerializer(queryset)
             # skills = StaffSkillSerializer(q_skills, many=True)
 
             data.append({'staff': StaffSerializer(queryset).data, 
-                         'skills': StaffSkillSerializer(q_skills, many=True).data,
+                        #  'skills': StaffSkillSerializer(q_skills, many=True).data,
                          'total_amount': total_amount}) 
             
         return Response(data)
