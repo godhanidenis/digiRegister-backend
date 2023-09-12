@@ -9,6 +9,7 @@ from app.models import Transaction
 from app.serializers import TransactionSerializer
 from .models import *
 from .serializers import *
+
 # Create your views here.
 
 class CategoryViewSet(viewsets.ModelViewSet):
@@ -26,26 +27,20 @@ class CategoryViewSet(viewsets.ModelViewSet):
         data = []
         for queryset in querysets:
             total_amount = Expense.objects.filter(category_id__id=queryset.id).aggregate(Sum('amount'))['amount__sum']
-            # print(f"CATEGORY ID::{queryset.id} ---- TOTAL AMOUNT:: {total_amount}")
             category = CategorySerializer(queryset)
-            # q_items = ExpenseItem.objects.filter(category_id__id=queryset.id)
-            # items = ExpenseItemSerializer(q_items, many=True)
             data.append({'category': category.data, 'total_amount':total_amount})
 
         return Response({'data':data}) 
 
     def retrieve(self, request, *args, **kwarge):
         instance = self.get_object()
-        # print("INSTANCE ID :::", instance.id)
         data = {
             "category_data": CategorySerializer(instance).data,
             "category_expense": []
         }
         expenses = Expense.objects.filter(category_id=instance.id)
         for expense in expenses:
-            # print("EXPENSE :::", expense.id)
             transaction = Transaction.objects.get(expense_id__id=expense.id)
-            # print("TRANSACTION :::", transaction)
             expense_data = ExpenseSerializer(expense).data
             transaction_data = TransactionSerializer(transaction).data
 
@@ -63,8 +58,6 @@ class ItemViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = {
         'user_id__id':['exact'],
-        # 'category_id__id':['exact'],
-        # 'category_id__name':['icontains'],
         'name':['icontains'],
         'price':['icontains']
     }
@@ -75,26 +68,20 @@ class ItemViewSet(viewsets.ModelViewSet):
         data = []
         for queryset in querysets:
             total_amount = ExpenseItem.objects.filter(item_id__id=queryset.id).aggregate(Sum('amount'))['amount__sum']
-            # print(f"ITEM ID::{queryset.id} ---- TOTAL AMOUNT:: {total_amount}")
             category = ItemSerializer(queryset)
-            # q_transaction = Transaction.objects.filter(item_id__id=queryset.id)
-            # transaction = TransactionSerializer(q_transaction, many=True)
             data.append({'item': category.data, 'total_amount':total_amount})
 
         return Response({'data':data}) 
 
     def retrieve(self, request, *args, **kwarge):
         instance = self.get_object()
-        # print("INSTANCE ID :::", instance.id)
         data = {
             "item_data": ItemSerializer(instance).data,
             "item_expense": []
         }
         items = ExpenseItem.objects.filter(item_id=instance.id)
         for item in items:
-            # print("ITEM :::", item.expense_id.id)
             transaction = Transaction.objects.get(expense_id__id=item.expense_id.id)
-            # print("TRANSACTION :::", transaction)
             item_data = ExpenseItemSerializer(item).data
             transaction_data = TransactionSerializer(transaction).data
 
@@ -144,19 +131,14 @@ class ExpenseViewSet(viewsets.ModelViewSet):
                          "transaction":t_serializers.data})
 
     def create(self, request, *args, **kwargs):
-        # print("POST DATA ::", request.data)
         expense = request.data['expense_data']
-        # print("EXPENSE ::", expense)
         transaction = request.data['transaction_data']
-        # print("TRANSACTION ::", transaction)
         items = request.data['item_data']
-        # print("ITEMS ::", items)
 
         expenseSerializer = ExpenseSerializer(data=expense)
         if expenseSerializer.is_valid():
             expenseSerializer.save()
         else:
-            # print("Expense Failed to save")
             return Response(expenseSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
         transaction['expense_id'] = expenseSerializer.data['id']
@@ -164,20 +146,16 @@ class ExpenseViewSet(viewsets.ModelViewSet):
         if transactionSerializer.is_valid():
             transactionSerializer.save()
         else:
-            # print("Transaction Failed to save")
             return Response(transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
         item_instances = []
         for item in items:
-            # print("ITEM :::", item)
             item['expense_id'] = expenseSerializer.data['id']
-            # print("CHANGE :::", item)
             expenseitemSerializer = ExpenseItemSerializer(data=item)
             if expenseitemSerializer.is_valid():
                 item_instance = expenseitemSerializer.save()
                 item_instances.append(item_instance)
             else:
-                # print("Item Failed to save")
                 return Response(expenseitemSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({
@@ -188,57 +166,41 @@ class ExpenseViewSet(viewsets.ModelViewSet):
 
     def update(self, request, pk=None, *args, **kwargs):
         expense_data = request.data.get('expense_data', None)
-        # print("EXPENSE ::", expense_data)
         transaction_data = request.data.get('transaction_data', None)
-        # print("TRANSACTION ::", transaction_data)
         items = request.data.get('item_data', None)
-        # print("ITEMS ::", items)
         delete_items = request.data.get('delete_item', None)
-        # print("DELETE ::", delete_items)
-        # print("--------------------------------------")
 
         expense = Expense.objects.get(pk=pk)
-        # print("EXPENSE :::", expense)
         e_serializer = ExpenseSerializer(expense, data=expense_data, partial=True)
         if e_serializer.is_valid():
             e_serializer.save()
         else:
             return Response(e_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
-        # print("--------------------------------------")
         transaction_id = transaction_data['id']
-        # print("TRANSACTION ID :::", transaction_id)
         transaction = Transaction.objects.get(pk=transaction_id)
-        # print("TRANSACTION :::", transaction)
         t_serializer = TransactionSerializer(transaction, data=transaction_data, partial=True)
         if t_serializer.is_valid():
             t_serializer.save()
         else:
             return Response(t_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
-        # print("--------------------------------------")
         if delete_items is not None:
             for delete_item in delete_items:
                 print("ONE ITEM :::", delete_item)
                 d_item = ExpenseItem.objects.get(id=delete_item)
                 d_item.delete()
 
-        # print("--------------------------------------")
         if items is not None:
             for item in items:
-                # print("ONE ITEM ::::", item)
-                # print("ITEM ID ::::", item['id'])
                 if item['id'] == '':
-                    # print(":::: NEW ITEM ::::")
                     item.pop('id')
                     ni_serializer = ExpenseItemSerializer(data=item)
                     if ni_serializer.is_valid():
                         ni_serializer.save()
                     else:
                         return Response(ni_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                    # print("--------------------------------------")
                 else:
-                    # print(":::: OLD ITEM ::::")
                     o_item = ExpenseItem.objects.get(id=item['id'])
                     oi_serializer = ExpenseItemSerializer(o_item, data=item, partial=True)
                     if oi_serializer.is_valid():
@@ -255,8 +217,6 @@ class ExpenseItemViewSet(viewsets.ModelViewSet):
     serializer_class = ExpenseItemSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = {
-        # 'category_id__user_id__id':['exact'],
-        # 'category_id__name':['icontains'],
         'expense_id__id':['exact'],
         'expense_id__date':['exact'],
         'expense_id__amount':['icontains'],
