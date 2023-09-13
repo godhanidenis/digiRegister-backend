@@ -501,6 +501,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                     'total_amount' : i.price,
                     # 'quotation_id':copy_quotation_instance.id,
                     'exposuredetails_id':i.id,
+                    'date': date.today()
                     # 'status' : "",
                 }
                 i_transactionSerializer = TransactionSerializer(data=i_transaction_data)
@@ -513,16 +514,35 @@ class QuotationViewSet(viewsets.ModelViewSet):
 
         advance_amount = transaction.get('recived_or_paid_amount', None)
         if advance_amount is not None:
-            balance_data = {
-                'customer_id': transaction['customer_id'],
-                'amount': advance_amount
-            }
+            try:
+                balance = Balance.objects.get(customer_id=quotation_instance.customer_id.id)
+            except:
+                balance = None
 
-            balanceSerializer = BalanceSerializer(data=balance_data)
-            if balanceSerializer.is_valid():
-                balanceSerializer.save()
+            print("BALANCE :: ",balance)
+
+            if balance is None:
+                balance_data = {
+                    'customer_id' : quotation_instance.customer_id.id,
+                    'amount' : advance_amount
+                }
+                print("Balance Data :: ", balance_data)
+                balanceSerializer = BalanceSerializer(data=balance_data)
+                if balanceSerializer.is_valid():
+                    balanceSerializer.save()
+                else:
+                    return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
             else:
-                return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                balance_data = {
+                    'customer_id' : quotation_instance.customer_id.id,
+                    'amount' : balance.amount + float(advance_amount)
+                }
+                print("Balance Data :: ", balance_data)
+                balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+                if balanceSerializer.is_valid():
+                    balanceSerializer.save()
+                else:
+                    return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({
             "quotation_data":QuotationSerializer(quotation_instance).data,
@@ -958,7 +978,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                 # print("ADD TRANSACTION COPY")
                 transaction_data.pop('id')
                 transaction_data['is_converted'] = True
-                transaction_data['type'] = 'sale'
+                transaction_data['type'] = 'event_sale'
                 transaction_data['quotation_id'] = copy_quotation_instance.id
                 transaction_data['customer_id'] = copy_quotation_instance.customer_id.id
                 # print("Transaction Data :: ", transaction_data)
@@ -1852,8 +1872,27 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     else:
                         return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                 else:
+                    # old_amount = transaction.total_amount
+                    # new_amount = transaction_data.get('total_amount')
+                    # if (old_amount - new_amount) > 0:
+                    #     differnece =  old_amount - new_amount
+                    #     # print("DIFFERNECE :: ", differnece)
+                    #     # updated_amount = transaction.recived_or_paid_amount - differnece
+                    #     # print("UPDATED AMOUNT :: ", updated_amount)
+                    #     amount = balance.amount - differnece
+
+                        
+                    # if (new_amount - old_amount) > 0:
+                    #     differnece =  new_amount - old_amount
+                    #     # print("DIFFERNECE :: ", differnece)
+                    #     # updated_amount = transaction.recived_or_paid_amount + differnece
+                    #     # print("UPDATED AMOUNTTTTTT :: ", updated_amount)
+                    #     amount = balance.amount + differnece
+
+
                     balance_data = {
                         'staff_id' : staff_id,
+                        # 'amount' : balance.amount + float(amount)
                         'amount' : balance.amount + float(transaction_data.get('total_amount'))
                     }
                     print("Balance Data :: ", balance_data)
@@ -1898,6 +1937,10 @@ class TransactionViewSet(viewsets.ModelViewSet):
                         return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                
         return Response(data)
+
+    # def destroy(self, request, pk=None, *args, **kwargs):
+    #     transaction = Transaction.objects.get(pk=pk)
+    #     pass
 
 
 class LinkTransactionViewSet(viewsets.ModelViewSet):
