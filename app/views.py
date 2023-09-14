@@ -1347,6 +1347,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                         'total_amount' : i.price,
                         # 'quotation_id':quotation_instance.id,
                         'exposuredetails_id':i.id,
+                        'date': date.today(),
                         # 'status' : "",
                     }
 
@@ -1468,6 +1469,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         data = {}
         # print("Instance ::", instance)
+        data['transaction_data'] = TransactionSerializer(instance).data
 
         inventory_descriptions = instance.inventorydescription.all()
         # print("Inventory Description IDs :: ",inventory_descriptions)
@@ -1481,8 +1483,21 @@ class TransactionViewSet(viewsets.ModelViewSet):
         if len(linktransaction) != 0:
             data['linktransaction_data'] = LinkTransactionSerializer(linktransaction, many=True).data
 
-        data['transaction_data'] = TransactionSerializer(instance).data
+        exposuredetails_id = instance.exposuredetails_id
+        print("EXPOSURE DETAILS ID :: ", exposuredetails_id)
+        if exposuredetails_id is not None:
+            exposuredetail = ExposureDetails.objects.get(pk=exposuredetails_id.id)
+            print("ExposureDetails :: ", exposuredetail)
+            inventorydetails_id = exposuredetail.inventorydetails_id
+            print("inventorydetails_id :: ", inventorydetails_id)
+            inventorydetails = InventoryDetails.objects.get(pk=inventorydetails_id.id)
+            print("inventorydetails :: ",inventorydetails)
+            eventdetails = exposuredetail.eventdetails.all()
+            print("eventdetails :: ", eventdetails)
 
+            data['exposuredetails'] = ExposureDetailsSerializer(exposuredetail).data
+            data['inventorydetails'] = InventoryDetailsSerializer(inventorydetails).data
+            data['eventdetails'] = EventDetailsSerializer(eventdetails, many=True).data
 
         return Response(data)
 
@@ -1938,10 +1953,121 @@ class TransactionViewSet(viewsets.ModelViewSet):
                
         return Response(data)
 
-    # def destroy(self, request, pk=None, *args, **kwargs):
-    #     transaction = Transaction.objects.get(pk=pk)
-    #     pass
+    def destroy(self, request, pk=None, *args, **kwargs):
+        transaction_object = Transaction.objects.get(pk=pk)
+        print("TRANSACTION :: ",transaction_object)
+        print("TRANSACTION TYPE :: ",transaction_object.type)
 
+        if transaction_object.type == 'estimate':
+            print("ESTIMANT TYPE")
+            quotation_id = transaction_object.quotation_id
+            print("QUOTATION ID :: ",quotation_id)
+            quotation = Quotation.objects.get(pk=quotation_id.id)
+            print("QUOTATION :: ",quotation)
+            quotation.delete()
+            transaction_object.delete()
+
+        if transaction_object.type == 'payment_in':
+            print("PAYMENT IN TYPE")
+            linktrasactions = LinkTransaction.objects.filter(from_transaction_id=pk)
+            print("ALL LINKED TRANSACTION :: ", linktrasactions)
+            for link in linktrasactions:
+                print("SINGLE TRANACTION :: ", link)
+                to_transaction_id = link.to_transaction_id
+                print("TO TRANACTION ID :: ", to_transaction_id)
+                print("LINKED AMOUNT ::", link.linked_amount, "type :: ",type(link.linked_amount))
+                to_transaction = Transaction.objects.get(pk=to_transaction_id.id)
+                print("TO TRANACTION :: ", to_transaction)
+                to_transaction.recived_or_paid_amount = to_transaction.recived_or_paid_amount - link.linked_amount
+                to_transaction.save()
+                transaction_object.delete()
+
+        if transaction_object.type == 'payment_out':
+            print("PAYMENT IN TYPE")
+            linktrasactions = LinkTransaction.objects.filter(from_transaction_id=pk)
+            print("ALL LINKED TRANSACTION :: ", linktrasactions)
+            for link in linktrasactions:
+                print("SINGLE TRANACTION :: ", link)
+                to_transaction_id = link.to_transaction_id
+                print("TO TRANACTION ID :: ", to_transaction_id)
+                print("LINKED AMOUNT ::", link.linked_amount)               
+                to_transaction = Transaction.objects.get(pk=to_transaction_id.id)
+                print("TO TRANACTION :: ", to_transaction)
+                to_transaction.recived_or_paid_amount = to_transaction.recived_or_paid_amount - link.linked_amount
+                to_transaction.save()
+                transaction_object.delete()
+
+        if transaction_object.type == 'sale_order':
+            print("SALE ORDER TYPE")
+            transaction_object.delete()
+
+        if transaction_object.type == 'sale':
+            print("SALE TYPE")
+            linktrasactions = LinkTransaction.objects.filter(to_transaction_id=pk)
+            print("ALL LINKED TRANSACTION :: ", linktrasactions)
+            for link in linktrasactions:
+                print("SINGLE TRANACTION :: ", link)
+                from_transaction_id = link.from_transaction_id
+                print("FROM TRANACTION ID :: ", from_transaction_id)
+                print("LINKED AMOUNT ::", link.linked_amount)
+                from_transaction = Transaction.objects.get(pk=from_transaction_id.id)
+                print("TO TRANACTION :: ", from_transaction)
+                from_transaction.used_amount = from_transaction.used_amount - link.linked_amount
+                from_transaction.save()
+                transaction_object.delete()
+
+        if transaction_object.type == 'purchase_order':
+            print("PURCHASE ORDER TYPE")
+            transaction_object.delete()
+
+        if transaction_object.type == 'purchase':
+            print("PURCHASE TYPE")
+            linktrasactions = LinkTransaction.objects.filter(to_transaction_id=pk)
+            print("ALL LINKED TRANSACTION :: ", linktrasactions)
+            for link in linktrasactions:
+                print("SINGLE TRANACTION :: ", link)
+                from_transaction_id = link.from_transaction_id
+                print("FROM TRANACTION ID :: ", from_transaction_id)
+                print("LINKED AMOUNT ::", link.linked_amount)
+                from_transaction = Transaction.objects.get(pk=from_transaction_id.id)
+                print("TO TRANACTION :: ", from_transaction)
+                from_transaction.used_amount = from_transaction.used_amount - link.linked_amount
+                from_transaction.save()
+                transaction_object.delete()
+
+        if transaction_object.type == 'event_purchase':
+            print("EVENT PURCHASE TYPE")
+            linktrasactions = LinkTransaction.objects.filter(to_transaction_id=pk)
+            print("ALL LINKED TRANSACTION :: ", linktrasactions)
+            for link in linktrasactions:
+                print("SINGLE TRANACTION :: ", link)
+                from_transaction_id = link.from_transaction_id
+                print("FROM TRANACTION ID :: ", from_transaction_id)
+                print("LINKED AMOUNT ::", link.linked_amount)
+                from_transaction = Transaction.objects.get(pk=from_transaction_id.id)
+                print("TO TRANACTION :: ", from_transaction)
+                from_transaction.used_amount = from_transaction.used_amount - link.linked_amount
+                from_transaction.save()
+                transaction_object.delete()
+
+        staff_id = transaction_object.staff_id
+        print("STAFF ID :: ",staff_id)
+        if staff_id is not None:
+            balance = Balance.objects.get(staff_id=staff_id)
+            print("BALANCE :: ",balance)
+            balance.amount = balance.amount - transaction_object.total_amount
+            balance.save()
+
+        customer_id = transaction_object.customer_id
+        print("CUSTOMER ID :: ",customer_id)
+        if customer_id is not None:
+            balance = Balance.objects.get(customer_id=customer_id)
+            print("BALANCE :: ",balance)
+            balance.amount = balance.amount - transaction_object.total_amount
+            balance.save()
+
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 class LinkTransactionViewSet(viewsets.ModelViewSet):
     queryset = LinkTransaction.objects.all().order_by('-id').distinct()
