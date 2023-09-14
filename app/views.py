@@ -1965,7 +1965,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
             quotation = Quotation.objects.get(pk=quotation_id.id)
             print("QUOTATION :: ",quotation)
             quotation.delete()
-            transaction_object.delete()
+            
 
         if transaction_object.type == 'payment_in':
             print("PAYMENT IN TYPE")
@@ -1980,7 +1980,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 print("TO TRANACTION :: ", to_transaction)
                 to_transaction.recived_or_paid_amount = to_transaction.recived_or_paid_amount - link.linked_amount
                 to_transaction.save()
-                transaction_object.delete()
+                
 
         if transaction_object.type == 'payment_out':
             print("PAYMENT IN TYPE")
@@ -1995,11 +1995,11 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 print("TO TRANACTION :: ", to_transaction)
                 to_transaction.recived_or_paid_amount = to_transaction.recived_or_paid_amount - link.linked_amount
                 to_transaction.save()
-                transaction_object.delete()
+                
 
         if transaction_object.type == 'sale_order':
             print("SALE ORDER TYPE")
-            transaction_object.delete()
+            
 
         if transaction_object.type == 'sale':
             print("SALE TYPE")
@@ -2014,11 +2014,11 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 print("TO TRANACTION :: ", from_transaction)
                 from_transaction.used_amount = from_transaction.used_amount - link.linked_amount
                 from_transaction.save()
-                transaction_object.delete()
+                
 
         if transaction_object.type == 'purchase_order':
             print("PURCHASE ORDER TYPE")
-            transaction_object.delete()
+            
 
         if transaction_object.type == 'purchase':
             print("PURCHASE TYPE")
@@ -2033,7 +2033,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 print("TO TRANACTION :: ", from_transaction)
                 from_transaction.used_amount = from_transaction.used_amount - link.linked_amount
                 from_transaction.save()
-                transaction_object.delete()
+                
 
         if transaction_object.type == 'event_purchase':
             print("EVENT PURCHASE TYPE")
@@ -2048,26 +2048,36 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 print("TO TRANACTION :: ", from_transaction)
                 from_transaction.used_amount = from_transaction.used_amount - link.linked_amount
                 from_transaction.save()
-                transaction_object.delete()
+                
 
         staff_id = transaction_object.staff_id
         print("STAFF ID :: ",staff_id)
         if staff_id is not None:
-            balance = Balance.objects.get(staff_id=staff_id)
-            print("BALANCE :: ",balance)
-            balance.amount = balance.amount - transaction_object.total_amount
-            balance.save()
+            try:
+                balance = Balance.objects.get(staff_id=staff_id)
+                print("BALANCE :: ",balance)
+            except:
+                balance = None
+            if balance is not None:
+                balance.amount = balance.amount - transaction_object.total_amount
+                balance.save()
 
         customer_id = transaction_object.customer_id
         print("CUSTOMER ID :: ",customer_id)
         if customer_id is not None:
-            balance = Balance.objects.get(customer_id=customer_id)
-            print("BALANCE :: ",balance)
-            balance.amount = balance.amount - transaction_object.total_amount
-            balance.save()
+            try:
+                balance = Balance.objects.get(customer_id=customer_id)
+                print("BALANCE :: ",balance)
+            except:
+                balance = None
+            if balance is not None:
+                balance.amount = balance.amount - transaction_object.total_amount
+                balance.save()
 
+        transaction_object.delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 class LinkTransactionViewSet(viewsets.ModelViewSet):
     queryset = LinkTransaction.objects.all().order_by('-id').distinct()
