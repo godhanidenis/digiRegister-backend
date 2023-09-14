@@ -317,12 +317,12 @@ class QuotationViewSet(viewsets.ModelViewSet):
             }
 
             eventdetails = EventDetails.objects.filter(eventday_id=eventday.id)
-            print("EventDetails :: ", eventdetails)
+            # print("EventDetails :: ", eventdetails)
             for eventdetail in eventdetails:
                 eventday_data["event_details"].append(EventDetailsSerializer(eventdetail).data)
 
             inventorydetails = InventoryDetails.objects.filter(eventday_id = eventday.id)
-            print("inventorydetails :: ",inventorydetails)
+            # print("inventorydetails :: ",inventorydetails)
             
             for inventorydetail in inventorydetails:
                 exposuredetails = ExposureDetails.objects.filter(inventorydetails_id=inventorydetail.id)
@@ -452,14 +452,14 @@ class QuotationViewSet(viewsets.ModelViewSet):
                                     if event_id == int(allocation):
                                         evnetdetials.append(single_eventdetails.id)
 
-                            print("Event Detail List ::", evnetdetials)
+                            # print("Event Detail List ::", evnetdetials)
                             exposuredetails_data = {
                                 'staff_id':exposuredetail['staff_id'],
                                 'price':exposuredetail['price'],
                                 'eventdetails':evnetdetials,
                                 'inventorydetails_id':inventorydetails_instance.id
                             }
-                            print("ExposureDetails Data ::", exposuredetails_data)
+                            # print("ExposureDetails Data ::", exposuredetails_data)
                             exposuredetailsSerializer = ExposureDetailsSerializer(data=exposuredetails_data)
                             if exposuredetailsSerializer.is_valid():
                                 exposuredetails_instance = exposuredetailsSerializer.save()
@@ -519,14 +519,14 @@ class QuotationViewSet(viewsets.ModelViewSet):
             except:
                 balance = None
 
-            print("BALANCE :: ",balance)
+            # print("BALANCE :: ",balance)
 
             if balance is None:
                 balance_data = {
                     'customer_id' : quotation_instance.customer_id.id,
                     'amount' : advance_amount
                 }
-                print("Balance Data :: ", balance_data)
+                # print("Balance Data :: ", balance_data)
                 balanceSerializer = BalanceSerializer(data=balance_data)
                 if balanceSerializer.is_valid():
                     balanceSerializer.save()
@@ -537,7 +537,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                     'customer_id' : quotation_instance.customer_id.id,
                     'amount' : balance.amount + float(advance_amount)
                 }
-                print("Balance Data :: ", balance_data)
+                # print("Balance Data :: ", balance_data)
                 balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
                 if balanceSerializer.is_valid():
                     balanceSerializer.save()
@@ -991,16 +991,36 @@ class QuotationViewSet(viewsets.ModelViewSet):
 
                 advance_amount = transaction_data.get('recived_or_paid_amount', None)
                 if advance_amount is not None:
-                    balance_data = {
-                        'customer_id': copy_quotation_instance.customer_id.id,
-                        'amount': advance_amount
-                    }
+                    try:
+                        balance = Balance.objects.get(customer_id=copy_quotation_instance.customer_id.id)
+                    except:
+                        balance = None
 
-                    balanceSerializer = BalanceSerializer(data=balance_data)
-                    if balanceSerializer.is_valid():
-                        balanceSerializer.save()
+                    # print("BALANCE :: ",balance)
+
+                    if balance is None:
+                        balance_data = {
+                            'customer_id' : copy_quotation_instance.customer_id.id,
+                            'amount' : advance_amount
+                        }
+                        # print("Balance Data :: ", balance_data)
+                        balanceSerializer = BalanceSerializer(data=balance_data)
+                        if balanceSerializer.is_valid():
+                            balanceSerializer.save()
+                        else:
+                            return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                     else:
-                        return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                        balance_data = {
+                            'customer_id' : copy_quotation_instance.customer_id.id,
+                            'amount' : balance.amount + float(advance_amount)
+                        }
+                        # print("Balance Data :: ", balance_data)
+                        balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+                        if balanceSerializer.is_valid():
+                            balanceSerializer.save()
+                        else:
+                            return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
                 
                 ### ADD BILL FOR EXOISURE ###
                 # print("copy_final_exposuredetails_data :: ",copy_final_exposuredetails_data)
@@ -1312,18 +1332,37 @@ class QuotationViewSet(viewsets.ModelViewSet):
                 else:
                     return Response(t_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
-                # advance_amount = transaction_data.get('recived_or_paid_amount', None)
-                # if advance_amount is not None:
-                #     balance_data = {
-                #         'customer_id': transaction['customer_id'],
-                #         'amount': advance_amount
-                #     }
+                if advance_amount is not None:
+                    try:
+                        balance = Balance.objects.get(customer_id=quotation_instance.customer_id.id)
+                    except:
+                        balance = None
 
-                #     balanceSerializer = BalanceSerializer(data=balance_data)
-                #     if balanceSerializer.is_valid():
-                #         balanceSerializer.save()
-                #     else:
-                #         return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    # print("BALANCE :: ",balance)
+
+                    if balance is None:
+                        balance_data = {
+                            'customer_id' : quotation_instance.customer_id.id,
+                            'amount' : advance_amount
+                        }
+                        # print("Balance Data :: ", balance_data)
+                        balanceSerializer = BalanceSerializer(data=balance_data)
+                        if balanceSerializer.is_valid():
+                            balanceSerializer.save()
+                        else:
+                            return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    else:
+                        balance_data = {
+                            'customer_id' : quotation_instance.customer_id.id,
+                            'amount' : balance.amount + float(advance_amount)
+                        }
+                        # print("Balance Data :: ", balance_data)
+                        balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+                        if balanceSerializer.is_valid():
+                            balanceSerializer.save()
+                        else:
+                            return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
             # print("final_exposuredetails_data :: ",final_exposuredetails_data)
             finall_instance = []
@@ -1484,16 +1523,16 @@ class TransactionViewSet(viewsets.ModelViewSet):
             data['linktransaction_data'] = LinkTransactionSerializer(linktransaction, many=True).data
 
         exposuredetails_id = instance.exposuredetails_id
-        print("EXPOSURE DETAILS ID :: ", exposuredetails_id)
+        # print("EXPOSURE DETAILS ID :: ", exposuredetails_id)
         if exposuredetails_id is not None:
             exposuredetail = ExposureDetails.objects.get(pk=exposuredetails_id.id)
-            print("ExposureDetails :: ", exposuredetail)
+            # print("ExposureDetails :: ", exposuredetail)
             inventorydetails_id = exposuredetail.inventorydetails_id
-            print("inventorydetails_id :: ", inventorydetails_id)
+            # print("inventorydetails_id :: ", inventorydetails_id)
             inventorydetails = InventoryDetails.objects.get(pk=inventorydetails_id.id)
-            print("inventorydetails :: ",inventorydetails)
+            # print("inventorydetails :: ",inventorydetails)
             eventdetails = exposuredetail.eventdetails.all()
-            print("eventdetails :: ", eventdetails)
+            # print("eventdetails :: ", eventdetails)
 
             data['exposuredetails'] = ExposureDetailsSerializer(exposuredetail).data
             data['inventorydetails'] = InventoryDetailsSerializer(inventorydetails).data
@@ -1521,20 +1560,20 @@ class TransactionViewSet(viewsets.ModelViewSet):
         staff_id = transaction_data.get('staff_id', None)
         # print("STAFF ID :: ",staff_id)
         if staff_id is not None:
-            print("ADD BALANCE FOR STAFF")
+            # print("ADD BALANCE FOR STAFF")
             try:
                 balance = Balance.objects.get(staff_id=staff_id)
             except:
                 balance = None
 
-            print("BALANCE :: ",balance)
+            # print("BALANCE :: ",balance)
             # print("Amount :: ", balance.amount)
             if balance is None:
                 balance_data = {
                     'staff_id' : staff_id,
                     'amount' : transaction_data.get('total_amount')
                 }
-                print("Balance Data :: ", balance_data)
+                # print("Balance Data :: ", balance_data)
                 
                 balanceSerializer = BalanceSerializer(data=balance_data)
                 if balanceSerializer.is_valid():
@@ -1546,7 +1585,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     'staff_id' : staff_id,
                     'amount' : balance.amount + float(transaction_data.get('total_amount'))
                 }
-                print("Balance Data :: ", balance_data)
+                # print("Balance Data :: ", balance_data)
                 balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
                 if balanceSerializer.is_valid():
                     balanceSerializer.save()
@@ -1556,20 +1595,20 @@ class TransactionViewSet(viewsets.ModelViewSet):
         customer_id = transaction_data.get('customer_id', None)
         # print("CUSTOMER ID :: ", customer_id)
         if customer_id is not None:
-            print("ADD BALANCE FOR CUSTOMER")
+            # print("ADD BALANCE FOR CUSTOMER")
             try:
                 balance = Balance.objects.get(customer_id=customer_id)
             except:
                 balance = None
 
-            print("BALANCE :: ",balance)
+            # print("BALANCE :: ",balance)
 
             if balance is None:
                 balance_data = {
                     'customer_id' : customer_id,
                     'amount' : transaction_data.get('total_amount')
                 }
-                print("Balance Data :: ", balance_data)
+                # print("Balance Data :: ", balance_data)
                 balanceSerializer = BalanceSerializer(data=balance_data)
                 if balanceSerializer.is_valid():
                     balanceSerializer.save()
@@ -1580,7 +1619,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     'customer_id' : customer_id,
                     'amount' : balance.amount + float(transaction_data.get('total_amount'))
                 }
-                print("Balance Data :: ", balance_data)
+                # print("Balance Data :: ", balance_data)
                 balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
                 if balanceSerializer.is_valid():
                     balanceSerializer.save()
@@ -1624,7 +1663,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
             inventory_datas = request.data.get('inventory_data', None)
             # print("Inventory Data :: ",inventory_datas)
             copy_inventory_datas = inventory_datas
-            print("Copy Inventory Data :: ",copy_inventory_datas)
+            # print("Copy Inventory Data :: ",copy_inventory_datas)
             transaction_data = request.data.get('transaction_data')
             # print("Trnasaction Data :: ",transaction_data)
             delete_inventorys = request.data.get('delete_inventory', None)
@@ -1635,9 +1674,9 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
             ### NOT CONVERTED TRANSACTION ###
             if transaction.is_converted == False:
-                print("CONVERTED FALSE")
+                # print("CONVERTED FALSE")
                 convert_status = transaction_data.get('is_converted', None)
-                print("CONVERTED STATUS :: ", convert_status)
+                # print("CONVERTED STATUS :: ", convert_status)
 
                 if delete_inventorys is not None:
                     for delete_inventory in delete_inventorys:
@@ -1685,15 +1724,15 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 else:
                     return Response(transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-                print("convert_status == 'true' ::: ", convert_status == 'true')
+                # print("convert_status == 'true' ::: ", convert_status == 'true')
                 if convert_status is not None:
                     if convert_status == 'true':
-                        print("MAKE A NEW COPY")
+                        # print("MAKE A NEW COPY")
                         copy_all_instance = []
                         copy_inventorydescription_ids = []
 
                         for copy_inventory_data in copy_inventory_datas:
-                            print("Single Inventory Data :: ", inventory_data)
+                            # print("Single Inventory Data :: ", inventory_data)
 
                             copy_inventorySerializer = InventoryDescriptionSerializer(data=copy_inventory_data)
                             if copy_inventorySerializer.is_valid():
@@ -1702,7 +1741,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                             else:
                                 return Response(copy_inventorySerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                             
-                            print("Inventory Description ID ::", copy_inventory_instance.id)
+                            # print("Inventory Description ID ::", copy_inventory_instance.id)
                             copy_inventorydescription_ids.append(copy_inventory_instance.id)
 
                         if transaction_data['type'] == 'purchase_order':
@@ -1711,7 +1750,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                             transaction_data['type'] = 'sale'
                         transaction_data['is_converted'] = True
                         transaction_data['inventorydescription'] = copy_inventorydescription_ids
-                        print("Transaction Data ::", transaction_data)
+                        # print("Transaction Data ::", transaction_data)
                         copy_transactionSerializer = TransactionSerializer(data = transaction_data)
                         if copy_transactionSerializer.is_valid():
                             copy_trnasaction_instance = copy_transactionSerializer.save()
@@ -1879,7 +1918,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                         'staff_id' : staff_id,
                         'amount' : transaction_data.get('total_amount')
                     }
-                    print("Balance Data :: ", balance_data)
+                    # print("Balance Data :: ", balance_data)
                     
                     balanceSerializer = BalanceSerializer(data=balance_data)
                     if balanceSerializer.is_valid():
@@ -1910,7 +1949,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                         # 'amount' : balance.amount + float(amount)
                         'amount' : balance.amount + float(transaction_data.get('total_amount'))
                     }
-                    print("Balance Data :: ", balance_data)
+                    # print("Balance Data :: ", balance_data)
                     balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
                     if balanceSerializer.is_valid():
                         balanceSerializer.save()
@@ -1951,111 +1990,121 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     else:
                         return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                
+        if key == 'exposure_bill_update':
+            transactionSerializer = TransactionSerializer(transaction, data=transaction_data, partial=True)
+            if transactionSerializer.is_valid():
+                transaction_instance = transactionSerializer.save()
+            else:
+                return Response(transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            data['tranasaction_data'] = TransactionSerializer(transaction_instance).data
         return Response(data)
 
     def destroy(self, request, pk=None, *args, **kwargs):
         transaction_object = Transaction.objects.get(pk=pk)
-        print("TRANSACTION :: ",transaction_object)
-        print("TRANSACTION TYPE :: ",transaction_object.type)
+        # print("TRANSACTION :: ",transaction_object)
+        # print("TRANSACTION TYPE :: ",transaction_object.type)
 
         if transaction_object.type == 'estimate':
-            print("ESTIMANT TYPE")
+            # print("ESTIMANT TYPE")
             quotation_id = transaction_object.quotation_id
-            print("QUOTATION ID :: ",quotation_id)
+            # print("QUOTATION ID :: ",quotation_id)
             quotation = Quotation.objects.get(pk=quotation_id.id)
-            print("QUOTATION :: ",quotation)
+            # print("QUOTATION :: ",quotation)
             quotation.delete()
             
 
         if transaction_object.type == 'payment_in':
-            print("PAYMENT IN TYPE")
+            # print("PAYMENT IN TYPE")
             linktrasactions = LinkTransaction.objects.filter(from_transaction_id=pk)
-            print("ALL LINKED TRANSACTION :: ", linktrasactions)
+            # print("ALL LINKED TRANSACTION :: ", linktrasactions)
             for link in linktrasactions:
-                print("SINGLE TRANACTION :: ", link)
+                # print("SINGLE TRANACTION :: ", link)
                 to_transaction_id = link.to_transaction_id
-                print("TO TRANACTION ID :: ", to_transaction_id)
-                print("LINKED AMOUNT ::", link.linked_amount, "type :: ",type(link.linked_amount))
+                # print("TO TRANACTION ID :: ", to_transaction_id)
+                # print("LINKED AMOUNT ::", link.linked_amount, "type :: ",type(link.linked_amount))
                 to_transaction = Transaction.objects.get(pk=to_transaction_id.id)
-                print("TO TRANACTION :: ", to_transaction)
+                # print("TO TRANACTION :: ", to_transaction)
                 to_transaction.recived_or_paid_amount = to_transaction.recived_or_paid_amount - link.linked_amount
                 to_transaction.save()
                 
 
         if transaction_object.type == 'payment_out':
-            print("PAYMENT IN TYPE")
+            # print("PAYMENT IN TYPE")
             linktrasactions = LinkTransaction.objects.filter(from_transaction_id=pk)
-            print("ALL LINKED TRANSACTION :: ", linktrasactions)
+            # print("ALL LINKED TRANSACTION :: ", linktrasactions)
             for link in linktrasactions:
-                print("SINGLE TRANACTION :: ", link)
+                # print("SINGLE TRANACTION :: ", link)
                 to_transaction_id = link.to_transaction_id
-                print("TO TRANACTION ID :: ", to_transaction_id)
-                print("LINKED AMOUNT ::", link.linked_amount)               
+                # print("TO TRANACTION ID :: ", to_transaction_id)
+                # print("LINKED AMOUNT ::", link.linked_amount)               
                 to_transaction = Transaction.objects.get(pk=to_transaction_id.id)
-                print("TO TRANACTION :: ", to_transaction)
+                # print("TO TRANACTION :: ", to_transaction)
                 to_transaction.recived_or_paid_amount = to_transaction.recived_or_paid_amount - link.linked_amount
                 to_transaction.save()
                 
 
         if transaction_object.type == 'sale_order':
-            print("SALE ORDER TYPE")
+            # print("SALE ORDER TYPE")
+            pass
             
 
         if transaction_object.type == 'sale':
-            print("SALE TYPE")
+            # print("SALE TYPE")
             linktrasactions = LinkTransaction.objects.filter(to_transaction_id=pk)
-            print("ALL LINKED TRANSACTION :: ", linktrasactions)
+            # print("ALL LINKED TRANSACTION :: ", linktrasactions)
             for link in linktrasactions:
-                print("SINGLE TRANACTION :: ", link)
+                # print("SINGLE TRANACTION :: ", link)
                 from_transaction_id = link.from_transaction_id
-                print("FROM TRANACTION ID :: ", from_transaction_id)
-                print("LINKED AMOUNT ::", link.linked_amount)
+                # print("FROM TRANACTION ID :: ", from_transaction_id)
+                # print("LINKED AMOUNT ::", link.linked_amount)
                 from_transaction = Transaction.objects.get(pk=from_transaction_id.id)
-                print("TO TRANACTION :: ", from_transaction)
+                # print("TO TRANACTION :: ", from_transaction)
                 from_transaction.used_amount = from_transaction.used_amount - link.linked_amount
                 from_transaction.save()
                 
 
         if transaction_object.type == 'purchase_order':
-            print("PURCHASE ORDER TYPE")
+            # print("PURCHASE ORDER TYPE")
+            pass
             
 
         if transaction_object.type == 'purchase':
-            print("PURCHASE TYPE")
+            # print("PURCHASE TYPE")
             linktrasactions = LinkTransaction.objects.filter(to_transaction_id=pk)
-            print("ALL LINKED TRANSACTION :: ", linktrasactions)
+            # print("ALL LINKED TRANSACTION :: ", linktrasactions)
             for link in linktrasactions:
-                print("SINGLE TRANACTION :: ", link)
+                # print("SINGLE TRANACTION :: ", link)
                 from_transaction_id = link.from_transaction_id
-                print("FROM TRANACTION ID :: ", from_transaction_id)
-                print("LINKED AMOUNT ::", link.linked_amount)
+                # print("FROM TRANACTION ID :: ", from_transaction_id)
+                # print("LINKED AMOUNT ::", link.linked_amount)
                 from_transaction = Transaction.objects.get(pk=from_transaction_id.id)
-                print("TO TRANACTION :: ", from_transaction)
+                # print("TO TRANACTION :: ", from_transaction)
                 from_transaction.used_amount = from_transaction.used_amount - link.linked_amount
                 from_transaction.save()
                 
 
         if transaction_object.type == 'event_purchase':
-            print("EVENT PURCHASE TYPE")
+            # print("EVENT PURCHASE TYPE")
             linktrasactions = LinkTransaction.objects.filter(to_transaction_id=pk)
-            print("ALL LINKED TRANSACTION :: ", linktrasactions)
+            # print("ALL LINKED TRANSACTION :: ", linktrasactions)
             for link in linktrasactions:
-                print("SINGLE TRANACTION :: ", link)
+                # print("SINGLE TRANACTION :: ", link)
                 from_transaction_id = link.from_transaction_id
-                print("FROM TRANACTION ID :: ", from_transaction_id)
-                print("LINKED AMOUNT ::", link.linked_amount)
+                # print("FROM TRANACTION ID :: ", from_transaction_id)
+                # print("LINKED AMOUNT ::", link.linked_amount)
                 from_transaction = Transaction.objects.get(pk=from_transaction_id.id)
-                print("TO TRANACTION :: ", from_transaction)
+                # print("TO TRANACTION :: ", from_transaction)
                 from_transaction.used_amount = from_transaction.used_amount - link.linked_amount
                 from_transaction.save()
                 
 
         staff_id = transaction_object.staff_id
-        print("STAFF ID :: ",staff_id)
+        # print("STAFF ID :: ",staff_id)
         if staff_id is not None:
             try:
                 balance = Balance.objects.get(staff_id=staff_id)
-                print("BALANCE :: ",balance)
+                # print("BALANCE :: ",balance)
             except:
                 balance = None
             if balance is not None:
@@ -2063,11 +2112,11 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 balance.save()
 
         customer_id = transaction_object.customer_id
-        print("CUSTOMER ID :: ",customer_id)
+        # print("CUSTOMER ID :: ",customer_id)
         if customer_id is not None:
             try:
                 balance = Balance.objects.get(customer_id=customer_id)
-                print("BALANCE :: ",balance)
+                # print("BALANCE :: ",balance)
             except:
                 balance = None
             if balance is not None:
@@ -2077,6 +2126,33 @@ class TransactionViewSet(viewsets.ModelViewSet):
         transaction_object.delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['POST'])
+def TrasactionLink(request):
+    if request.method == 'POST':
+        data = {}
+        customer_id = request.data.get('customer_id')
+        print("Customer ID :: ", customer_id)
+        from_transaction_id = request.data.get('from_transaction_id', None)
+        print("From Transaction ID :: ",from_transaction_id)
+        to_transaction_id = request.data.get('to_transaction_id', None)
+        print("To Transaction ID :: ",to_transaction_id)
+
+
+        trasactions = Transaction.objects.filter(customer_id=customer_id)
+        print("")
+        data['trasaction_data'] = TransactionSerializer(trasactions, many=True).data
+
+        if from_transaction_id is not None:
+            linktrasaction = LinkTransaction.objects.filter(from_transaction_id=from_transaction_id)
+            data['linktrasaction'] = LinkTransactionSerializer(linktrasaction, many=True).data
+
+        if to_transaction_id is not None:
+            linktrasaction = LinkTransaction.objects.filter(to_transaction_id=to_transaction_id)
+            data['linktrasaction'] = LinkTransactionSerializer(linktrasaction, many=True).data
+
+        return Response(data)
 
 
 class LinkTransactionViewSet(viewsets.ModelViewSet):
