@@ -1,5 +1,6 @@
 from django.shortcuts import render
-from django.db.models import Sum, Count
+from django.db.models import Sum, Count, Q
+
 from django.http import  HttpResponse
 from django.db.models.functions import TruncMonth, TruncYear
 
@@ -1991,6 +1992,9 @@ class TransactionViewSet(viewsets.ModelViewSet):
                         return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                
         if key == 'exposure_bill_update':
+            transaction_data = request.data.get('transaction_data')
+            # print("Trnasaction Data :: ",transaction_data)
+            
             transactionSerializer = TransactionSerializer(transaction, data=transaction_data, partial=True)
             if transactionSerializer.is_valid():
                 transaction_instance = transactionSerializer.save()
@@ -1998,6 +2002,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 return Response(transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
             data['tranasaction_data'] = TransactionSerializer(transaction_instance).data
+        
         return Response(data)
 
     def destroy(self, request, pk=None, *args, **kwargs):
@@ -2134,15 +2139,20 @@ def TrasactionLink(request):
         data = {}
         customer_id = request.data.get('customer_id')
         print("Customer ID :: ", customer_id)
+        transaction_type = request.data.get('transaction_type', None)
+        print("TYPE :: ", transaction_type)
         from_transaction_id = request.data.get('from_transaction_id', None)
         print("From Transaction ID :: ",from_transaction_id)
         to_transaction_id = request.data.get('to_transaction_id', None)
         print("To Transaction ID :: ",to_transaction_id)
 
-
-        trasactions = Transaction.objects.filter(customer_id=customer_id)
-        print("")
-        data['trasaction_data'] = TransactionSerializer(trasactions, many=True).data
+        if transaction_type is not None:
+            transaction = Transaction.objects.filter(
+                Q(customer_id=customer_id), Q(type__in=transaction_type))
+        else:
+            transaction = Transaction.objects.filter(customer_id=customer_id)
+        print("transaction ::", transaction)
+        data['trasaction_data'] = TransactionSerializer(transaction, many=True).data
 
         if from_transaction_id is not None:
             linktrasaction = LinkTransaction.objects.filter(from_transaction_id=from_transaction_id)
