@@ -2134,7 +2134,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
 
 @api_view(['POST'])
-def TrasactionLink(request):
+def TransactionLink(request):
     if request.method == 'POST':
         data = {}
         customer_id = request.data.get('customer_id', None)
