@@ -1994,7 +1994,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
         if key == 'exposure_bill_update':
             transaction_data = request.data.get('transaction_data')
             # print("Trnasaction Data :: ",transaction_data)
-            
+
             transactionSerializer = TransactionSerializer(transaction, data=transaction_data, partial=True)
             if transactionSerializer.is_valid():
                 transaction_instance = transactionSerializer.save()
@@ -2137,8 +2137,10 @@ class TransactionViewSet(viewsets.ModelViewSet):
 def TrasactionLink(request):
     if request.method == 'POST':
         data = {}
-        customer_id = request.data.get('customer_id')
+        customer_id = request.data.get('customer_id', None)
         print("Customer ID :: ", customer_id)
+        staff_id = request.data.get('staff_id', None)
+        print("Staff ID :: ", staff_id)
         transaction_type = request.data.get('transaction_type', None)
         print("TYPE :: ", transaction_type)
         from_transaction_id = request.data.get('from_transaction_id', None)
@@ -2146,12 +2148,25 @@ def TrasactionLink(request):
         to_transaction_id = request.data.get('to_transaction_id', None)
         print("To Transaction ID :: ",to_transaction_id)
 
-        if transaction_type is not None:
-            transaction = Transaction.objects.filter(
-                Q(customer_id=customer_id), Q(type__in=transaction_type))
-        else:
-            transaction = Transaction.objects.filter(customer_id=customer_id)
-        print("transaction ::", transaction)
+        if customer_id is not None:
+            if transaction_type is not None:
+                transaction = Transaction.objects.filter(
+                                                        Q(customer_id=customer_id), 
+                                                        Q(type__in=transaction_type)
+                                                        )
+            else:
+                transaction = Transaction.objects.filter(customer_id=customer_id)
+                print("transaction ::", transaction)
+
+        if staff_id is not None:
+            if transaction_type is not None:
+                transaction = Transaction.objects.filter(
+                                                        Q(staff_id=staff_id), 
+                                                        Q(type__in=transaction_type)
+                                                        )
+            else:
+                transaction = Transaction.objects.filter(staff_id=staff_id)
+                print("transaction ::", transaction)
         data['trasaction_data'] = TransactionSerializer(transaction, many=True).data
 
         if from_transaction_id is not None:
