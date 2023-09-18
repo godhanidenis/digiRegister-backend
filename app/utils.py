@@ -138,13 +138,13 @@ def link_transaction(transaction_id, linktransaction_data):
                     if (old_amount - new_amount) > 0:
                         differnece =  old_amount - new_amount
                         print("DIFFERNECE :: ", differnece)
-                        updated_amount = transaction.used_amoun - differnece
+                        updated_amount = transaction.used_amount - differnece
                         print("UPDATED AMOUNT :: ", updated_amount)
                         
                     if (new_amount - old_amount) > 0:
                         differnece =  new_amount - old_amount
                         print("DIFFERNECE :: ", differnece)
-                        updated_amount = transaction.used_amoun + differnece
+                        updated_amount = transaction.used_amount + differnece
                         print("UPDATED AMOUNTTTTTT :: ", updated_amount)
 
                     transaction.used_amount = updated_amount
@@ -173,13 +173,13 @@ def link_transaction(transaction_id, linktransaction_data):
                     if (old_amount - new_amount) > 0:
                         differnece =  old_amount - new_amount
                         print("DIFFERNECE :: ", differnece)
-                        updated_amount = transaction.used_amoun - differnece
+                        updated_amount = transaction.used_amount - differnece
                         print("UPDATED AMOUNT :: ", updated_amount)
                         
                     if (new_amount - old_amount) > 0:
                         differnece =  new_amount - old_amount
                         print("DIFFERNECE :: ", differnece)
-                        updated_amount = transaction.used_amoun + differnece
+                        updated_amount = transaction.used_amount + differnece
                         print("UPDATED AMOUNTTTTTT :: ", updated_amount)
 
                     transaction.used_amount = updated_amount
