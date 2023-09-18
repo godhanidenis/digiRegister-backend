@@ -1,7 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import BaseUserManager, AbstractUser
 
-
 # Create your models here.
 
 class UserManager(BaseUserManager):
@@ -203,13 +202,6 @@ class ExposureDetails(models.Model):
     staff_id = models.ForeignKey(Staff, null=True, blank=True, on_delete=models.CASCADE)
     inventorydetails_id = models.ForeignKey(InventoryDetails, null=True, blank=True, on_delete=models.CASCADE)
     price = models.FloatField(max_length=10, default=0.0)
-
-
-# class TransactionDescription(models.Model):
-#     # transaction_id = models.ForeignKey(Transaction, blank=True, null=True, on_delete=models.CASCADE)
-#     inventory_id = models.ForeignKey(Inventory, null=True, blank=True, on_delete=models.CASCADE)
-#     qty = models.IntegerField(default=0)
-#     price = models.FloatField(max_length=10, default=0.0)
 
 
 class InventoryDescription(models.Model):
