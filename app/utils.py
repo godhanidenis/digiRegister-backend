@@ -153,6 +153,7 @@ def link_transaction(transaction_id, linktransaction_data):
             elif from_transaction.type == ('payment_out', 'event_sale', 'sale'):
                 if transaction.type in ('event_purchase', 'purchase'):
                     print("RESCIVED AMOUNT :: ", transaction.recived_or_paid_amount, "TYPE :: ", type(transaction.recived_or_paid_amount))
+                    
                     if (old_amount - new_amount) > 0:
                         differnece =  old_amount - new_amount
                         print("DIFFERNECE :: ", differnece)
