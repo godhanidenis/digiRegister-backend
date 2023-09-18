@@ -1928,6 +1928,8 @@ class TransactionViewSet(viewsets.ModelViewSet):
             # print("Trnasaction Data :: ",transaction_data)
             delete_inventorys = request.data.get('delete_inventory', None)
             # print("Delete Inventory :: ",delete_inventorys)
+            linktransaction_data = request.data.get('linktransaction_data', None)
+            print("Link Transaction Data :: ",linktransaction_data)
 
             all_inventory = []
             inventorydescription_ids = []
@@ -2333,6 +2335,9 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 else:
                     return Response(transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+            print("PKKKK :: ",pk)
+            if linktransaction_data is not None:
+                link_transaction(pk, linktransaction_data)
 
             data['tranasaction_data'] = TransactionSerializer(transaction_instance).data
             data['inventorydescription_data'] = InventoryDescriptionSerializer(all_inventory, many=True).data
