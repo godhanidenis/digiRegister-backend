@@ -62,6 +62,7 @@ def link_transaction(transaction_id, linktransaction_data):
             
 
             if from_transaction.type in ('payment_in' , 'event_purchase' , 'purchase'):
+                
                 if transaction.type in ('event_sale', 'sale'):
                     print("RESCIVED AMOUNT :: ", transaction.recived_or_paid_amount, "TYPE :: ", type(transaction.recived_or_paid_amount))
                     print("AMOUNT :: ", linktransaction.linked_amount, "TYPE :: ", type(linktransaction.linked_amount))
@@ -76,7 +77,8 @@ def link_transaction(transaction_id, linktransaction_data):
                     print("transaction.used_amount ::: ",transaction.used_amount)
                     transaction.save()
             
-            elif from_transaction.type == ('payment_out', 'event_sale', 'sale'):
+            elif from_transaction.type in ('payment_out', 'event_sale', 'sale'):
+
                 if transaction.type in ('event_purchase', 'purchase'):
                     print("RESCIVED AMOUNT :: ", transaction.recived_or_paid_amount, "TYPE :: ", type(transaction.recived_or_paid_amount))
                     print("AMOUNT :: ", linktransaction.linked_amount, "TYPE :: ", type(linktransaction.linked_amount))
@@ -122,6 +124,7 @@ def link_transaction(transaction_id, linktransaction_data):
             
 
             if from_transaction.type in ('payment_in', 'event_purchase', 'purchase'):
+
                 if transaction.type in ('event_sale', 'sale'):
 
                     print("RESCIVED AMOUNT :: ", transaction.recived_or_paid_amount, "TYPE :: ", type(transaction.recived_or_paid_amount))
@@ -160,7 +163,8 @@ def link_transaction(transaction_id, linktransaction_data):
                         transaction.used_amount = transaction.used_amount + differnece
                         transaction.save()
 
-            elif from_transaction.type == ('payment_out', 'event_sale', 'sale'):
+            elif from_transaction.type in ('payment_out', 'event_sale', 'sale'):
+                
                 if transaction.type in ('event_purchase', 'purchase'):
                     print("RESCIVED AMOUNT :: ", transaction.recived_or_paid_amount, "TYPE :: ", type(transaction.recived_or_paid_amount))
                     if (old_amount - new_amount) > 0:
