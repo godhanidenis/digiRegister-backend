@@ -2872,10 +2872,12 @@ def TransactionLink(request):
         print("Staff ID :: ", staff_id)
         transaction_type = request.data.get('transaction_type', None)
         print("TYPE :: ", transaction_type)
-        from_transaction_id = request.data.get('from_transaction_id', None)
-        print("From Transaction ID :: ",from_transaction_id)
-        to_transaction_id = request.data.get('to_transaction_id', None)
-        print("To Transaction ID :: ",to_transaction_id)
+        # from_transaction_id = request.data.get('from_transaction_id', None)
+        # print("From Transaction ID :: ",from_transaction_id)
+        # to_transaction_id = request.data.get('to_transaction_id', None)
+        # print("To Transaction ID :: ",to_transaction_id)
+        transaction_id = request.data.get('transaction_id', None)
+        print("Transaction ID :: ",transaction_id)
 
         if customer_id is not None:
             if transaction_type is not None:
@@ -2896,15 +2898,20 @@ def TransactionLink(request):
             else:
                 transaction = Transaction.objects.filter(staff_id=staff_id)
                 print("transaction ::", transaction)
-        data['trasaction_data'] = TransactionSerializer(transaction, many=True).data
+        data['transaction_data'] = TransactionSerializer(transaction, many=True).data
 
-        if from_transaction_id is not None:
-            linktrasaction = LinkTransaction.objects.filter(from_transaction_id=from_transaction_id)
-            data['linktrasaction'] = LinkTransactionSerializer(linktrasaction, many=True).data
+        # if from_transaction_id is not None:
+        #     linktransaction = LinkTransaction.objects.filter(from_transaction_id=from_transaction_id)
+        #     data['linktransaction'] = LinkTransactionSerializer(linktransaction, many=True).data
 
-        if to_transaction_id is not None:
-            linktrasaction = LinkTransaction.objects.filter(to_transaction_id=to_transaction_id)
-            data['linktrasaction'] = LinkTransactionSerializer(linktrasaction, many=True).data
+        # if to_transaction_id is not None:
+        #     linktransaction = LinkTransaction.objects.filter(to_transaction_id=to_transaction_id)
+        #     data['linktransaction'] = LinkTransactionSerializer(linktransaction, many=True).data
+
+        if transaction_id is not None:
+            linktransaction = LinkTransaction.objects.filter(Q(from_transaction_id=transaction_id) 
+                                                            | Q(to_transaction_id=transaction_id))
+            data['linktransaction'] = LinkTransactionSerializer(linktransaction, many=True).data
 
         return Response(data)
 
