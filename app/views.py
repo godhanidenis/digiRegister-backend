@@ -2350,6 +2350,9 @@ class TransactionViewSet(viewsets.ModelViewSet):
             # delete_linktransaction_datas = request.data.get('delete_linktransaction', None)
             # print("Delete Transaction Data :: ",delete_linktransaction_datas)
 
+            # old_amount = transaction.recived_or_paid_amount
+            # print("OLD AMOUNT :: ",old_amount)
+
             transactionSerializer = TransactionSerializer(transaction, data=transaction_data, partial=True)
             if transactionSerializer.is_valid():
                 transaction_instance = transactionSerializer.save()
@@ -2359,6 +2362,117 @@ class TransactionViewSet(viewsets.ModelViewSet):
             print("PKKKK :: ",pk)
             if linktransaction_data is not None:
                 link_transaction(pk, linktransaction_data)
+
+            # new_amount = float(transaction_data.get('total_amount'))
+
+            # if transaction_data['customer_id'] is not None:
+            #     try:
+            #         balance = Balance.objects.get(customer_id=transaction_data['customer_id'])
+            #     except:
+            #         balance = None
+
+            #     if balance is None:
+            #         balance_data = {
+            #             'customer_id' : transaction_data['customer_id'],
+            #             'amount' : advance_amount
+            #         }
+            #         print("Balance Data :: ", balance_data)
+            #         balanceSerializer = BalanceSerializer(data=balance_data)
+            #         if balanceSerializer.is_valid():
+            #             balanceSerializer.save()
+            #         else:
+            #             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            #     else:
+            #         print("OLD BILL")
+            #         old_amount = transaction.total_amount
+            #         print("OLD AMOUNT :: ", old_amount)
+            #         new_amount = float(advance_amount)
+            #         print("NEW AMOUNT :: ", new_amount)
+            #         print("(old_amount - new_amount) > 0 ::: ", (old_amount - new_amount) > 0)
+            #         if (old_amount - new_amount) > 0:
+            #             differnece =  old_amount - new_amount
+            #             print("DIFFERNECE :: ", differnece)
+            #             updated_amount = transaction.recived_or_paid_amount - differnece
+            #             print("UPDATED AMOUNT :: ", updated_amount)
+            #             amount = balance.amount - differnece
+            #             print("Amount :: ", amount)
+
+            #         print("(new_amount - old_amount) > 0 ::: ", (new_amount - old_amount) > 0)
+            #         if (new_amount - old_amount) > 0:
+            #             differnece =  new_amount - old_amount
+            #             print("DIFFERNECE :: ", differnece)
+            #             updated_amount = transaction.recived_or_paid_amount + differnece
+            #             print("UPDATED AMOUNTTTTTT :: ", updated_amount)
+            #             amount = balance.amount + differnece
+            #             print("Amount :: ", amount)
+
+            #         balance_data = {
+            #             'customer_id' : transaction_data['customer_id'],
+            #             'amount' : amount
+            #             # 'amount' : balance.amount + float(advance_amount)
+            #         }
+            #         print("Balance Data :: ", balance_data)
+            #         balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+            #         if balanceSerializer.is_valid():
+            #             balanceSerializer.save()
+            #         else:
+            #             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            # if transaction_data['staff_id'] is not None:
+            #     try:
+            #         balance = Balance.objects.get(staff_id=transaction_data['staff_id'])
+            #     except:
+            #         balance = None
+
+            #     if balance is None:
+            #         balance_data = {
+            #             'customer_id' : transaction_data['staff_id'],
+            #             'amount' : advance_amount
+            #         }
+            #         print("Balance Data :: ", balance_data)
+            #         balanceSerializer = BalanceSerializer(data=balance_data)
+            #         if balanceSerializer.is_valid():
+            #             balanceSerializer.save()
+            #         else:
+            #             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            #     else:
+            #         print("OLD BILL")
+            #         old_amount = transaction.total_amount
+            #         print("OLD AMOUNT :: ", old_amount)
+            #         new_amount = float(advance_amount)
+            #         print("NEW AMOUNT :: ", new_amount)
+            #         print("(old_amount - new_amount) > 0 ::: ", (old_amount - new_amount) > 0)
+            #         if (old_amount - new_amount) > 0:
+            #             differnece =  old_amount - new_amount
+            #             print("DIFFERNECE :: ", differnece)
+            #             updated_amount = transaction.recived_or_paid_amount - differnece
+            #             print("UPDATED AMOUNT :: ", updated_amount)
+            #             amount = balance.amount - differnece
+            #             print("Amount :: ", amount)
+
+            #         print("(new_amount - old_amount) > 0 ::: ", (new_amount - old_amount) > 0)
+            #         if (new_amount - old_amount) > 0:
+            #             differnece =  new_amount - old_amount
+            #             print("DIFFERNECE :: ", differnece)
+            #             updated_amount = transaction.recived_or_paid_amount + differnece
+            #             print("UPDATED AMOUNTTTTTT :: ", updated_amount)
+            #             amount = balance.amount + differnece
+            #             print("Amount :: ", amount)
+
+            #         balance_data = {
+            #             'customer_id' : transaction_data['staff_id'],
+            #             'amount' : amount
+            #             # 'amount' : balance.amount + float(advance_amount)
+            #         }
+            #         print("Balance Data :: ", balance_data)
+            #         balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+            #         if balanceSerializer.is_valid():
+            #             balanceSerializer.save()
+            #         else:
+            #             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+                        #############   
+
             # if linktransaction_datas is not None:
             #     all_linktransaction = []
             #     for linktransaction_data in linktransaction_datas:
@@ -2602,29 +2716,29 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 to_transaction.recived_or_paid_amount = to_transaction.recived_or_paid_amount - link.linked_amount
                 to_transaction.save()
             
-            # staff_id = transaction_object.staff_id
-            # # print("STAFF ID :: ",staff_id)
-            # if staff_id is not None:
-            #     try:
-            #         balance = Balance.objects.get(staff_id=staff_id)
-            #         # print("BALANCE :: ",balance)
-            #     except:
-            #         balance = None
-            #     if balance is not None:
-            #         balance.amount = balance.amount + transaction_object.total_amount
-            #         balance.save()
+            staff_id = transaction_object.staff_id
+            # print("STAFF ID :: ",staff_id)
+            if staff_id is not None:
+                try:
+                    balance = Balance.objects.get(staff_id=staff_id)
+                    # print("BALANCE :: ",balance)
+                except:
+                    balance = None
+                if balance is not None:
+                    balance.amount = balance.amount + transaction_object.total_amount
+                    balance.save()
 
-            # customer_id = transaction_object.customer_id
-            # # print("CUSTOMER ID :: ",customer_id)
-            # if customer_id is not None:
-            #     try:
-            #         balance = Balance.objects.get(customer_id=customer_id)
-            #         # print("BALANCE :: ",balance)
-            #     except:
-            #         balance = None
-            #     if balance is not None:
-            #         balance.amount = balance.amount + transaction_object.total_amount
-            #         balance.save()
+            customer_id = transaction_object.customer_id
+            # print("CUSTOMER ID :: ",customer_id)
+            if customer_id is not None:
+                try:
+                    balance = Balance.objects.get(customer_id=customer_id)
+                    # print("BALANCE :: ",balance)
+                except:
+                    balance = None
+                if balance is not None:
+                    balance.amount = balance.amount + transaction_object.total_amount
+                    balance.save()
 
 
         if transaction_object.type == 'payment_out':
@@ -2641,29 +2755,29 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 to_transaction.recived_or_paid_amount = to_transaction.recived_or_paid_amount - link.linked_amount
                 to_transaction.save()
             
-            # staff_id = transaction_object.staff_id
-            # # print("STAFF ID :: ",staff_id)
-            # if staff_id is not None:
-            #     try:
-            #         balance = Balance.objects.get(staff_id=staff_id)
-            #         # print("BALANCE :: ",balance)
-            #     except:
-            #         balance = None
-            #     if balance is not None:
-            #         balance.amount = balance.amount - transaction_object.total_amount
-            #         balance.save()
+            staff_id = transaction_object.staff_id
+            # print("STAFF ID :: ",staff_id)
+            if staff_id is not None:
+                try:
+                    balance = Balance.objects.get(staff_id=staff_id)
+                    # print("BALANCE :: ",balance)
+                except:
+                    balance = None
+                if balance is not None:
+                    balance.amount = balance.amount - transaction_object.total_amount
+                    balance.save()
 
-            # customer_id = transaction_object.customer_id
-            # # print("CUSTOMER ID :: ",customer_id)
-            # if customer_id is not None:
-            #     try:
-            #         balance = Balance.objects.get(customer_id=customer_id)
-            #         # print("BALANCE :: ",balance)
-            #     except:
-            #         balance = None
-            #     if balance is not None:
-            #         balance.amount = balance.amount - transaction_object.total_amount
-            #         balance.save()
+            customer_id = transaction_object.customer_id
+            # print("CUSTOMER ID :: ",customer_id)
+            if customer_id is not None:
+                try:
+                    balance = Balance.objects.get(customer_id=customer_id)
+                    # print("BALANCE :: ",balance)
+                except:
+                    balance = None
+                if balance is not None:
+                    balance.amount = balance.amount - transaction_object.total_amount
+                    balance.save()
 
 
         if transaction_object.type == 'sale_order':
@@ -2685,29 +2799,29 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 from_transaction.used_amount = from_transaction.used_amount - link.linked_amount
                 from_transaction.save()
             
-            # staff_id = transaction_object.staff_id
-            # # print("STAFF ID :: ",staff_id)
-            # if staff_id is not None:
-            #     try:
-            #         balance = Balance.objects.get(staff_id=staff_id)
-            #         # print("BALANCE :: ",balance)
-            #     except:
-            #         balance = None
-            #     if balance is not None:
-            #         balance.amount = balance.amount - transaction_object.total_amount
-            #         balance.save()
+            staff_id = transaction_object.staff_id
+            # print("STAFF ID :: ",staff_id)
+            if staff_id is not None:
+                try:
+                    balance = Balance.objects.get(staff_id=staff_id)
+                    # print("BALANCE :: ",balance)
+                except:
+                    balance = None
+                if balance is not None:
+                    balance.amount = balance.amount - transaction_object.total_amount
+                    balance.save()
 
-            # customer_id = transaction_object.customer_id
-            # # print("CUSTOMER ID :: ",customer_id)
-            # if customer_id is not None:
-            #     try:
-            #         balance = Balance.objects.get(customer_id=customer_id)
-            #         # print("BALANCE :: ",balance)
-            #     except:
-            #         balance = None
-            #     if balance is not None:
-            #         balance.amount = balance.amount - transaction_object.total_amount
-            #         balance.save()
+            customer_id = transaction_object.customer_id
+            # print("CUSTOMER ID :: ",customer_id)
+            if customer_id is not None:
+                try:
+                    balance = Balance.objects.get(customer_id=customer_id)
+                    # print("BALANCE :: ",balance)
+                except:
+                    balance = None
+                if balance is not None:
+                    balance.amount = balance.amount - transaction_object.total_amount
+                    balance.save()
         
         
         if transaction_object.type == 'event_sale':
@@ -2724,29 +2838,29 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 from_transaction.used_amount = from_transaction.used_amount - link.linked_amount
                 from_transaction.save()
             
-            # staff_id = transaction_object.staff_id
-            # # print("STAFF ID :: ",staff_id)
-            # if staff_id is not None:
-            #     try:
-            #         balance = Balance.objects.get(staff_id=staff_id)
-            #         # print("BALANCE :: ",balance)
-            #     except:
-            #         balance = None
-            #     if balance is not None:
-            #         balance.amount = balance.amount - transaction_object.total_amount
-            #         balance.save()
+            staff_id = transaction_object.staff_id
+            # print("STAFF ID :: ",staff_id)
+            if staff_id is not None:
+                try:
+                    balance = Balance.objects.get(staff_id=staff_id)
+                    # print("BALANCE :: ",balance)
+                except:
+                    balance = None
+                if balance is not None:
+                    balance.amount = balance.amount - transaction_object.total_amount
+                    balance.save()
 
-            # customer_id = transaction_object.customer_id
-            # # print("CUSTOMER ID :: ",customer_id)
-            # if customer_id is not None:
-            #     try:
-            #         balance = Balance.objects.get(customer_id=customer_id)
-            #         # print("BALANCE :: ",balance)
-            #     except:
-            #         balance = None
-            #     if balance is not None:
-            #         balance.amount = balance.amount - transaction_object.total_amount
-            #         balance.save()
+            customer_id = transaction_object.customer_id
+            # print("CUSTOMER ID :: ",customer_id)
+            if customer_id is not None:
+                try:
+                    balance = Balance.objects.get(customer_id=customer_id)
+                    # print("BALANCE :: ",balance)
+                except:
+                    balance = None
+                if balance is not None:
+                    balance.amount = balance.amount - transaction_object.total_amount
+                    balance.save()
 
 
         if transaction_object.type == 'purchase_order':
@@ -2768,29 +2882,29 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 from_transaction.used_amount = from_transaction.used_amount - link.linked_amount
                 from_transaction.save()
             
-            # staff_id = transaction_object.staff_id
-            # # print("STAFF ID :: ",staff_id)
-            # if staff_id is not None:
-            #     try:
-            #         balance = Balance.objects.get(staff_id=staff_id)
-            #         # print("BALANCE :: ",balance)
-            #     except:
-            #         balance = None
-            #     if balance is not None:
-            #         balance.amount = balance.amount + transaction_object.total_amount
-            #         balance.save()
+            staff_id = transaction_object.staff_id
+            # print("STAFF ID :: ",staff_id)
+            if staff_id is not None:
+                try:
+                    balance = Balance.objects.get(staff_id=staff_id)
+                    # print("BALANCE :: ",balance)
+                except:
+                    balance = None
+                if balance is not None:
+                    balance.amount = balance.amount + transaction_object.total_amount
+                    balance.save()
 
-            # customer_id = transaction_object.customer_id
-            # # print("CUSTOMER ID :: ",customer_id)
-            # if customer_id is not None:
-            #     try:
-            #         balance = Balance.objects.get(customer_id=customer_id)
-            #         # print("BALANCE :: ",balance)
-            #     except:
-            #         balance = None
-            #     if balance is not None:
-            #         balance.amount = balance.amount + transaction_object.total_amount
-            #         balance.save()
+            customer_id = transaction_object.customer_id
+            # print("CUSTOMER ID :: ",customer_id)
+            if customer_id is not None:
+                try:
+                    balance = Balance.objects.get(customer_id=customer_id)
+                    # print("BALANCE :: ",balance)
+                except:
+                    balance = None
+                if balance is not None:
+                    balance.amount = balance.amount + transaction_object.total_amount
+                    balance.save()
 
 
         if transaction_object.type == 'event_purchase':
@@ -2807,54 +2921,54 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 from_transaction.used_amount = from_transaction.used_amount - link.linked_amount
                 from_transaction.save()
                 
-            # staff_id = transaction_object.staff_id
-            # # print("STAFF ID :: ",staff_id)
-            # if staff_id is not None:
-            #     try:
-            #         balance = Balance.objects.get(staff_id=staff_id)
-            #         # print("BALANCE :: ",balance)
-            #     except:
-            #         balance = None
-            #     if balance is not None:
-            #         balance.amount = balance.amount + transaction_object.total_amount
-            #         balance.save()
+            staff_id = transaction_object.staff_id
+            # print("STAFF ID :: ",staff_id)
+            if staff_id is not None:
+                try:
+                    balance = Balance.objects.get(staff_id=staff_id)
+                    # print("BALANCE :: ",balance)
+                except:
+                    balance = None
+                if balance is not None:
+                    balance.amount = balance.amount + transaction_object.total_amount
+                    balance.save()
 
-            # customer_id = transaction_object.customer_id
-            # # print("CUSTOMER ID :: ",customer_id)
-            # if customer_id is not None:
-            #     try:
-            #         balance = Balance.objects.get(customer_id=customer_id)
-            #         # print("BALANCE :: ",balance)
-            #     except:
-            #         balance = None
-            #     if balance is not None:
-            #         balance.amount = balance.amount + transaction_object.total_amount
-            #         balance.save()
+            customer_id = transaction_object.customer_id
+            # print("CUSTOMER ID :: ",customer_id)
+            if customer_id is not None:
+                try:
+                    balance = Balance.objects.get(customer_id=customer_id)
+                    # print("BALANCE :: ",balance)
+                except:
+                    balance = None
+                if balance is not None:
+                    balance.amount = balance.amount + transaction_object.total_amount
+                    balance.save()
 
 
-        staff_id = transaction_object.staff_id
-        # print("STAFF ID :: ",staff_id)
-        if staff_id is not None:
-            try:
-                balance = Balance.objects.get(staff_id=staff_id)
-                # print("BALANCE :: ",balance)
-            except:
-                balance = None
-            if balance is not None:
-                balance.amount = balance.amount - transaction_object.total_amount
-                balance.save()
+        # staff_id = transaction_object.staff_id
+        # # print("STAFF ID :: ",staff_id)
+        # if staff_id is not None:
+        #     try:
+        #         balance = Balance.objects.get(staff_id=staff_id)
+        #         # print("BALANCE :: ",balance)
+        #     except:
+        #         balance = None
+        #     if balance is not None:
+        #         balance.amount = balance.amount - transaction_object.total_amount
+        #         balance.save()
 
-        customer_id = transaction_object.customer_id
-        # print("CUSTOMER ID :: ",customer_id)
-        if customer_id is not None:
-            try:
-                balance = Balance.objects.get(customer_id=customer_id)
-                # print("BALANCE :: ",balance)
-            except:
-                balance = None
-            if balance is not None:
-                balance.amount = balance.amount - transaction_object.total_amount
-                balance.save()
+        # customer_id = transaction_object.customer_id
+        # # print("CUSTOMER ID :: ",customer_id)
+        # if customer_id is not None:
+        #     try:
+        #         balance = Balance.objects.get(customer_id=customer_id)
+        #         # print("BALANCE :: ",balance)
+        #     except:
+        #         balance = None
+        #     if balance is not None:
+        #         balance.amount = balance.amount - transaction_object.total_amount
+        #         balance.save()
 
         transaction_object.delete()
 
