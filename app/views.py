@@ -940,7 +940,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                         # print("COPY SINGAL description :::", copy_description)
                         ### FOR INVENTORY DETAILS DATA ###
                         copy_inventorydetails_data = {
-                            'inventory_id':description['inventory_id'],
+                            'inventory_id':copy_description['inventory_id'],
                             'price':copy_description['price'],
                             'qty':copy_description['qty'],
                             'profit':copy_description['profit'],
