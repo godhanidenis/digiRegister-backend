@@ -228,7 +228,7 @@ def link_transaction(transaction_id, linktransaction_data):
                 print("From Transaction ::: ",from_transaction)
                 print("RESCIVED AMOUNT :: ", from_transaction.used_amount, "TYPE :: ", type(from_transaction.used_amount))
                 print("LINKED AMOUNT :: ", d_linktransaction.linked_amount, "TYPE :: ", type(d_linktransaction.linked_amount))
-                from_transaction.used_amount = from_transaction.used_amount - d_linktransaction.linked_amount
+                from_transaction.used_amount = from_transaction.used_amount + d_linktransaction.linked_amount
                 print("from_transaction.used_amount :::",from_transaction.used_amount)
                 from_transaction.save()
 
