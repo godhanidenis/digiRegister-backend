@@ -17,7 +17,7 @@ def convert_time_utc_to_local(timezone, data):
 
 
 
-def link_transaction(transaction_id, linktransaction_data):
+def link_transaction(transaction_id, linktransaction_data, transaction_type=None):
     # print("Transaction ID ::", transaction_id)
     # print("Link Transaction Data ::", linktransaction_data)
     new_linktransactions = linktransaction_data.get('new_linktransaction', None)
@@ -217,11 +217,19 @@ def link_transaction(transaction_id, linktransaction_data):
                 transaction.save()
 
             elif transaction.type in ('payment_in', 'payment_out'):
-                # print("RESCIVED AMOUNT :: ", transaction.used_amount, "TYPE :: ", type(transaction.used_amount))
-                # print("LINKED AMOUNT :: ", d_linktransaction.linked_amount, "TYPE :: ", type(d_linktransaction.linked_amount))
-                transaction.used_amount = transaction.used_amount - d_linktransaction.linked_amount
-                # print("transaction.used_amount :::",transaction.used_amount)
-                transaction.save()
+                if transaction_type is not None:
+                    if transaction.type != transaction_type:
+                        # print("RESCIVED AMOUNT :: ", transaction.used_amount, "TYPE :: ", type(transaction.used_amount))
+                        # print("LINKED AMOUNT :: ", d_linktransaction.linked_amount, "TYPE :: ", type(d_linktransaction.linked_amount))
+                        transaction.used_amount = transaction.used_amount - d_linktransaction.linked_amount
+                        # print("transaction.used_amount :::",transaction.used_amount)
+                        transaction.save()
+                else:
+                    # print("RESCIVED AMOUNT :: ", transaction.used_amount, "TYPE :: ", type(transaction.used_amount))
+                        # print("LINKED AMOUNT :: ", d_linktransaction.linked_amount, "TYPE :: ", type(d_linktransaction.linked_amount))
+                        transaction.used_amount = transaction.used_amount - d_linktransaction.linked_amount
+                        # print("transaction.used_amount :::",transaction.used_amount)
+                        transaction.save()
 
                 from_transaction = Transaction.objects.get(id = d_linktransaction.from_transaction_id.id)
                 # print("From Transaction ::: ",from_transaction)

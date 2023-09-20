@@ -2362,7 +2362,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
             print("PKKKK :: ",pk)
             if linktransaction_data is not None:
                 print("LINK TRASACTION FUNCTION")
-                link_transaction(pk, linktransaction_data)
+                link_transaction(pk, linktransaction_data, transaction.type)
 
             # new_amount = float(transaction_data.get('total_amount'))
 
