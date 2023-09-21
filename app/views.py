@@ -368,13 +368,13 @@ class QuotationViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs): 
         quotation =request.data['quotation_data']
-        # print("quotation ::", quotation)
+        print("quotation ::", quotation)
         datas = request.data['datas']
-        # print("datas ::", datas)
+        print("datas ::", datas)
         transaction = request.data['transaction_data']
-        # print("TRANSACTION :::", transaction)
+        print("TRANSACTION :::", transaction)
         linktransaction_data = request.data.get('linktransaction_data', None)
-        # print("link_transaction_data :: ", linktransaction_data)
+        print("link_transaction_data :: ", linktransaction_data)
 
 
         ### FOR ADD QUOTATION DATA ###
@@ -500,7 +500,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
 
         ### ADD BILL FOR EXOISURE ###
         if transaction['is_converted'] == 'true':
-            # print("final_exposuredetails_data :: ",final_exposuredetails_data)
+            print("final_exposuredetails_data :: ",final_exposuredetails_data)
             finall_instance = []
             for i in final_exposuredetails_data:
                 # print("iiiii :: ",i)
@@ -531,13 +531,13 @@ class QuotationViewSet(viewsets.ModelViewSet):
                     balance = Balance.objects.get(staff_id=t_instance.staff_id.id)
                 except:
                     balance = None
-                # print("BALANCE :: ",balance)
+                print("BALANCE :: ",balance)
                 if balance is None:
                     balance_data = {
                         'staff_id' : t_instance.staff_id.id,
                         'amount' : t_instance.total_amount
                     }
-                    # print("Balance Data :: ", balance_data)
+                    print("Balance Data :: ", balance_data)
                     balanceSerializer = BalanceSerializer(data=balance_data)
                     if balanceSerializer.is_valid():
                         balanceSerializer.save()
@@ -548,7 +548,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                         'staff_id' : t_instance.staff_id.id,
                         'amount' : balance.amount - float(t_instance.total_amount)
                     }
-                    # print("Balance Data :: ", balance_data)
+                    print("Balance Data :: ", balance_data)
                     balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
                     if balanceSerializer.is_valid():
                         balanceSerializer.save()
@@ -558,20 +558,22 @@ class QuotationViewSet(viewsets.ModelViewSet):
 
             # print("FINAL INSTANCE :: ", finall_instance)
 
-        ## ADD AMOUNT IN CUSTOMER BALANCE 
+        ## ADD AMOUNT IN CUSTOMER BALANCE
         if transaction['is_converted'] == 'true':
+            print("ADD AMOUNT IN CUSTOMER BALANCE")
             total_amount = transaction.get('total_amount', None)
+            print("TOTAL AMOUNT ::: ",total_amount)
             try:
                 balance = Balance.objects.get(customer_id=transaction.customer_id.id)
             except:
                 balance = None
-            # print("BALANCE :: ",balance)
+            print("BALANCE :: ",balance)
             if balance is None:
                 balance_data = {
                     'customer_id' : transaction.customer_id.id,
                     'amount' : total_amount
                 }
-                # print("Balance Data :: ", balance_data)
+                print("Balance Data :: ", balance_data)
                 balanceSerializer = BalanceSerializer(data=balance_data)
                 if balanceSerializer.is_valid():
                     balanceSerializer.save()
@@ -582,7 +584,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                     'customer_id' : quotation_instance.customer_id.id,
                     'amount' : balance.amount + float(total_amount)
                 }
-                # print("Balance Data :: ", balance_data)
+                print("Balance Data :: ", balance_data)
                 balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
                 if balanceSerializer.is_valid():
                     balanceSerializer.save()
@@ -590,20 +592,21 @@ class QuotationViewSet(viewsets.ModelViewSet):
                     return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         advance_amount = transaction.get('recived_or_paid_amount', None)
+        print("ADVANCE AMOUNT ::: ", advance_amount)
         if advance_amount is not None:
             try:
                 balance = Balance.objects.get(customer_id=quotation_instance.customer_id.id)
             except:
                 balance = None
 
-            # print("BALANCE :: ",balance)
+            print("BALANCE :: ",balance)
 
             if balance is None:
                 balance_data = {
                     'customer_id' : quotation_instance.customer_id.id,
                     'amount' : advance_amount
                 }
-                # print("Balance Data :: ", balance_data)
+                print("Balance Data :: ", balance_data)
                 balanceSerializer = BalanceSerializer(data=balance_data)
                 if balanceSerializer.is_valid():
                     balanceSerializer.save()
@@ -614,7 +617,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                     'customer_id' : quotation_instance.customer_id.id,
                     'amount' : balance.amount - float(advance_amount)
                 }
-                # print("Balance Data :: ", balance_data)
+                print("Balance Data :: ", balance_data)
                 balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
                 if balanceSerializer.is_valid():
                     balanceSerializer.save()
@@ -1728,7 +1731,6 @@ class QuotationViewSet(viewsets.ModelViewSet):
                         else:
                             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
                 else:
                     # print("NEW BILL")
                     i_transactionSerializer = TransactionSerializer(data=i_transaction_data)
@@ -1836,7 +1838,7 @@ class InventoryDescriptionViewSet(viewsets.ModelViewSet):
         if advance_amount is not None:
 
             if transaction_instance.type == 'sale':
-                if transaction_data['customer_id'] is not None:
+                if transaction_data.get('customer_id', None) is not None:
                     try:
                         balance = Balance.objects.get(customer_id=transaction_data['customer_id'])
                     except:
@@ -1866,7 +1868,7 @@ class InventoryDescriptionViewSet(viewsets.ModelViewSet):
                         else:
                             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-                if transaction_data['staff_id'] is not None:
+                if transaction_data.get('staff_id', None) is not None:
                     try:
                         balance = Balance.objects.get(staff_id=transaction_data['staff_id'])
                     except:
@@ -1897,7 +1899,7 @@ class InventoryDescriptionViewSet(viewsets.ModelViewSet):
                             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
             if transaction_instance.type == 'purchase':
-                if transaction_data['customer_id'] is not None:
+                if transaction_data.get('customer_id', None) is not None:
                     try:
                         balance = Balance.objects.get(customer_id=transaction_data['customer_id'])
                     except:
@@ -1927,7 +1929,7 @@ class InventoryDescriptionViewSet(viewsets.ModelViewSet):
                         else:
                             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-                if transaction_data['staff_id'] is not None:
+                if transaction_data.get('staff_id', None) is not None:
                     try:
                         balance = Balance.objects.get(staff_id=transaction_data['staff_id'])
                     except:
@@ -2082,7 +2084,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
             link_transaction(transaction_instance.id, linktransaction_data)
 
         if transaction_instance.type == 'payment_out':
-            if transaction_data['customer_id'] is not None:
+            if transaction_data.get('customer_id', None) is not None:
                 try:
                     balance = Balance.objects.get(customer_id=transaction_data['customer_id'])
                 except:
@@ -2112,7 +2114,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     else:
                         return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            if transaction_data['staff_id'] is not None:
+            if transaction_data.get('staff_id', None) is not None:
                 try:
                     balance = Balance.objects.get(staff_id=transaction_data['staff_id'])
                 except:
@@ -2143,7 +2145,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                         return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         if transaction_instance.type == 'payment_in':
-            if transaction_data['customer_id'] is not None:
+            if transaction_data.get('customer_id', None) is not None:
                 try:
                     balance = Balance.objects.get(customer_id=transaction_data['customer_id'])
                 except:
@@ -2173,7 +2175,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     else:
                         return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            if transaction_data['staff_id'] is not None:
+            if transaction_data.get('staff_id', None) is not None:
                 try:
                     balance = Balance.objects.get(staff_id=transaction_data['staff_id'])
                 except:
@@ -2557,7 +2559,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                         if advance_amount is not None:
 
                             if transaction_data['type'] == 'sale':
-                                if transaction_data['customer_id'] is not None:
+                                if transaction_data.get('customer_id', None) is not None:
                                     try:
                                         balance = Balance.objects.get(customer_id=transaction_data['customer_id'])
                                     except:
@@ -2610,7 +2612,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                                         else:
                                             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-                                if transaction_data['staff_id'] is not None:
+                                if transaction_data.get('staff_id', None) is not None:
                                     try:
                                         balance = Balance.objects.get(staff_id=transaction_data['staff_id'])
                                     except:
@@ -2664,7 +2666,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                                             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                             
                             if transaction_data['type'] == 'purchase': 
-                                if transaction_data['customer_id'] is not None:
+                                if transaction_data.get('customer_id', None) is not None:
                                     try:
                                         balance = Balance.objects.get(customer_id=transaction_data['customer_id'])
                                     except:
@@ -2717,7 +2719,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                                         else:
                                             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-                                if transaction_data['staff_id'] is not None:
+                                if transaction_data.get('staff_id', None) is not None:
                                     try:
                                         balance = Balance.objects.get(staff_id=transaction_data['staff_id'])
                                     except:
@@ -2873,7 +2875,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 if advance_amount is not None:
 
                     if transaction_data['type'] == 'sale':
-                        if transaction_data['customer_id'] is not None:
+                        if transaction_data.get('customer_id', None) is not None:
                             try:
                                 balance = Balance.objects.get(customer_id=transaction_data['customer_id'])
                             except:
@@ -2926,7 +2928,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                                 else:
                                     return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-                        if transaction_data['staff_id'] is not None:
+                        if transaction_data.get('staff_id', None) is not None:
                             try:
                                 balance = Balance.objects.get(staff_id=transaction_data['staff_id'])
                             except:
@@ -2980,7 +2982,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                                     return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                     
                     if transaction_data['type'] == 'purchase': 
-                        if transaction_data['customer_id'] is not None:
+                        if transaction_data.get('customer_id', None) is not None:
                             try:
                                 balance = Balance.objects.get(customer_id=transaction_data['customer_id'])
                             except:
@@ -3033,7 +3035,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                                 else:
                                     return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-                        if transaction_data['staff_id'] is not None:
+                        if transaction_data.get('staff_id', None) is not None:
                             try:
                                 balance = Balance.objects.get(staff_id=transaction_data['staff_id'])
                             except:
@@ -3121,7 +3123,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
             if transaction.type == 'payment_in':
 
-                if transaction_data['customer_id'] is not None:
+                if transaction_data.get('customer_id', None) is not None:
                     try:
                         balance = Balance.objects.get(customer_id=transaction_data['customer_id'])
                     except:
@@ -3174,7 +3176,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                         else:
                             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-                if transaction_data['staff_id'] is not None:
+                if transaction_data.get('staff_id', None) is not None:
                     try:
                         balance = Balance.objects.get(staff_id=transaction_data['staff_id'])
                     except:
@@ -3229,7 +3231,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
             elif transaction.type == 'payment_out':
 
-                if transaction_data['customer_id'] is not None:
+                if transaction_data.get('customer_id', None) is not None:
                     try:
                         balance = Balance.objects.get(customer_id=transaction_data['customer_id'])
                     except:
@@ -3282,7 +3284,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                         else:
                             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-                if transaction_data['staff_id'] is not None:
+                if transaction_data.get('staff_id', None) is not None:
                     try:
                         balance = Balance.objects.get(staff_id=transaction_data['staff_id'])
                     except:
@@ -3548,7 +3550,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
             else:
                 return Response(transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
-            if transaction_data['staff_id'] is not None:
+            if transaction_data.get('staff_id', None) is not None:
                 try:
                     balance = Balance.objects.get(staff_id=transaction_data['staff_id'])
                 except:
