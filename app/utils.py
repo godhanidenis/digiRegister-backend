@@ -230,15 +230,17 @@ def link_transaction(transaction_id, linktransaction_data, transaction_type=None
                         transaction.used_amount = transaction.used_amount - d_linktransaction.linked_amount
                         # print("transaction.used_amount :::",transaction.used_amount)
                         transaction.save()
-
+                
                 from_transaction = Transaction.objects.get(id = d_linktransaction.from_transaction_id.id)
-                # print("From Transaction ::: ",from_transaction)
-                # print("FROM TRASACTION TYPE :::", from_transaction.type)
-                # print("RESCIVED AMOUNT :: ", from_transaction.used_amount, "TYPE :: ", type(from_transaction.used_amount))
-                # print("LINKED AMOUNT :: ", d_linktransaction.linked_amount, "TYPE :: ", type(d_linktransaction.linked_amount))
-                from_transaction.used_amount = from_transaction.used_amount - d_linktransaction.linked_amount
-                # print("from_transaction.used_amount :::",from_transaction.used_amount)
-                from_transaction.save()
+                if transaction_type is not None:
+                    if from_transaction.type != transaction_type:
+                        # print("From Transaction ::: ",from_transaction)
+                        # print("FROM TRASACTION TYPE :::", from_transaction.type)
+                        # print("RESCIVED AMOUNT :: ", from_transaction.used_amount, "TYPE :: ", type(from_transaction.used_amount))
+                        # print("LINKED AMOUNT :: ", d_linktransaction.linked_amount, "TYPE :: ", type(d_linktransaction.linked_amount))
+                        from_transaction.used_amount = from_transaction.used_amount - d_linktransaction.linked_amount
+                        # print("from_transaction.used_amount :::",from_transaction.used_amount)
+                        from_transaction.save()
 
             d_linktransaction.delete()
 

@@ -494,6 +494,45 @@ class QuotationViewSet(viewsets.ModelViewSet):
             transaction_instance = transactionSerializer.save()
         else:
             return Response(transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        # if transaction['is_converted'] == 'true':
+        #     print("ADD BALANCE")
+        #     try:
+        #         balance = Balance.objects.get(customer_id = transaction_instance.customer_id.id)
+        #     except:
+        #         balance = None
+            
+        #     if balance is None:
+        #         balance_data = {
+        #             'customer_id': transaction_instance.customer_id.id,
+        #             'amount': transaction_instance.total_amount
+        #         }
+        #         print("Balance DATA ::: ", balance_data)
+        #         balanceSerializer = BalanceSerializer(data = balance_data)
+        #         if balanceSerializer.is_valid():
+        #             balanceSerializer.save()
+        #         else:
+        #             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        #     else:
+        #         balance_data = {
+        #             'customer_id': transaction_instance.customer_id.id,
+        #             'amount': balance.amount + float(transaction_instance.total_amount)
+        #         }
+        #         print("Balance DATA ::: ", balance_data)
+        #         balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+        #         if balanceSerializer.is_valid():
+        #             balanceSerializer.save()
+        #         else:
+        #             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
+
+
+
+
 
         if transaction['is_converted'] == 'true' and linktransaction_data is not None:
             link_transaction(transaction_instance.id, linktransaction_data)
