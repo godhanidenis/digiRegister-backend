@@ -2900,8 +2900,8 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     balance = None
                 print("BALANCE :: ",balance)
                 if balance is not None:
-                    balance.amount = balance.amount - transaction_object.total_amount
-                    balance.save()
+                    balance.amount = (balance.amount + transaction_object.recived_or_paid_amount) - transaction_object.total_amount
+                    balance.save() 
 
             if staff_id is not None:
                     try:
@@ -2910,7 +2910,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                         balance = None
                     print("BALANCE :: ",balance)
                     if balance is not None:
-                        balance.amount = balance.amount - transaction_object.total_amount
+                        balance.amount = (balance.amount + transaction_object.recived_or_paid_amount) - transaction_object.total_amount
                         balance.save()
 
 
@@ -2935,7 +2935,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     balance = None
                 print("BALANCE :: ",balance)
                 if balance is not None:
-                    balance.amount = balance.amount - transaction_object.total_amount
+                    balance.amount = (balance.amount + transaction_object.recived_or_paid_amount) - transaction_object.total_amount
                     balance.save()
 
             if staff_id is not None:
@@ -2945,7 +2945,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                         balance = None
                     print("BALANCE :: ",balance)
                     if balance is not None:
-                        balance.amount = balance.amount - transaction_object.total_amount
+                        balance.amount = (balance.amount + transaction_object.recived_or_paid_amount) - transaction_object.total_amount
                         balance.save()
 
 
@@ -2975,7 +2975,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     balance = None
                 print("BALANCE :: ",balance)
                 if balance is not None:
-                    balance.amount = balance.amount + transaction_object.total_amount
+                    balance.amount = (balance.amount - transaction_object.recived_or_paid_amount) + transaction_object.total_amount
                     balance.save()
 
             if staff_id is not None:
@@ -2985,7 +2985,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                         balance = None
                     print("BALANCE :: ",balance)
                     if balance is not None:
-                        balance.amount = balance.amount + transaction_object.total_amount
+                        balance.amount = (balance.amount - transaction_object.recived_or_paid_amount) + transaction_object.total_amount
                         balance.save()
 
 
@@ -3010,7 +3010,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     balance = None
                 print("BALANCE :: ",balance)
                 if balance is not None:
-                    balance.amount = balance.amount + transaction_object.total_amount
+                    balance.amount = (balance.amount - transaction_object.recived_or_paid_amount) + transaction_object.total_amount
                     balance.save()
 
             if staff_id is not None:
@@ -3020,7 +3020,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                         balance = None
                     print("BALANCE :: ",balance)
                     if balance is not None:
-                        balance.amount = balance.amount + transaction_object.total_amount
+                        balance.amount = (balance.amount - transaction_object.recived_or_paid_amount) + transaction_object.total_amount
                         balance.save()
 
 
