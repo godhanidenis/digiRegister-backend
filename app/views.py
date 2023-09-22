@@ -2155,7 +2155,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 new_recived_or_paid_amount = float(transaction_instance.recived_or_paid_amount)
                 print("new_recived_or_paid_amount ::: ",new_recived_or_paid_amount)
 
-                if transaction_instance.type == 'sale':
+                if transaction_instance.type == 'event_sale':
                     ## ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE
                     try:
                         balance = Balance.objects.get(customer_id = transaction_instance.customer_id.id)
@@ -2210,7 +2210,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                         else:
                             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-                if transaction_instance.type == 'purchase':
+                if transaction_instance.type == 'event_purchase':
                     ## ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE
                     try:
                         balance = Balance.objects.get(customer_id = transaction_instance.customer_id.id)
@@ -2299,7 +2299,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                         else:
                             return Response(copy_transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                         
-                        if copy_trnasaction_instance.type == 'event_sale':
+                        if copy_trnasaction_instance.type == 'sale':
                             ## ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE
                             try:
                                 balance = Balance.objects.get(customer_id = copy_trnasaction_instance.customer_id.id)
@@ -2362,7 +2362,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                                     else:
                                         return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-                        if copy_trnasaction_instance.type == 'event_purchase':
+                        if copy_trnasaction_instance.type == 'purchase':
                             ## ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE
                             try:
                                 balance = Balance.objects.get(customer_id = copy_trnasaction_instance.customer_id.id)
@@ -2479,7 +2479,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 new_recived_or_paid_amount = float(transaction_instance.recived_or_paid_amount)
                 print("new_recived_or_paid_amount ::: ",new_recived_or_paid_amount)
 
-                if transaction_instance.type == 'event_sale':
+                if transaction_instance.type == 'sale':
                     ## ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE
                     
                     try:
@@ -2535,7 +2535,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                         else:
                             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-                if transaction_instance.type == 'event_purchase':
+                if transaction_instance.type == 'purchase':
                     ## ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE
                     try:
                         balance = Balance.objects.get(customer_id = transaction_instance.customer_id.id)
