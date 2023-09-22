@@ -2467,6 +2467,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 print("old_recived_or_paid_amount ::: ",old_recived_or_paid_amount)
 
                 transaction_data['inventorydescription'] = inventorydescription_ids 
+                transaction_data['is_converted'] = True
                 transactionSerializer = TransactionSerializer(transaction, data=transaction_data, partial=True)
                 if transactionSerializer.is_valid():
                     transaction_instance = transactionSerializer.save()
