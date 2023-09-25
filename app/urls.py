@@ -13,8 +13,19 @@ router.register(r'inventory',views.InventoryViewSet)
 router.register(r'staff',views.StaffViewSet)
 router.register(r'staffskill',views.StaffSkillViewSet)
 router.register(r'event',views.EventViewSet)
-router.register(r'quotation',views.QuotationViewSet)
+
 router.register(r'transaction',views.TransactionViewSet)
+
+router.register(r'quotation',views.QuotationViewSet)
+router.register(r'eventday',views.EventDayViewSet)
+router.register(r'inventorydetails',views.InventoryDetailsViewSet)
+router.register(r'eventdetails',views.EventDetailsViewSet)
+router.register(r'exposuredetails',views.ExposureDetailsViewSet)
+
+router.register(r'linktransaction',views.LinkTransactionViewSet)
+router.register(r'inventorydescription',views.InventoryDescriptionViewSet)
+router.register(r'balance',views.BalanceViewSet)
+
 
 router.register(r'amountreport',views.AmountReportViewSet)
 
@@ -25,7 +36,10 @@ router.register(r'exportinvoice',views.InvoiceExport)
 
 
 urlpatterns =[
-    path('',include(router.urls)),
+    path('',include(router.urls)),  
+    path('transactionlink/',views.TransactionLink, name='transactionlink'),
+    path('staffstatus/',views.StaffStatus, name='staffstatus'),
+    path('eventdetail/',views.EventDetail, name='eventdetail'),
     path('conversationreport/',views.ConversationRateReport, name='conversationratereport'),
     path('statusreport/',views.InvoiceStatusReport, name='invoicestatusreport'),
     path('earningreport/',views.MonthylyEarningReport, name='monthylyearningreport'),
