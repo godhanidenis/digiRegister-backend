@@ -3223,6 +3223,7 @@ def EventDetail(request):
                 eventdetails = EventDetails.objects.filter(eventday_id=eventday.id)
                 for eventdetail in eventdetails:
                     event_detail_data = {
+                        'eventdetalis_id':eventdetail.event_id.id,
                         'event_name': eventdetail.event_id.event_name,
                         'event_venue': eventdetail.event_venue,
                         'start_time': eventdetail.start_time,
