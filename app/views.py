@@ -3202,6 +3202,8 @@ def EventDetail(request):
     if request.method == 'POST':
         today = request.data.get('today', None)
         print("TODAY :: ", today)
+        user_id = request.data.get('user_id', None)
+        print("user_id :: ", user_id)
 
         eventdays = EventDay.objects.filter(event_date=today)
         print("EVENT DAYS :: ", eventdays)
@@ -3210,7 +3212,9 @@ def EventDetail(request):
 
         for eventday in eventdays:
             transaction = Transaction.objects.get(quotation_id=eventday.quotation_id)
-            if transaction.type == 'event_sale':
+            print("TRANSACTION TYPE :: ", transaction.type)
+            print("TRANSACTION USER ID :: ",transaction.user_id.id)
+            if transaction.type == 'event_sale' and transaction.user_id.id == user_id:
                 eventdetails = EventDetails.objects.filter(eventday_id=eventday.id)
                 for eventdetail in eventdetails:
                     event_detail_data = {
