@@ -2946,6 +2946,11 @@ class TransactionViewSet(viewsets.ModelViewSet):
                         balance.amount = (balance.amount + transaction_object.recived_or_paid_amount) - transaction_object.total_amount
                         balance.save()
 
+            quotation_id = transaction_object.quotation_id
+            print("QUOTATION ID :: ",quotation_id)
+            quotation = Quotation.objects.get(pk=quotation_id.id)
+            print("QUOTATION :: ",quotation)
+            quotation.delete()
 
         if transaction_object.type == 'purchase_order':
             # print("PURCHASE ORDER TYPE")
