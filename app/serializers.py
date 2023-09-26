@@ -70,7 +70,6 @@ class EventDaySerializer(serializers.ModelSerializer):
 
 
 class InventoryDetailsSerializer(serializers.ModelSerializer):
-    # eventday = EventDaySerializer(source="eventday_id", read_only=True)
     inventory = InventorySerializer(source="inventory_id", read_only=True)
     class Meta:
         model = InventoryDetails
@@ -96,7 +95,7 @@ class ExposureDetailsSerializer(serializers.ModelSerializer):
 
 
 class InventoryDescriptionSerializer(serializers.ModelSerializer):
-    # inventory = Inventory(source='inventory_id', read_only=True)
+    inventory = InventorySerializer(source='inventory_id', read_only=True)
     class Meta:
         model = InventoryDescription
         fields = "__all__"
