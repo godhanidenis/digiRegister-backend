@@ -54,6 +54,7 @@ class User(AbstractUser):
     you_tube = models.CharField(max_length=100, null=True, blank=True)
     facebook_id = models.CharField(max_length=100, null=True, blank=True)
     profile_pic = models.CharField(max_length=150, null=True, blank=True)
+    signature = models.CharField(max_length=150, null=True, blank=True)
 
     objects = UserManager()
 

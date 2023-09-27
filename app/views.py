@@ -40,6 +40,7 @@ class UserViewSet(viewsets.ModelViewSet):
     def update(self, request, pk=None, *args, **kwargs):
         user = User.objects.get(pk=pk)
         old_pic = f"digi_profile_pic/{os.path.basename(user.profile_pic)}" if user.profile_pic else None
+        old_signature = f"digi_signature/{os.path.basename(user.signature)}" if user.signature else None
 
         ## SET NEW PASSWORD AS PASSWORD ##
         if 'password' in request.data:
@@ -72,6 +73,32 @@ class UserViewSet(viewsets.ModelViewSet):
 
             s3_file_url = f"https://s3.{region}.wasabisys.com/{bucket_name}/{file_name}"
             request.data['profile_pic'] = s3_file_url
+
+        ## ADD USER SIGNATURE IN BUCKET ##
+        if 'signature' in request.data:
+            bucket_name = config('wasabisys_bucket_name')
+            region = config('wasabisys_region')
+            s3 = boto3.client('s3',
+                          endpoint_url=config('wasabisys_endpoint_url'),
+                          aws_access_key_id=config('wasabisys_access_key_id'),
+                          aws_secret_access_key=config('wasabisys_secret_access_key')
+                          )
+            
+            # DELETE OLD SIGNATURE FORM BUCKET #
+            if old_signature:
+                s3.delete_object(
+                            Bucket = bucket_name, 
+                            Key=old_signature
+                            )
+            
+            file = request.data['signature']
+            file_name = f"digi_signature/{uuid.uuid4().hex}.jpg"
+
+            # ADD NEW PIC IN BUCKET #
+            s3.upload_fileobj(file, bucket_name, file_name)
+
+            s3_file_url = f"https://s3.{region}.wasabisys.com/{bucket_name}/{file_name}"
+            request.data['signature'] = s3_file_url
 
         serializer = UserSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
@@ -2951,6 +2978,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
             quotation = Quotation.objects.get(pk=quotation_id.id)
             print("QUOTATION :: ",quotation)
             quotation.delete()
+
 
         if transaction_object.type == 'purchase_order':
             # print("PURCHASE ORDER TYPE")
