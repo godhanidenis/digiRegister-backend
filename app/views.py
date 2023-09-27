@@ -16,6 +16,8 @@ from .pagination import MyPagination
 from .resource import *
 
 from datetime import date
+import datetime
+import pytz
 from decouple import config
 import pandas as pd
 import boto3
@@ -3116,120 +3118,112 @@ def TransactionLink(request):
 
 
 ### API FOR STAFF AVAILABLE STATUS ###
-@api_view(['POST'])
+@api_view(['GET', 'POST'])
 def StaffStatus(request):
-    if request.method == 'POST':
-        staff_id = request.data.get('staff_id', None)
-        print("Staff ID :: ", staff_id)
+    if request.method == 'GET':
+        user_id = request.query_params.get("user_id")
+        # print("user_id ::", user_id)
+
+        current_utc_datetime = datetime.datetime.utcnow()
+        itc_timezone = pytz.timezone('Asia/Kolkata')
+        current_itc_datetime = current_utc_datetime.astimezone(itc_timezone)
+        current_itc_date = current_itc_datetime.date()
+        # print("Current ITC Date:", current_itc_date)
+
+        staffs = Staff.objects.filter(user_id=user_id)
+        # print("staffs ::", staffs)
         data = []
-        exposuredetails = ExposureDetails.objects.filter(staff_id=staff_id)
-        # print("exposuredetails :: ",exposuredetails)
-        for exposuredetail in exposuredetails:
-            # print("exposuredetail :: ",exposuredetail)
+        for staff in staffs:
+            # print("Single Staff :: ",staff)
+            # print("Staff ID :: ",staff.id)
+            detail ={
+                'staff_detail': {},
+                'event_data': []
+            }
+            staffskill = StaffSkill.objects.filter(staff_id=staff.id)
+            # print("STAFF SKILL :: ",staffskill)
+            detail['staff_detail'] = {
+                "staff_data" : StaffSerializer(staff).data,
+                "staffskill_data" : StaffSkillSerializer(staffskill, many=True).data
+            }
 
-            event_details = exposuredetail.eventdetails.all()
-            # print("event_details :: ", event_details)
-            
-            for event_detail in event_details:
-                details ={}
-                # print("event_detail :: ", event_detail)
-                # print("event_detail.eventday_id :: ", event_detail.eventday_id)
-                # print("event_detail.event_venue :: ", event_detail.event_venue)
-                details['event_venue'] = event_detail.event_venue
-                # print("event_detail.start_time :: ", event_detail.start_time)
-                details['start_time'] = event_detail.start_time.strftime('%H:%M:%S')
-                # print("event_detail.end_time :: ", event_detail.end_time)
-                details['end_time'] = event_detail.end_time.strftime('%H:%M:%S')
+            exposuredetails = ExposureDetails.objects.filter(staff_id=staff.id)
+            # print("exposuredetails :: ",exposuredetails)
+            for exposuredetail in exposuredetails:
+                # print("exposuredetail :: ",exposuredetail)
 
-                eventday = EventDay.objects.get(pk=event_detail.eventday_id.id)
-                # print("eventday :: ", eventday)
-                # print("eventday.event_date :: ", eventday.event_date)
-                details['event_date'] = eventday.event_date.strftime('%Y-%m-%d')
+                event_details = exposuredetail.eventdetails.all()
+                # print("event_details :: ", event_details)
+                
+                for event_detail in event_details:
+                    details ={}
+                    # print("event_detail :: ", event_detail)
+                    # print("event_detail.eventday_id :: ", event_detail.eventday_id)
+                    # print("event_detail.event_venue :: ", event_detail.event_venue)
+                    # print("event_detail.start_time :: ", event_detail.start_time)
+                    # print("event_detail.end_time :: ", event_detail.end_time)
 
-                print("DETAILS :: ",details)
-                data.append(details)
+                    eventday = EventDay.objects.get(pk=event_detail.eventday_id.id)
+                    # print("eventday :: ", eventday)
+                    # print("eventday.event_date :: ", eventday.event_date)
 
-        print("DATA ::: ", data)
+                    if eventday.event_date >= current_itc_date:
+                        # print("EVENT DATE IS GREATER THAN CURRENT DATE")
+                        details = {
+                            'event_date': eventday.event_date.strftime('%Y-%m-%d'),
+                            'event_venue': event_detail.event_venue,
+                            'start_time': event_detail.start_time.strftime('%H:%M:%S'),
+                            'end_time': event_detail.end_time.strftime('%H:%M:%S'),
+                        }
 
+                    # today = data.today()
+                    # print("TODAY :: ", today)
 
+                    # print("DETAILS :: ",details)
+                        detail['event_data'].append(details)
+            data.append(detail)
+        # print("DATA ::: ", data)
+        
         return Response(data)
+
+    # if request.method == 'POST':
+    #     staff_id = request.data.get('staff_id', None)
+    #     print("Staff ID :: ", staff_id)
+    #     data = []
+    #     exposuredetails = ExposureDetails.objects.filter(staff_id=staff_id)
+    #     # print("exposuredetails :: ",exposuredetails)
+    #     for exposuredetail in exposuredetails:
+    #         # print("exposuredetail :: ",exposuredetail)
+
+    #         event_details = exposuredetail.eventdetails.all()
+    #         # print("event_details :: ", event_details)
+            
+    #         for event_detail in event_details:
+    #             details ={}
+    #             # print("event_detail :: ", event_detail)
+    #             # print("event_detail.eventday_id :: ", event_detail.eventday_id)
+    #             # print("event_detail.event_venue :: ", event_detail.event_venue)
+    #             details['event_venue'] = event_detail.event_venue
+    #             # print("event_detail.start_time :: ", event_detail.start_time)
+    #             details['start_time'] = event_detail.start_time.strftime('%H:%M:%S')
+    #             # print("event_detail.end_time :: ", event_detail.end_time)
+    #             details['end_time'] = event_detail.end_time.strftime('%H:%M:%S')
+
+    #             eventday = EventDay.objects.get(pk=event_detail.eventday_id.id)
+    #             # print("eventday :: ", eventday)
+    #             # print("eventday.event_date :: ", eventday.event_date)
+    #             details['event_date'] = eventday.event_date.strftime('%Y-%m-%d')
+
+    #             print("DETAILS :: ",details)
+    #             data.append(details)
+
+    #     print("DATA ::: ", data)
+
+
+    #     return Response(data)
 
 
 ### API FOR TODAY'S EVENT DETAILS ###
-# @api_view(['POST'])
-# def EventDetail(request):
-#     if request.method == 'POST':
-#         today = request.data.get('today', None)
-#         print("TODAY :: ",today)
-#         # user_id = request.data.get('user_id', None)
-#         # print("USER :: ",user_id)
-
-#         eventdays = EventDay.objects.filter(event_date=today)
-#         print("EVENT DAYS :: ",eventdays)
-#         data = []
-#         for eventday in eventdays:
-#             # print("Single Event Day :: ",eventday)
-#             # print("Single Event Day ID :: ",eventday.id)
-#             print("Quotation ID :: ",eventday.quotation_id)
-
-#             transaction = Transaction.objects.get(quotation_id = eventday.quotation_id)
-#             print("Transaction :: ",transaction)
-#             print("Transaction TYPE :: ",transaction.type)
-            
-#             if transaction.type == 'event_sale':
-#                 print("EVENT SALE")
-#                 # print("Quotation Customer ID :: ",eventday.quotation_id.customer_id)
-#                 # print("Quotation Customer Full Name :: ",eventday.quotation_id.customer_id.full_name)
-#                 # print("Quotation Customer Mobile No. :: ",eventday.quotation_id.customer_id.mobile_no)
-#                 event = {
-#                     'customer_name':eventday.quotation_id.customer_id.full_name,
-#                     'customer_mobile_no':eventday.quotation_id.customer_id.mobile_no,
-#                     'event_detail':[]
-#                 }
-#                 eventdetails = EventDetails.objects.filter(eventday_id=eventday.id)
-#                 # print("Event Details :: ",eventdetails)
-                
-#                 for eventdetail in eventdetails:
-#                     # print("Event Detail :: ",eventdetail)
-#                     # print("Event Detail ID :: ",eventdetail.id)
-#                     # print("Event Detail Event ID :: ",eventdetail.event_id.id)
-#                     # print("Event Detail Event Name :: ",eventdetail.event_id.event_name)
-#                     # print("Event Detail Event Venue :: ",eventdetail.event_venue)
-#                     # print("Event Detail Start Time :: ",eventdetail.start_time)
-#                     # print("Event Detail End Time :: ",eventdetail.end_time)
-#                     eventdetail_data = {
-#                         'event_name':eventdetail.event_id.event_name,
-#                         'event_venue':eventdetail.event_venue,
-#                         'start_time':eventdetail.start_time,
-#                         'end_time':eventdetail.end_time,
-#                         'exposuredetails_data': []
-#                     }
-#                     event['event_detail'].append(eventdetail_data)
-#                     exposuredetails = ExposureDetails.objects.filter(eventdetails__id=eventdetail.id)
-#                     # print("Exposuredetails :: ",exposuredetails)
-#                     for exposuredetail in exposuredetails:
-#                         exposuredetail_data = {}
-#                         # print("Exposuredetail :: ",exposuredetail)
-#                         # print("Exposuredetail ID :: ",exposuredetail.id)
-#                         # print("Exposuredetail Staff ID :: ",exposuredetail.staff_id.id)
-#                         # print("Exposuredetail Staff FULL NAME :: ",exposuredetail.staff_id.full_name)
-#                         # print("Exposuredetail Staff MOBILE NO. :: ",exposuredetail.staff_id.mobile_no)
-                        
-#                         exposuredetail_data = {
-#                             'staff_name' : exposuredetail.staff_id.full_name,
-#                             'staff_mobile_no' : exposuredetail.staff_id.mobile_no
-#                         }
-#                         # print("exposuredetail :: ",exposuredetail_data)
-#                         eventdetail_data['exposuredetails_data'].append(exposuredetail_data)
-
-#                     # print("exposuredetails :: ",exposuredetails)
-#                 data.append(event)
-#                 # print(data)
-
-
-#                 # print("-------------------------------------")
-#         return Response(data)
-
 @api_view(['POST'])
 def EventDetail(request):
     if request.method == 'POST':
@@ -3287,8 +3281,6 @@ def EventDetail(request):
                             })
 
         return Response(data)
-
-
 
 
 class LinkTransactionViewSet(viewsets.ModelViewSet):
