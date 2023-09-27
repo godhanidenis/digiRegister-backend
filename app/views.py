@@ -2976,9 +2976,34 @@ class TransactionViewSet(viewsets.ModelViewSet):
                         balance.save()
 
             quotation_id = transaction_object.quotation_id
-            print("QUOTATION ID :: ",quotation_id)
+            # print("QUOTATION ID :: ",quotation_id)
             quotation = Quotation.objects.get(pk=quotation_id.id)
-            print("QUOTATION :: ",quotation)
+            # print("QUOTATION :: ",quotation)
+
+            eventdays = EventDay.objects.filter(quotation_id=quotation_id.id)
+            for eventday in eventdays:
+                # print("Single Event Day :: ",eventday)
+                # print("Event Day ID :: ",eventday.id)
+
+                inventorydetails = InventoryDetails.objects.filter(eventday_id=eventday.id)
+                for inventorydetail in inventorydetails:
+                    # print("Single Inventory Detail :: ",inventorydetail)
+                    # print("Inventory Detail ID :: ",inventorydetail.id)
+
+                    exposuredetails = ExposureDetails.objects.get(inventorydetails_id=inventorydetail.id)
+                    # print("Exposure Details :: ",exposuredetails)
+
+                    transaction = Transaction.objects.get(exposuredetails_id=exposuredetails.id)
+                    # print("Transaction :: ",transaction)
+                    # print("Staff ID :: ",transaction.staff_id.id)
+
+                    balance = Balance.objects.get(staff_id=transaction.staff_id.id)
+                    # print("Balance :: ",balance)
+                    # print("Balance Amount :: ",balance.amount)
+                    balance.amount = balance.amount + float(transaction.total_amount)
+                    # print("Balance Amount :: ",balance.amount)
+                    balance.save()
+
             quotation.delete()
 
 
