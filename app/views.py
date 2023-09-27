@@ -2990,19 +2990,22 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     # print("Single Inventory Detail :: ",inventorydetail)
                     # print("Inventory Detail ID :: ",inventorydetail.id)
 
-                    exposuredetails = ExposureDetails.objects.get(inventorydetails_id=inventorydetail.id)
+                    exposuredetails = ExposureDetails.objects.filter(inventorydetails_id=inventorydetail.id)
                     # print("Exposure Details :: ",exposuredetails)
 
-                    transaction = Transaction.objects.get(exposuredetails_id=exposuredetails.id)
-                    # print("Transaction :: ",transaction)
-                    # print("Staff ID :: ",transaction.staff_id.id)
+                    for exposuredetail in exposuredetails:
+                        print("Exposure Detail :: ",exposuredetail)
 
-                    balance = Balance.objects.get(staff_id=transaction.staff_id.id)
-                    # print("Balance :: ",balance)
-                    # print("Balance Amount :: ",balance.amount)
-                    balance.amount = balance.amount + float(transaction.total_amount)
-                    # print("Balance Amount :: ",balance.amount)
-                    balance.save()
+                        transaction = Transaction.objects.get(exposuredetails_id=exposuredetail.id)
+                        # print("Transaction :: ",transaction)
+                        # print("Staff ID :: ",transaction.staff_id.id)
+
+                        balance = Balance.objects.get(staff_id=transaction.staff_id.id)
+                        # print("Balance :: ",balance)
+                        # print("Balance Amount :: ",balance.amount)
+                        balance.amount = balance.amount + float(transaction.total_amount)
+                        # print("Balance Amount :: ",balance.amount)
+                        balance.save()
 
             quotation.delete()
 
