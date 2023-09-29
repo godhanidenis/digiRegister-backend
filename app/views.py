@@ -51,57 +51,75 @@ class UserViewSet(viewsets.ModelViewSet):
             user.save()
             request.data.pop('password')
 
+        bucket_name = config('wasabisys_bucket_name')
+        region = config('wasabisys_region')
+        s3 = boto3.client('s3',
+                        endpoint_url=config('wasabisys_endpoint_url'),
+                        aws_access_key_id=config('wasabisys_access_key_id'),
+                        aws_secret_access_key=config('wasabisys_secret_access_key')
+                        )
+
         ## ADD USER PROFILE PIC IN BUCKET ##
         if 'profile_pic' in request.data:
-            bucket_name = config('wasabisys_bucket_name')
-            region = config('wasabisys_region')
-            s3 = boto3.client('s3',
-                          endpoint_url=config('wasabisys_endpoint_url'),
-                          aws_access_key_id=config('wasabisys_access_key_id'),
-                          aws_secret_access_key=config('wasabisys_secret_access_key')
-                          )
-            
-            # DELETE OLD PIC FORM BUCKET #
-            if old_pic:
-                s3.delete_object(
-                            Bucket = bucket_name, 
-                            Key=old_pic
-                            )
-            
-            file = request.data['profile_pic']
-            file_name = f"digi_profile_pic/{uuid.uuid4().hex}.jpg"
+            profile_pic = request.data['profile_pic']
+            # print("profile_pic ::: ",profile_pic ,"type ::: ",type(profile_pic))
 
-            # ADD NEW PIC IN BUCKET #
-            s3.upload_fileobj(file, bucket_name, file_name)
+            if profile_pic == 'null':
+                print("profile_pic is Null")
+                # DELETE OLD PIC FORM BUCKET #
+                if old_pic:
+                    s3.delete_object(
+                                Bucket = bucket_name, 
+                                Key=old_pic
+                                )
+            else:
+                print("profile_pic is not Null")
+                # DELETE OLD PIC FORM BUCKET #
+                if old_pic:
+                    s3.delete_object(
+                                Bucket = bucket_name, 
+                                Key=old_pic
+                                )
+                
+                file = request.data['profile_pic']
+                file_name = f"digi_profile_pic/{uuid.uuid4().hex}.jpg"
 
-            s3_file_url = f"https://s3.{region}.wasabisys.com/{bucket_name}/{file_name}"
-            request.data['profile_pic'] = s3_file_url
+                # ADD NEW PIC IN BUCKET #
+                s3.upload_fileobj(file, bucket_name, file_name)
+
+                s3_file_url = f"https://s3.{region}.wasabisys.com/{bucket_name}/{file_name}"
+                request.data['profile_pic'] = s3_file_url
 
         ## ADD USER SIGNATURE IN BUCKET ##
         if 'signature' in request.data:
-            bucket_name = config('wasabisys_bucket_name')
-            region = config('wasabisys_region')
-            s3 = boto3.client('s3',
-                          endpoint_url=config('wasabisys_endpoint_url'),
-                          aws_access_key_id=config('wasabisys_access_key_id'),
-                          aws_secret_access_key=config('wasabisys_secret_access_key')
-                          )
+            signature = request.data['signature']
+            # print("signature ::: ",signature ,"type ::: ",type(signature))
             
-            # DELETE OLD SIGNATURE FORM BUCKET #
-            if old_signature:
-                s3.delete_object(
-                            Bucket = bucket_name, 
-                            Key=old_signature
-                            )
-            
-            file = request.data['signature']
-            file_name = f"digi_signature/{uuid.uuid4().hex}.jpg"
+            if signature == 'null':
+                print("Signature is Null")
+                # DELETE OLD SIGNATURE FORM BUCKET #
+                if old_signature:
+                    s3.delete_object(
+                                Bucket = bucket_name, 
+                                Key=old_signature
+                                )
+            else:
+                print("Signature is not Null")
+                # DELETE OLD SIGNATURE FORM BUCKET #
+                if old_signature:
+                    s3.delete_object(
+                                Bucket = bucket_name, 
+                                Key=old_signature
+                                )
+                
+                file = request.data['signature']
+                file_name = f"digi_signature/{uuid.uuid4().hex}.jpg"
 
-            # ADD NEW PIC IN BUCKET #
-            s3.upload_fileobj(file, bucket_name, file_name)
+                # ADD NEW PIC IN BUCKET #
+                s3.upload_fileobj(file, bucket_name, file_name)
 
-            s3_file_url = f"https://s3.{region}.wasabisys.com/{bucket_name}/{file_name}"
-            request.data['signature'] = s3_file_url
+                s3_file_url = f"https://s3.{region}.wasabisys.com/{bucket_name}/{file_name}"
+                request.data['signature'] = s3_file_url
 
         serializer = UserSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
@@ -3175,20 +3193,14 @@ def TransactionLink(request):
 
         if customer_id is not None:
             if transaction_type is not None:
-                transaction = Transaction.objects.filter(
-                                                        Q(customer_id=customer_id), 
-                                                        Q(type__in=transaction_type)
-                                                        )
+                transaction = Transaction.objects.filter(Q(customer_id=customer_id), Q(type__in=transaction_type))
             else:
                 transaction = Transaction.objects.filter(customer_id=customer_id)
                 # print("transaction ::", transaction)
 
         if staff_id is not None:
             if transaction_type is not None:
-                transaction = Transaction.objects.filter(
-                                                        Q(staff_id=staff_id), 
-                                                        Q(type__in=transaction_type)
-                                                        )
+                transaction = Transaction.objects.filter(Q(staff_id=staff_id), Q(type__in=transaction_type))
             else:
                 transaction = Transaction.objects.filter(staff_id=staff_id)
                 # print("transaction ::", transaction)
@@ -3278,42 +3290,6 @@ def StaffStatus(request):
         # print("DATA ::: ", data)
         
         return Response(data)
-
-    # if request.method == 'POST':
-    #     staff_id = request.data.get('staff_id', None)
-    #     print("Staff ID :: ", staff_id)
-    #     data = []
-    #     exposuredetails = ExposureDetails.objects.filter(staff_id=staff_id)
-    #     # print("exposuredetails :: ",exposuredetails)
-    #     for exposuredetail in exposuredetails:
-    #         # print("exposuredetail :: ",exposuredetail)
-
-    #         event_details = exposuredetail.eventdetails.all()
-    #         # print("event_details :: ", event_details)
-            
-    #         for event_detail in event_details:
-    #             details ={}
-    #             # print("event_detail :: ", event_detail)
-    #             # print("event_detail.eventday_id :: ", event_detail.eventday_id)
-    #             # print("event_detail.event_venue :: ", event_detail.event_venue)
-    #             details['event_venue'] = event_detail.event_venue
-    #             # print("event_detail.start_time :: ", event_detail.start_time)
-    #             details['start_time'] = event_detail.start_time.strftime('%H:%M:%S')
-    #             # print("event_detail.end_time :: ", event_detail.end_time)
-    #             details['end_time'] = event_detail.end_time.strftime('%H:%M:%S')
-
-    #             eventday = EventDay.objects.get(pk=event_detail.eventday_id.id)
-    #             # print("eventday :: ", eventday)
-    #             # print("eventday.event_date :: ", eventday.event_date)
-    #             details['event_date'] = eventday.event_date.strftime('%Y-%m-%d')
-
-    #             print("DETAILS :: ",details)
-    #             data.append(details)
-
-    #     print("DATA ::: ", data)
-
-
-    #     return Response(data)
 
 
 ### API FOR TODAY'S EVENT DETAILS ###
