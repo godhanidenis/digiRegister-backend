@@ -3027,18 +3027,18 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     balance = None
                 # print("BALANCE :: ",balance)
                 if balance is not None:
-                    balance.amount = (balance.amount + transaction_object.recived_or_paid_amount) - transaction_object.total_amount
+                    balance.amount = (balance.amount + (transaction_object.recived_or_paid_amount + transaction_object.settled_amount)) - transaction_object.total_amount
                     balance.save()
 
-            if staff_id is not None:
-                try:
-                    balance = Balance.objects.get(staff_id=staff_id)
-                except:
-                    balance = None
-                # print("BALANCE :: ",balance)
-                if balance is not None:
-                    balance.amount = (balance.amount + transaction_object.recived_or_paid_amount) - transaction_object.total_amount
-                    balance.save()
+            # if staff_id is not None:
+            #     try:
+            #         balance = Balance.objects.get(staff_id=staff_id)
+            #     except:
+            #         balance = None
+            #     # print("BALANCE :: ",balance)
+            #     if balance is not None:
+            #         balance.amount = (balance.amount + (transaction_object.recived_or_paid_amount + transaction_object.settled_amount)) - transaction_object.total_amount
+            #         balance.save()
 
             quotation_id = transaction_object.quotation_id
             # print("QUOTATION ID :: ",quotation_id)
@@ -3777,19 +3777,14 @@ def ConvertBucketURL(request):
     if request.method == 'POST':
         s3_bucket_url = request.data.get('s3_bucket_url', None)
         print("s3_bucket_url ::: ",s3_bucket_url)
-
         if s3_bucket_url is not None:
-
             response = requests.get(s3_bucket_url)
             image_data = response.content
-
             base64_image = base64.b64encode(image_data).decode()
-
             data_url = f"data:image/jpeg;base64,{base64_image}"
             print("Data URL:", data_url)
         
         return Response(data_url)
-
 
 
 @api_view(['POST'])
