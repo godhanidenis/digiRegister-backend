@@ -8,3 +8,4 @@ psycopg2-binary
 django-import-export
 pandas
 boto3
+requests
