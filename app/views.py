@@ -64,7 +64,7 @@ class UserViewSet(viewsets.ModelViewSet):
             profile_pic = request.data['profile_pic']
             # print("profile_pic ::: ",profile_pic ,"type ::: ",type(profile_pic))
 
-            if profile_pic == 'null':
+            if profile_pic == '':
                 print("profile_pic is Null")
                 # DELETE OLD PIC FORM BUCKET #
                 if old_pic:
@@ -95,7 +95,7 @@ class UserViewSet(viewsets.ModelViewSet):
             signature = request.data['signature']
             # print("signature ::: ",signature ,"type ::: ",type(signature))
             
-            if signature == 'null':
+            if signature == '':
                 print("Signature is Null")
                 # DELETE OLD SIGNATURE FORM BUCKET #
                 if old_signature:
@@ -337,7 +337,6 @@ class QuotationViewSet(viewsets.ModelViewSet):
 
         return queryset
 
-
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         # print("Instance ::", instance)
@@ -391,7 +390,6 @@ class QuotationViewSet(viewsets.ModelViewSet):
 
         # print(data)
         return Response(data)
-
 
     def create(self, request, *args, **kwargs): 
         quotation =request.data['quotation_data']
@@ -686,7 +684,6 @@ class QuotationViewSet(viewsets.ModelViewSet):
             "inventorydetails_data":InventoryDetailsSerializer(final_inventorydetails_data, many=True).data,
             "exposuredetails_data":ExposureDetailsSerializer(final_exposuredetails_data, many=True).data,
             "transaction_data":TransactionSerializer(transaction_instance).data})
-
 
     def update(self, request, pk=None, *args, **kwargs):
         quotation_data = request.data.get('quotation_data', None)
@@ -1965,7 +1962,6 @@ class InventoryDescriptionViewSet(viewsets.ModelViewSet):
                     else:
                         return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
         return Response({
             "inventorydescription": InventoryDescriptionSerializer(all_instance, many=True).data,
             "transaction": TransactionSerializer(transaction_instance).data
@@ -2913,7 +2909,6 @@ class TransactionViewSet(viewsets.ModelViewSet):
             # print("QUOTATION :: ",quotation)
             quotation.delete()
             
-
         if transaction_object.type == 'payment_in':
             # print("PAYMENT IN TYPE")
             linktrasactions = LinkTransaction.objects.filter(from_transaction_id=pk)
@@ -2947,7 +2942,6 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     if balance is not None:
                         balance.amount = balance.amount + transaction_object.total_amount
                         balance.save()
-
 
         if transaction_object.type == 'payment_out':
             # print("PAYMENT IN TYPE")
@@ -2983,12 +2977,10 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     balance.amount = balance.amount - transaction_object.total_amount
                     balance.save()
 
-
         if transaction_object.type == 'sale_order':
             # print("SALE ORDER TYPE")
             pass
             
-
         if transaction_object.type == 'sale':
             # print("SALE TYPE")
             linktrasactions = LinkTransaction.objects.filter(to_transaction_id=pk)
@@ -3022,7 +3014,6 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     if balance is not None:
                         balance.amount = (balance.amount + transaction_object.recived_or_paid_amount) - transaction_object.total_amount
                         balance.save()
-
 
         if transaction_object.type == 'event_sale':
             # print("EVENT PURCHASE TYPE")
@@ -3092,12 +3083,10 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
             quotation.delete()
 
-
         if transaction_object.type == 'purchase_order':
             # print("PURCHASE ORDER TYPE")
             pass
             
-
         if transaction_object.type == 'purchase':
             # print("PURCHASE TYPE")
             linktrasactions = LinkTransaction.objects.filter(to_transaction_id=pk)
@@ -3132,7 +3121,6 @@ class TransactionViewSet(viewsets.ModelViewSet):
                         balance.amount = (balance.amount - transaction_object.recived_or_paid_amount) + transaction_object.total_amount
                         balance.save()
 
-
         if transaction_object.type == 'event_purchase':
             # print("EVENT PURCHASE TYPE")
             linktrasactions = LinkTransaction.objects.filter(to_transaction_id=pk)
@@ -3166,7 +3154,6 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     if balance is not None:
                         balance.amount = (balance.amount - transaction_object.recived_or_paid_amount) + transaction_object.total_amount
                         balance.save()
-
 
         transaction_object.delete()
 
@@ -3761,6 +3748,18 @@ def ConvertBucketURL(request):
             print("Data URL:", data_url)
         
         return Response(data_url)
+
+
+### TOTAL SALE
+# @api_view(['POST'])
+# def TotalSale(request):
+#     if request.method == 'POST':
+#         user_id = request.data.get('user_id', None)
+#         print('user_id ::: ', user_id)
+#         type = request.data.get('type', None)
+#         print('type ::: ', type)
+
+
 
 
 @api_view(['POST'])
