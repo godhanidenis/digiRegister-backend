@@ -55,6 +55,8 @@ class User(AbstractUser):
     facebook_id = models.CharField(max_length=100, null=True, blank=True)
     profile_pic = models.CharField(max_length=150, null=True, blank=True)
     signature = models.CharField(max_length=150, null=True, blank=True)
+    payee_address = models.CharField(max_length=100, null=True, blank=True)
+    payee_name = models.CharField(max_length=100, null=True, blank=True)
 
     objects = UserManager()
 
