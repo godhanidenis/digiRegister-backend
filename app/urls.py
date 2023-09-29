@@ -40,6 +40,7 @@ urlpatterns =[
     path('transactionlink/',views.TransactionLink, name='transactionlink'),
     path('staffstatus/',views.StaffStatus, name='staffstatus'),
     path('eventdetail/',views.EventDetail, name='eventdetail'),
+    path('converturl/',views.ConvertBucketURL, name='convertbucketurl'),
     path('conversationreport/',views.ConversationRateReport, name='conversationratereport'),
     path('statusreport/',views.InvoiceStatusReport, name='invoicestatusreport'),
     path('earningreport/',views.MonthylyEarningReport, name='monthylyearningreport'),
