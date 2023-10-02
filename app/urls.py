@@ -41,6 +41,14 @@ urlpatterns =[
     path('staffstatus/',views.StaffStatus, name='staffstatus'),
     path('eventdetail/',views.EventDetail, name='eventdetail'),
     path('converturl/',views.ConvertBucketURL, name='convertbucketurl'),
+    # path('totalsale/',views.TotalSale, name='totalsale'),
+    # path('totalexpense/',views.TotalExpense, name='totalexpense'),
+    # path('totalamount/',views.TotalAmount, name='totalamount'),
+    # path('totalpurchase/',views.TotalPurchase, name='totalpurchase'),
+
+
+
+    
     path('conversationreport/',views.ConversationRateReport, name='conversationratereport'),
     path('statusreport/',views.InvoiceStatusReport, name='invoicestatusreport'),
     path('earningreport/',views.MonthylyEarningReport, name='monthylyearningreport'),
