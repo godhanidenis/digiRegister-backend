@@ -9,7 +9,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from app.utils import convert_time_utc_to_local, link_transaction
+from app.utils import *
 from .models import *
 from .serializers import *
 from .pagination import MyPagination
@@ -340,56 +340,60 @@ class QuotationViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         # print("Instance ::", instance)
-        data = {
-            "quotation_data": QuotationSerializer(instance).data, 
-            "datas": []
-            }
+        # print("Instance ID ::", instance.id)
 
-        eventdays = EventDay.objects.filter(quotation_id=instance.id)
-        # print("EventDays ::", eventdays)
-        for eventday in eventdays:
-            eventday_data = {
-                "event_day": EventDaySerializer(eventday).data,
-                "event_details": [],
-                "description": []
-            }
+        return Response(quotation_get(instance.id))
 
-            eventdetails = EventDetails.objects.filter(eventday_id=eventday.id)
-            # print("EventDetails :: ", eventdetails)
-            for eventdetail in eventdetails:
-                eventday_data["event_details"].append(EventDetailsSerializer(eventdetail).data)
+        # data = {
+        #     "quotation_data": QuotationSerializer(instance).data, 
+        #     "datas": []
+        #     }
 
-            inventorydetails = InventoryDetails.objects.filter(eventday_id = eventday.id)
-            # print("inventorydetails :: ",inventorydetails)
+        # eventdays = EventDay.objects.filter(quotation_id=instance.id)
+        # # print("EventDays ::", eventdays)
+        # for eventday in eventdays:
+        #     eventday_data = {
+        #         "event_day": EventDaySerializer(eventday).data,
+        #         "event_details": [],
+        #         "description": []
+        #     }
+
+        #     eventdetails = EventDetails.objects.filter(eventday_id=eventday.id)
+        #     # print("EventDetails :: ", eventdetails)
+        #     for eventdetail in eventdetails:
+        #         eventday_data["event_details"].append(EventDetailsSerializer(eventdetail).data)
+
+        #     inventorydetails = InventoryDetails.objects.filter(eventday_id = eventday.id)
+        #     # print("inventorydetails :: ",inventorydetails)
             
-            for inventorydetail in inventorydetails:
-                exposuredetails = ExposureDetails.objects.filter(inventorydetails_id=inventorydetail.id)
-                # print("exposuredetails :: ",exposuredetails)
-                # exposure_details_list = []
+        #     for inventorydetail in inventorydetails:
+        #         exposuredetails = ExposureDetails.objects.filter(inventorydetails_id=inventorydetail.id)
+        #         # print("exposuredetails :: ",exposuredetails)
+        #         # exposure_details_list = []
 
-                # grouped_exposure_details = exposuredetails.values('staff_id','inventorydetails_id','price').annotate(event_ids_list=ArrayAgg('eventdetails_id'))
-                # exposure = {}
+        #         # grouped_exposure_details = exposuredetails.values('staff_id','inventorydetails_id','price').annotate(event_ids_list=ArrayAgg('eventdetails_id'))
+        #         # exposure = {}
 
-                # for entry in grouped_exposure_details:
-                #     exposure = {
-                #     "staff_id" : entry['staff_id'],
-                #     "inventorydetails_id" : entry['inventorydetails_id'],
-                #     "event_ids_list" : entry['event_ids_list'],
-                #     "price" : entry['price'],
-                #     }
-                #     exposure_details_list.append(exposure)
+        #         # for entry in grouped_exposure_details:
+        #         #     exposure = {
+        #         #     "staff_id" : entry['staff_id'],
+        #         #     "inventorydetails_id" : entry['inventorydetails_id'],
+        #         #     "event_ids_list" : entry['event_ids_list'],
+        #         #     "price" : entry['price'],
+        #         #     }
+        #         #     exposure_details_list.append(exposure)
 
-                eventday_data["description"].append({"inventory_details": InventoryDetailsSerializer(inventorydetail).data,
-                                                     "exposure_details": ExposureDetailsSerializer(exposuredetails, many=True).data})
+        #         eventday_data["description"].append({"inventory_details": InventoryDetailsSerializer(inventorydetail).data,
+        #                                              "exposure_details": ExposureDetailsSerializer(exposuredetails, many=True).data})
                 
-            data["datas"].append(eventday_data)
+        #     data["datas"].append(eventday_data)
 
-        transaction_data = Transaction.objects.get(quotation_id=instance.id)
-        # print("Transaction data :: ", transaction_data)
-        data['transaction_data'] = TransactionSerializer(transaction_data).data
+        # transaction_data = Transaction.objects.get(quotation_id=instance.id)
+        # # print("Transaction data :: ", transaction_data)
+        # data['transaction_data'] = TransactionSerializer(transaction_data).data
 
         # print(data)
-        return Response(data)
+        # return Response(data)
 
     def create(self, request, *args, **kwargs): 
         quotation =request.data['quotation_data']
@@ -408,6 +412,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
         else:
             return Response(quotationSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
+        final_evnetday_data = []
         final_eventdetails_data = []
         final_inventorydetails_data = []
         final_exposuredetails_data = []
@@ -421,6 +426,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
             eventdaySerializer = EventDaySerializer(data=eventdate_data)
             if eventdaySerializer.is_valid():
                 eventday_instance = eventdaySerializer.save()
+                final_evnetday_data.append(eventday_instance)
             else:
                 return Response(eventdaySerializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
@@ -677,13 +683,17 @@ class QuotationViewSet(viewsets.ModelViewSet):
 
             # print("FINAL INSTANCE :: ", finall_instance)
 
-        return Response({
-            "quotation_data":QuotationSerializer(quotation_instance).data,
-            "eventday_data":EventDaySerializer(eventday_instance).data,
-            "eventdetails_data":EventDetailsSerializer(final_eventdetails_data, many=True).data,
-            "inventorydetails_data":InventoryDetailsSerializer(final_inventorydetails_data, many=True).data,
-            "exposuredetails_data":ExposureDetailsSerializer(final_exposuredetails_data, many=True).data,
-            "transaction_data":TransactionSerializer(transaction_instance).data})
+        # return Response({
+        #     "quotation_data":QuotationSerializer(quotation_instance).data,
+        #     "eventday_data":EventDaySerializer(final_evnetday_data, many=True).data,
+        #     "eventdetails_data":EventDetailsSerializer(final_eventdetails_data, many=True).data,
+        #     "inventorydetails_data":InventoryDetailsSerializer(final_inventorydetails_data, many=True).data,
+        #     "exposuredetails_data":ExposureDetailsSerializer(final_exposuredetails_data, many=True).data,
+        #     "transaction_data":TransactionSerializer(transaction_instance).data})
+
+        # print("quotation_instance.id :: ",quotation_instance.id)
+        return Response(quotation_get(quotation_instance.id))
+
 
     def update(self, request, pk=None, *args, **kwargs):
         quotation_data = request.data.get('quotation_data', None)
@@ -3756,8 +3766,116 @@ def ConvertBucketURL(request):
 #     if request.method == 'POST':
 #         user_id = request.data.get('user_id', None)
 #         print('user_id ::: ', user_id)
-#         type = request.data.get('type', None)
-#         print('type ::: ', type)
+#         start_date = request.data.get('start_date', None)
+#         print("START ::", start_date)
+#         end_date = request.data.get('end_date', None)
+#         print("END ::", end_date)
+
+#         if start_date is None and end_date is None:
+#             total_amount = Transaction.objects.filter(user_id=user_id, 
+#                                                       type__in=['sale', 'event_sale']).aggregate(Sum('total_amount'))['total_amount__sum']
+#             print('total_amount ::: ',total_amount)
+#         else:
+#             total_amount = Transaction.objects.filter(user_id=user_id, 
+#                                                       created_on__range=[start_date, end_date], 
+#                                                       type__in=['sale', 'event_sale']).aggregate(Sum('total_amount'))['total_amount__sum']
+#             print('total_amount ::: ',total_amount)
+
+#         return Response(total_amount)
+
+
+### TOTAL EXPENSES
+# @api_view(['POST'])
+# def TotalExpense(request):
+#     if request.method == 'POST':
+#         user_id = request.data.get('user_id', None)
+#         print('user_id ::: ', user_id)
+#         start_date = request.data.get('start_date', None)
+#         print("START ::", start_date)
+#         end_date = request.data.get('end_date', None)
+#         print("END ::", end_date)
+
+#         if start_date is None and end_date is None:
+#             total_amount = Transaction.objects.filter(user_id=user_id, 
+#                                                       type__in=['expense']).aggregate(Sum('total_amount'))['total_amount__sum']
+#             print('total_amount ::: ',total_amount)
+#         else:
+#             total_amount = Transaction.objects.filter(user_id=user_id, 
+#                                                       created_on__range=[start_date, end_date], 
+#                                                       type__in=['expense']).aggregate(Sum('total_amount'))['total_amount__sum']
+#             print('total_amount ::: ',total_amount)
+
+#         return Response(total_amount)
+
+
+### TOTAL RECIVED AMOUNT
+# @api_view(['POST'])
+# def TotalAmount(request):
+#     if request.method == 'POST':
+#         user_id = request.data.get('user_id', None)
+#         # print('user_id ::: ', user_id)
+#         data = {
+#             "you'll recived" : [],
+#             "you'll pay": [],
+#         }
+#         total_recived = 0
+#         total_paied = 0
+#         customers = Customer.objects.filter(user_id=user_id)
+#         for customer in customers:
+#             # print("Single Customer ::: ",customer)
+#             # print("Customer ID ::: ",customer.id)
+        
+#             total_recived_amount = Transaction.objects.filter(customer_id=customer.id, 
+#                                                               type__in=['sale','event_sale','payment_out']).aggregate(Sum('total_amount'))['total_amount__sum']
+#             total_recived_amount = total_recived_amount if total_recived_amount is not None else 0
+#             # print("TOTAL RECEIVED AMOUNT ::: ",total_recived_amount)
+
+#             total_pay_amount = Transaction.objects.filter(customer_id=customer.id, 
+#                                                               type__in=['purchase','event_purchase','payment_in']).aggregate(Sum('total_amount'))['total_amount__sum']
+#             total_pay_amount = total_pay_amount if total_pay_amount is not None else 0
+#             # print("TOTAL PAY AMOUNT ::: ",total_pay_amount)
+
+#             total = total_recived_amount - total_pay_amount
+#             # print("TOTAL ::: ",total)
+
+#             if total > 0:
+#                 data["you'll recived"].append({'customer_name': customer.full_name,
+#                                                'amount':total})
+#                 total_recived = total_recived + total
+#             elif total < 0:
+#                 data["you'll pay"].append({'customer_name': customer.full_name,
+#                                            'amount':total})
+#                 total_paied = total_paied + total
+
+#         data['total_recived'] = total_recived
+#         data['total_paied'] = total_paied
+
+#         return Response(data)
+
+
+### TOTAL PURCHASE
+# @api_view(['POST'])
+# def TotalPurchase(request):
+#     if request.method == 'POST':
+#         user_id = request.data.get('user_id', None)
+#         print('user_id ::: ', user_id)
+#         start_date = request.data.get('start_date', None)
+#         print("START ::", start_date)
+#         end_date = request.data.get('end_date', None)
+#         print("END ::", end_date)
+
+#         if start_date is None and end_date is None:
+#             total_amount = Transaction.objects.filter(user_id=user_id, 
+#                                                       type__in=['purchase','event_purchase']).aggregate(Sum('total_amount'))['total_amount__sum']
+#             print('total_amount ::: ',total_amount)
+#         else:
+#             total_amount = Transaction.objects.filter(user_id=user_id, 
+#                                                       created_on__range=[start_date, end_date], 
+#                                                       type__in=['purchase','event_purchase']).aggregate(Sum('total_amount'))['total_amount__sum']
+#             print('total_amount ::: ',total_amount)
+
+#         return Response(total_amount)
+
 
 
 

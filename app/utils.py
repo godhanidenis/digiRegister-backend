@@ -6,6 +6,63 @@ from .serializers import *
 from datetime import datetime
 import pytz
 
+def quotation_get(quotation_id):
+    quotation_id = quotation_id
+    # print("Quotation ID :: ",quotation_id)
+    quotation = Quotation.objects.get(id=quotation_id)
+    # print("Quotation :: ",quotation)
+
+    data = {"quotation_data": QuotationSerializer(quotation).data,
+             "datas": []}
+
+    eventdays = EventDay.objects.filter(quotation_id=quotation.id)
+    # print("EventDays ::", eventdays)
+    for eventday in eventdays:
+        eventday_data = {
+            "event_day": EventDaySerializer(eventday).data,
+            "event_details": [],
+            "description": []
+        }
+
+        eventdetails = EventDetails.objects.filter(eventday_id=eventday.id)
+        # print("EventDetails :: ", eventdetails)
+        for eventdetail in eventdetails:
+            eventday_data["event_details"].append(EventDetailsSerializer(eventdetail).data)
+
+        inventorydetails = InventoryDetails.objects.filter(eventday_id = eventday.id)
+        # print("inventorydetails :: ",inventorydetails)
+        
+        for inventorydetail in inventorydetails:
+            exposuredetails = ExposureDetails.objects.filter(inventorydetails_id=inventorydetail.id)
+            # print("exposuredetails :: ",exposuredetails)
+            # exposure_details_list = []
+
+            # grouped_exposure_details = exposuredetails.values('staff_id','inventorydetails_id','price').annotate(event_ids_list=ArrayAgg('eventdetails_id'))
+            # exposure = {}
+
+            # for entry in grouped_exposure_details:
+            #     exposure = {
+            #     "staff_id" : entry['staff_id'],
+            #     "inventorydetails_id" : entry['inventorydetails_id'],
+            #     "event_ids_list" : entry['event_ids_list'],
+            #     "price" : entry['price'],
+            #     }
+            #     exposure_details_list.append(exposure)
+
+            eventday_data["description"].append({"inventory_details": InventoryDetailsSerializer(inventorydetail).data,
+                                                    "exposure_details": ExposureDetailsSerializer(exposuredetails, many=True).data})
+            
+        data["datas"].append(eventday_data)
+
+    transaction_data = Transaction.objects.get(quotation_id=quotation.id)
+    # print("Transaction data :: ", transaction_data)
+    data['transaction_data'] = TransactionSerializer(transaction_data).data
+
+    # print(data)
+    return data
+
+
+
 def convert_time_utc_to_local(timezone, data):
     if data is not None:
         utc_datetime = datetime.strptime(data, "%Y-%m-%dT%H:%M:%SZ")

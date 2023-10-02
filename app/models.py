@@ -37,6 +37,11 @@ class UserManager(BaseUserManager):
         return user
     
 
+# class TermsAndConditions(models.Model):
+#     name = models.CharField(max_length=50, blank=True, null=True)
+#     description = models.TextField
+
+
 class User(AbstractUser):
     ROLE = (
         ("super_admin", "SUPER_ADMIN"),
