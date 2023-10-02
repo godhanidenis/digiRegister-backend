@@ -40,6 +40,13 @@ class UserViewSet(viewsets.ModelViewSet):
         'address':['icontains']
     }
 
+    def retrieve(self, request, *args, **kwarge):
+        instance = self.get_object()
+        terms = TermsAndConditions.objects.filter(user_id=instance.id)
+
+        return Response({'user_data' : UserSerializer(instance).data,
+                         'terms' : TermsAndConditionsSerializer(terms, many=True).data})
+
     def update(self, request, pk=None, *args, **kwargs):
         user = User.objects.get(pk=pk)
         old_pic = f"digi_profile_pic/{os.path.basename(user.profile_pic)}" if user.profile_pic else None
@@ -128,6 +135,15 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
         return Response(serializer.data)
+
+
+class TermsAndConditionsViewSet(viewsets.ModelViewSet):
+    queryset = TermsAndConditions.objects.all().order_by('-id').distinct()
+    serializer_class = TermsAndConditionsSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields ={
+        'user_id__id':['exact'],
+    }
 
 
 class StudioDetailsViewSet(viewsets.ModelViewSet):

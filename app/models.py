@@ -35,11 +35,6 @@ class UserManager(BaseUserManager):
         # user.save()
 
         return user
-    
-
-# class TermsAndConditions(models.Model):
-#     name = models.CharField(max_length=50, blank=True, null=True)
-#     description = models.TextField
 
 
 class User(AbstractUser):
@@ -80,6 +75,12 @@ class User(AbstractUser):
             if self.type_of_user != 'super_admin':
                 self.set_password(self.password)
         super().save(*args, **kwargs)
+
+
+class TermsAndConditions(models.Model):
+    user_id = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE)
+    name = models.CharField(max_length=100, blank=True, null=True)
+    description = models.TextField(max_length=2000, null=True, blank=True)
 
 
 class StudioDetails(models.Model):

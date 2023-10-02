@@ -7,6 +7,7 @@ from app.views import *
 
 router = routers.DefaultRouter()
 router.register(r'user',views.UserViewSet)
+router.register(r'terms',views.TermsAndConditionsViewSet)
 router.register(r'studiodetails',views.StudioDetailsViewSet)
 router.register(r'customer',views.CustomerViewSet)
 router.register(r'inventory',views.InventoryViewSet)
@@ -25,7 +26,6 @@ router.register(r'exposuredetails',views.ExposureDetailsViewSet)
 router.register(r'linktransaction',views.LinkTransactionViewSet)
 router.register(r'inventorydescription',views.InventoryDescriptionViewSet)
 router.register(r'balance',views.BalanceViewSet)
-
 
 router.register(r'amountreport',views.AmountReportViewSet)
 
