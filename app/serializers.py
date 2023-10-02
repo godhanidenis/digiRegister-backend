@@ -10,6 +10,12 @@ class UserSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class TermsAndConditionsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TermsAndConditions
+        fields = "__all__"
+
+
 class StudioDetailsSerializer(serializers.ModelSerializer):
     # user = UserSerializer(source="user_id", read_only=True)
     class Meta:

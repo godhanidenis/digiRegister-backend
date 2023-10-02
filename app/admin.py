@@ -8,6 +8,11 @@ class UserAdmin(admin.ModelAdmin):
 admin.site.register(User, UserAdmin)
 
 
+class TermsAndConditionsAdmin(admin.ModelAdmin):
+    list_display = ['user_id']
+admin.site.register(TermsAndConditions, TermsAndConditionsAdmin)
+
+
 class StudioDetailsAdmin(admin.ModelAdmin):
     list_display = ['name', 'email']
 admin.site.register(StudioDetails, StudioDetailsAdmin)
