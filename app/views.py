@@ -710,7 +710,6 @@ class QuotationViewSet(viewsets.ModelViewSet):
         # print("quotation_instance.id :: ",quotation_instance.id)
         return Response(quotation_get(quotation_instance.id))
 
-
     def update(self, request, pk=None, *args, **kwargs):
         quotation_data = request.data.get('quotation_data', None)
         # print("Quotation data :", quotation_data)
@@ -1661,7 +1660,9 @@ class QuotationViewSet(viewsets.ModelViewSet):
                         return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                 
                 ### CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON SETTLED AMOUNT
-                new_settled_amount = float(transaction_data.get('settled_amount', None))
+                new_settled_amount = transaction_data.get('settled_amount', None)
+                if new_settled_amount is not None:
+                    new_settled_amount = float(new_settled_amount)
                 # print("new_settled_amount ::: ",new_settled_amount)
                 try:
                     balance = Balance.objects.get(customer_id=transaction.customer_id.id)
@@ -3765,13 +3766,13 @@ class InvoiceExport(viewsets.ReadOnlyModelViewSet):
 def ConvertBucketURL(request):
     if request.method == 'POST':
         s3_bucket_url = request.data.get('s3_bucket_url', None)
-        print("s3_bucket_url ::: ",s3_bucket_url)
+        # print("s3_bucket_url ::: ",s3_bucket_url)
         if s3_bucket_url is not None:
             response = requests.get(s3_bucket_url)
             image_data = response.content
             base64_image = base64.b64encode(image_data).decode()
             data_url = f"data:image/jpeg;base64,{base64_image}"
-            print("Data URL:", data_url)
+            # print("Data URL:", data_url)
         
         return Response(data_url)
 
@@ -3781,21 +3782,21 @@ def ConvertBucketURL(request):
 def TotalSale(request):
     if request.method == 'POST':
         user_id = request.data.get('user_id', None)
-        print('user_id ::: ', user_id)
+        # print('user_id ::: ', user_id)
         start_date = request.data.get('start_date', None)
-        print("START ::", start_date)
+        # print("START ::", start_date)
         end_date = request.data.get('end_date', None)
-        print("END ::", end_date)
+        # print("END ::", end_date)
 
         if start_date is None and end_date is None:
             total_amount = Transaction.objects.filter(user_id=user_id, 
                                                       type__in=['sale', 'event_sale']).aggregate(Sum('total_amount'))['total_amount__sum']
-            print('total_amount ::: ',total_amount)
+            # print('total_amount ::: ',total_amount)
         else:
             total_amount = Transaction.objects.filter(user_id=user_id, 
                                                       created_on__range=[start_date, end_date], 
                                                       type__in=['sale', 'event_sale']).aggregate(Sum('total_amount'))['total_amount__sum']
-            print('total_amount ::: ',total_amount)
+            # print('total_amount ::: ',total_amount)
 
         return Response(total_amount)
 
@@ -3805,21 +3806,21 @@ def TotalSale(request):
 def TotalExpense(request):
     if request.method == 'POST':
         user_id = request.data.get('user_id', None)
-        print('user_id ::: ', user_id)
+        # print('user_id ::: ', user_id)
         start_date = request.data.get('start_date', None)
-        print("START ::", start_date)
+        # print("START ::", start_date)
         end_date = request.data.get('end_date', None)
-        print("END ::", end_date)
+        # print("END ::", end_date)
 
         if start_date is None and end_date is None:
             total_amount = Transaction.objects.filter(user_id=user_id, 
                                                       type__in=['expense']).aggregate(Sum('total_amount'))['total_amount__sum']
-            print('total_amount ::: ',total_amount)
+            # print('total_amount ::: ',total_amount)
         else:
             total_amount = Transaction.objects.filter(user_id=user_id, 
                                                       created_on__range=[start_date, end_date], 
                                                       type__in=['expense']).aggregate(Sum('total_amount'))['total_amount__sum']
-            print('total_amount ::: ',total_amount)
+            # print('total_amount ::: ',total_amount)
 
         return Response(total_amount)
 
@@ -3831,8 +3832,8 @@ def TotalAmount(request):
         user_id = request.data.get('user_id', None)
         # print('user_id ::: ', user_id)
         data = {
-            "you'll recived" : [],
-            "you'll pay": [],
+            # "you'll recived" : [],
+            # "you'll pay": [],
         }
         total_recived = 0
         total_paied = 0
@@ -3855,13 +3856,13 @@ def TotalAmount(request):
             # print("TOTAL ::: ",total)
 
             if total > 0:
-                data["you'll recived"].append({'customer_name': customer.full_name,
-                                               'amount':total})
+                # data["you'll recived"].append({'customer_name': customer.full_name,
+                #                                'amount':total})
                 total_recived = total_recived + total
             elif total < 0:
-                data["you'll pay"].append({'customer_name': customer.full_name,
-                                           'amount':total})
-                total_paied = total_paied + total
+                # data["you'll pay"].append({'customer_name': customer.full_name,
+                #                            'amount':total})
+                total_paied = total_paied + (-total)
 
         data['total_recived'] = total_recived
         data['total_paied'] = total_paied
@@ -3874,21 +3875,21 @@ def TotalAmount(request):
 def TotalPurchase(request):
     if request.method == 'POST':
         user_id = request.data.get('user_id', None)
-        print('user_id ::: ', user_id)
+        # print('user_id ::: ', user_id)
         start_date = request.data.get('start_date', None)
-        print("START ::", start_date)
+        # print("START ::", start_date)
         end_date = request.data.get('end_date', None)
-        print("END ::", end_date)
+        # print("END ::", end_date)
 
         if start_date is None and end_date is None:
             total_amount = Transaction.objects.filter(user_id=user_id, 
                                                       type__in=['purchase','event_purchase']).aggregate(Sum('total_amount'))['total_amount__sum']
-            print('total_amount ::: ',total_amount)
+            # print('total_amount ::: ',total_amount)
         else:
             total_amount = Transaction.objects.filter(user_id=user_id, 
                                                       created_on__range=[start_date, end_date], 
                                                       type__in=['purchase','event_purchase']).aggregate(Sum('total_amount'))['total_amount__sum']
-            print('total_amount ::: ',total_amount)
+            # print('total_amount ::: ',total_amount)
 
         return Response(total_amount)
 
@@ -3898,33 +3899,33 @@ def TotalPurchase(request):
 def ConversationRateReport(request):
     if request.method == 'POST':
         user = request.data.get('user_id')
-        print("USER ::", user)
+        # print("USER ::", user)
         start_date = request.data.get('start_date', None)
-        print("START ::", start_date)
+        # print("START ::", start_date)
         end_date = request.data.get('end_date', None)
-        print("END ::", end_date)
+        # print("END ::", end_date)
 
         report = {}
 
         total = Transaction.objects.filter(user_id = user, type='estimate').count()
-        print("Total ::", total)
+        # print("Total ::", total)
         report['total'] = total
 
         if start_date is None and end_date is None:
             not_converted = Transaction.objects.filter(user_id = user, type='estimate', is_converted=False).count()
-            print("not_converted ::: ",not_converted)
+            # print("not_converted ::: ",not_converted)
             report['not_converted'] = not_converted
 
             converted = Transaction.objects.filter(user_id = user, type='estimate', is_converted=True).count()
-            print("converted ::: ",converted)
+            # print("converted ::: ",converted)
             report['converted'] = converted
         else:
             not_converted = Transaction.objects.filter(user_id = user, type='estimate', is_converted=False, created_on__range=[start_date, end_date]).count()
-            print("not_converted ::: ",not_converted)
+            # print("not_converted ::: ",not_converted)
             report['not_converted'] = not_converted
 
             converted = Transaction.objects.filter(user_id = user, type='estimate', is_converted=True, created_on__range=[start_date, end_date]).count()
-            print("converted ::: ",converted)
+            # print("converted ::: ",converted)
             report['converted'] = converted
 
         return Response(report)
@@ -3935,11 +3936,11 @@ def ConversationRateReport(request):
 def InvoiceStatusReport(request):
     if request.method == 'POST':
         user = request.data.get('user_id')
-        print("USER ::", user)
+        # print("USER ::", user)
         start_date = request.data.get('start_date', None)
-        print("START ::", start_date)
+        # print("START ::", start_date)
         end_date = request.data.get('end_date', None)
-        print("END ::", end_date)
+        # print("END ::", end_date)
 
         report = {}
         report['completed'] = 0
@@ -3947,24 +3948,18 @@ def InvoiceStatusReport(request):
 
         if start_date is None and end_date is None:
             transactions = Transaction.objects.filter(user_id=user, type__in=['event_sale','sale','event_purchase','purchase'])
-            print("Transactions :: ",transactions)
-            for transaction in transactions:
-                print('transaction :: ', transaction)
-                print("STATUS :: ", transaction.total_amount == (transaction.recived_or_paid_amount + transaction.settled_amount))
-                if transaction.total_amount == (transaction.recived_or_paid_amount + transaction.settled_amount):
-                    report['completed'] += 1
-                else:
-                    report['pending'] += 1
+            # print("Transactions :: ",transactions)
         else:
             transactions = Transaction.objects.filter(user_id=user, type__in=['event_sale','sale','event_purchase','purchase'], created_on__range=[start_date, end_date])
-            print("Transactions :: ",transactions)
-            for transaction in transactions:
-                print('transaction :: ', transaction)
-                print("STATUS :: ", transaction.total_amount == (transaction.recived_or_paid_amount + transaction.settled_amount))
-                if transaction.total_amount == (transaction.recived_or_paid_amount + transaction.settled_amount):
-                    report['completed'] += 1
-                else:
-                    report['pending'] += 1
+            # print("Transactions :: ",transactions)
+
+        for transaction in transactions:
+            # print('transaction :: ', transaction)
+            # print("STATUS :: ", transaction.total_amount == (transaction.recived_or_paid_amount + transaction.settled_amount))
+            if transaction.total_amount == (transaction.recived_or_paid_amount + transaction.settled_amount):
+                report['completed'] += 1
+            else:
+                report['pending'] += 1
 
         return Response(report)
 
@@ -3974,75 +3969,48 @@ def InvoiceStatusReport(request):
 def CompletionReport(request):
     if request.method == 'POST':
         user = request.data.get('user_id')
-        print("USER ::", user)
+        # print("USER ::", user)
         start_date = request.data.get('start_date', None)
-        print("START ::", start_date)
+        # print("START ::", start_date)
         end_date = request.data.get('end_date', None)
-        print("END ::", end_date)
+        # print("END ::", end_date)
         
         data = []
 
         if start_date is None and end_date is None:
             transactions = Transaction.objects.filter(user_id=user, type='event_sale')
-            print("TRANSACTIONS ::", transactions)
-            for transaction in transactions:
-                print("Transaction ::", transaction)
-                print("Quotation ID ::", transaction.quotation_id.id)
-
-                quotation = Quotation.objects.get(pk=transaction.quotation_id.id)
-                print("Quotation ::", quotation)
-                print("Quotation ID ::", quotation.id)
-
-                eventdays = EventDay.objects.filter(quotation_id=quotation.id)
-                print("Event Days ::", eventdays)
-
-                for eventday in eventdays:
-                    print("Event Day ::", eventday)
-                    print("Event Day ID ::", eventday.id)
-
-                    inventorydetails = InventoryDetails.objects.filter(eventday_id=eventday.id)
-                    print("Inventory Details ::", inventorydetails)
-
-                    for inventorydetail in inventorydetails:
-                        print("Inventory Detail ::", inventorydetail)
-                        print("Inventory Detail ID ::", inventorydetail.id)
-
-                        exposuredetails = ExposureDetails.objects.filter(inventorydetails_id=inventorydetail.id)
-                        print("LENGTH ::", len(exposuredetails))
-                        if len(exposuredetails) == 0:
-                            data.append(transaction)
-                            break
-
+            # print("TRANSACTIONS ::", transactions)
         else:
             transactions = Transaction.objects.filter(user_id=user, created_on__range=[start_date, end_date], type__in=['event_sale', 'estimate'])
-            print("TRANSACTIONS ::", transactions)
-            for transaction in transactions:
-                print("Transaction ::", transaction)
-                print("Quotation ID ::", transaction.quotation_id.id)
+            # print("TRANSACTIONS ::", transactions)
 
-                quotation = Quotation.objects.get(pk=transaction.quotation_id.id)
-                print("Quotation ::", quotation)
-                print("Quotation ID ::", quotation.id)
+        for transaction in transactions:
+            # print("Transaction ::", transaction)
+            # print("Quotation ID ::", transaction.quotation_id.id)
 
-                eventdays = EventDay.objects.filter(quotation_id=quotation.id)
-                print("Event Days ::", eventdays)
+            quotation = Quotation.objects.get(pk=transaction.quotation_id.id)
+            # print("Quotation ::", quotation)
+            # print("Quotation ID ::", quotation.id)
 
-                for eventday in eventdays:
-                    print("Event Day ::", eventday)
-                    print("Event Day ID ::", eventday.id)
+            eventdays = EventDay.objects.filter(quotation_id=quotation.id)
+            # print("Event Days ::", eventdays)
 
-                    inventorydetails = InventoryDetails.objects.filter(eventday_id=eventday.id)
-                    print("Inventory Details ::", inventorydetails)
+            for eventday in eventdays:
+                # print("Event Day ::", eventday)
+                # print("Event Day ID ::", eventday.id)
 
-                    for inventorydetail in inventorydetails:
-                        print("Inventory Detail ::", inventorydetail)
-                        print("Inventory Detail ID ::", inventorydetail.id)
+                inventorydetails = InventoryDetails.objects.filter(eventday_id=eventday.id)
+                # print("Inventory Details ::", inventorydetails)
 
-                        exposuredetails = ExposureDetails.objects.filter(inventorydetails_id=inventorydetail.id)
-                        print("LENGTH ::", len(exposuredetails))
-                        if len(exposuredetails) == 0:
-                            data.append(transaction)
-                            break
+                for inventorydetail in inventorydetails:
+                    # print("Inventory Detail ::", inventorydetail)
+                    # print("Inventory Detail ID ::", inventorydetail.id)
+
+                    exposuredetails = ExposureDetails.objects.filter(inventorydetails_id=inventorydetail.id)
+                    # print("LENGTH ::", len(exposuredetails))
+                    if len(exposuredetails) == 0:
+                        data.append(transaction)
+                        break
 
         print("DATA :: ",data)
         return Response(TransactionSerializer(data, many=True).data)
