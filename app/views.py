@@ -1661,6 +1661,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                 
                 ### CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON SETTLED AMOUNT
                 new_settled_amount = transaction_data.get('settled_amount', None)
+                new_settled_amount = new_settled_amount if new_settled_amount is not None else 0
                 if new_settled_amount is not None:
                     new_settled_amount = float(new_settled_amount)
                 # print("new_settled_amount ::: ",new_settled_amount)
@@ -3789,13 +3790,10 @@ def TotalSale(request):
         # print("END ::", end_date)
 
         if start_date is None and end_date is None:
-            total_amount = Transaction.objects.filter(user_id=user_id, 
-                                                      type__in=['sale', 'event_sale']).aggregate(Sum('total_amount'))['total_amount__sum']
+            total_amount = Transaction.objects.filter(user_id=user_id, type__in=['sale', 'event_sale']).aggregate(Sum('total_amount'))['total_amount__sum']
             # print('total_amount ::: ',total_amount)
         else:
-            total_amount = Transaction.objects.filter(user_id=user_id, 
-                                                      created_on__range=[start_date, end_date], 
-                                                      type__in=['sale', 'event_sale']).aggregate(Sum('total_amount'))['total_amount__sum']
+            total_amount = Transaction.objects.filter(user_id=user_id, created_on__range=[start_date, end_date], type__in=['sale', 'event_sale']).aggregate(Sum('total_amount'))['total_amount__sum']
             # print('total_amount ::: ',total_amount)
 
         return Response(total_amount)
@@ -3813,13 +3811,10 @@ def TotalExpense(request):
         # print("END ::", end_date)
 
         if start_date is None and end_date is None:
-            total_amount = Transaction.objects.filter(user_id=user_id, 
-                                                      type__in=['expense']).aggregate(Sum('total_amount'))['total_amount__sum']
+            total_amount = Transaction.objects.filter(user_id=user_id, type__in=['expense']).aggregate(Sum('total_amount'))['total_amount__sum']
             # print('total_amount ::: ',total_amount)
         else:
-            total_amount = Transaction.objects.filter(user_id=user_id, 
-                                                      created_on__range=[start_date, end_date], 
-                                                      type__in=['expense']).aggregate(Sum('total_amount'))['total_amount__sum']
+            total_amount = Transaction.objects.filter(user_id=user_id, created_on__range=[start_date, end_date], type__in=['expense']).aggregate(Sum('total_amount'))['total_amount__sum']
             # print('total_amount ::: ',total_amount)
 
         return Response(total_amount)
@@ -3842,13 +3837,11 @@ def TotalAmount(request):
             # print("Single Customer ::: ",customer)
             # print("Customer ID ::: ",customer.id)
         
-            total_recived_amount = Transaction.objects.filter(customer_id=customer.id, 
-                                                              type__in=['sale','event_sale','payment_out']).aggregate(Sum('total_amount'))['total_amount__sum']
+            total_recived_amount = Transaction.objects.filter(customer_id=customer.id, type__in=['sale','event_sale','payment_out']).aggregate(Sum('total_amount'))['total_amount__sum']
             total_recived_amount = total_recived_amount if total_recived_amount is not None else 0
             # print("TOTAL RECEIVED AMOUNT ::: ",total_recived_amount)
 
-            total_pay_amount = Transaction.objects.filter(customer_id=customer.id, 
-                                                              type__in=['purchase','event_purchase','payment_in']).aggregate(Sum('total_amount'))['total_amount__sum']
+            total_pay_amount = Transaction.objects.filter(customer_id=customer.id, type__in=['purchase','event_purchase','payment_in']).aggregate(Sum('total_amount'))['total_amount__sum']
             total_pay_amount = total_pay_amount if total_pay_amount is not None else 0
             # print("TOTAL PAY AMOUNT ::: ",total_pay_amount)
 
@@ -3882,13 +3875,10 @@ def TotalPurchase(request):
         # print("END ::", end_date)
 
         if start_date is None and end_date is None:
-            total_amount = Transaction.objects.filter(user_id=user_id, 
-                                                      type__in=['purchase','event_purchase']).aggregate(Sum('total_amount'))['total_amount__sum']
+            total_amount = Transaction.objects.filter(user_id=user_id, type__in=['purchase','event_purchase']).aggregate(Sum('total_amount'))['total_amount__sum']
             # print('total_amount ::: ',total_amount)
         else:
-            total_amount = Transaction.objects.filter(user_id=user_id, 
-                                                      created_on__range=[start_date, end_date], 
-                                                      type__in=['purchase','event_purchase']).aggregate(Sum('total_amount'))['total_amount__sum']
+            total_amount = Transaction.objects.filter(user_id=user_id, created_on__range=[start_date, end_date], type__in=['purchase','event_purchase']).aggregate(Sum('total_amount'))['total_amount__sum']
             # print('total_amount ::: ',total_amount)
 
         return Response(total_amount)
