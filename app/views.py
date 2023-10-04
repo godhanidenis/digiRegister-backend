@@ -1549,6 +1549,16 @@ class QuotationViewSet(viewsets.ModelViewSet):
                     # print("Delete Exposure ::", delete_exposure)
                     d_exposure = ExposureDetails.objects.get(pk=delete_exposure)
                     # print("Exposure ::", d_exposure)
+                    exposure_bill = Transaction.objects.get(exposuredetails_id=delete_exposure)
+                    print("exposure_bill ::", exposure_bill)
+
+                    balance = Balance.objects.get(staff_id=d_exposure.staff_id.id)
+                    print("balance ::", balance)
+                    print("balance.amount ::", balance.amount)
+                    balance.amount = balance.amount + exposure_bill.total_amount
+                    print("New balance.amount ::", balance.amount)
+                    balance.save()
+
                     d_exposure.delete()
 
             # print("*************************************************")
