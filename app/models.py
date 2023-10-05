@@ -258,6 +258,7 @@ class Transaction(models.Model):
     total_amount = models.FloatField(max_length=10, default=0.0)
     discount_amount = models.FloatField(max_length=10, default=0.0)
     recived_or_paid_amount = models.FloatField(max_length=10, default=0.0)
+    advance_amount = models.FloatField(max_length=10, default=0.0)
     used_amount = models.FloatField(max_length=10, default=0.0)
     settled_amount = models.FloatField(max_length=10, default=0.0)
     profit = models.FloatField(max_length=10, default=0.0)
