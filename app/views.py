@@ -1645,6 +1645,9 @@ class QuotationViewSet(viewsets.ModelViewSet):
                 ### CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON RESCIVED OR PAID AMOUNT
                 new_advance_amount = float(transaction_data.get('advance_amount', None))
                 # print("new_advance_amount ::: ",new_advance_amount)
+                new_advance_amount = new_advance_amount if new_advance_amount is not None else 0
+                if new_advance_amount is not None:
+                    new_advance_amount = float(new_advance_amount)
                 try:
                     balance = Balance.objects.get(customer_id=transaction.customer_id.id)
                 except:
@@ -4015,6 +4018,78 @@ def CompletionReport(request):
         print("DATA :: ",data)
         return Response(TransactionSerializer(data, many=True).data)
 
+
+### Cash & Bank 
+@api_view(['POST'])
+def CashAndBank(request):
+    if request.method == 'POST':
+        user = request.data.get('user_id')
+        print("USER ::", user)
+
+
+        cash_payment_in = Transaction.objects.filter(user_id=user, payment_type='cash', type__in=['payment_in']).aggregate(Sum('total_amount'))['total_amount__sum']
+        cash_payment_in = cash_payment_in if cash_payment_in is not None else 0
+        print("cash_payment_in ::", cash_payment_in)
+        cash_payment_out = Transaction.objects.filter(user_id=user, payment_type='cash', type__in=['payment_out']).aggregate(Sum('total_amount'))['total_amount__sum']
+        cash_payment_out = cash_payment_out if cash_payment_out is not None else 0
+        print("cash_payment_out ::", cash_payment_out)
+        cash_sale = Transaction.objects.filter(user_id=user, payment_type='cash', type__in=['sale','event_sale']).aggregate(Sum('advance_amount'))['advance_amount__sum']
+        cash_sale = cash_sale if cash_sale is not None else 0
+        print("cash_sale ::", cash_sale)
+        cash_purchase = Transaction.objects.filter(user_id=user, payment_type='cash', type__in=['purchase','event_purchase']).aggregate(Sum('advance_amount'))['advance_amount__sum']
+        cash_purchase = cash_purchase if cash_purchase is not None else 0
+        print("cash_purchase ::", cash_purchase)
+        
+
+        cheque_payment_in = Transaction.objects.filter(user_id=user, payment_type='cheque', type__in=['payment_in']).aggregate(Sum('total_amount'))['total_amount__sum']
+        cheque_payment_in = cheque_payment_in if cheque_payment_in is not None else 0
+        print("cheque_payment_in ::", cheque_payment_in)
+        cheque_payment_out = Transaction.objects.filter(user_id=user, payment_type='cheque', type__in=['payment_out']).aggregate(Sum('total_amount'))['total_amount__sum']
+        cheque_payment_out = cheque_payment_out if cheque_payment_out is not None else 0
+        print("cheque_payment_out ::", cheque_payment_out)
+        cheque_sale = Transaction.objects.filter(user_id=user, payment_type='cheque', type__in=['sale','event_sale']).aggregate(Sum('advance_amount'))['advance_amount__sum']
+        cheque_sale = cheque_sale if cheque_sale is not None else 0
+        print("cheque_sale ::", cheque_sale)
+        cheque_purchase = Transaction.objects.filter(user_id=user, payment_type='cheque', type__in=['purchase','event_purchase']).aggregate(Sum('advance_amount'))['advance_amount__sum']
+        cheque_purchase = cheque_purchase if cheque_purchase is not None else 0
+        print("cheque_purchase ::", cheque_purchase)
+
+
+        net_banking_payment_in = Transaction.objects.filter(user_id=user, payment_type='net_banking', type__in=['payment_in']).aggregate(Sum('total_amount'))['total_amount__sum']
+        net_banking_payment_in = net_banking_payment_in if net_banking_payment_in is not None else 0
+        print("net_banking_payment_in ::", net_banking_payment_in)
+        net_banking_payment_out = Transaction.objects.filter(user_id=user, payment_type='net_banking', type__in=['payment_out']).aggregate(Sum('total_amount'))['total_amount__sum']
+        net_banking_payment_out = net_banking_payment_out if net_banking_payment_out is not None else 0
+        print("net_banking_payment_out ::", net_banking_payment_out)
+        net_banking_sale = Transaction.objects.filter(user_id=user, payment_type='net_banking', type__in=['sale','event_sale']).aggregate(Sum('advance_amount'))['advance_amount__sum']
+        net_banking_sale = net_banking_sale if net_banking_sale is not None else 0
+        print("net_banking_sale ::", net_banking_sale)
+        net_banking_purchase = Transaction.objects.filter(user_id=user, payment_type='net_banking', type__in=['purchase','event_purchase']).aggregate(Sum('advance_amount'))['advance_amount__sum']
+        net_banking_purchase = net_banking_purchase if net_banking_purchase is not None else 0
+        print("net_banking_purchase ::", net_banking_purchase)
+
+
+        upi_payment_in = Transaction.objects.filter(user_id=user, payment_type='upi', type__in=['payment_in']).aggregate(Sum('total_amount'))['total_amount__sum']
+        upi_payment_in = upi_payment_in if upi_payment_in is not None else 0
+        print("upi_payment_in ::", upi_payment_in)
+        upi_payment_out = Transaction.objects.filter(user_id=user, payment_type='upi', type__in=['payment_out']).aggregate(Sum('total_amount'))['total_amount__sum']
+        upi_payment_out = upi_payment_out if upi_payment_out is not None else 0
+        print("upi_payment_out ::", upi_payment_out)
+        upi_sale = Transaction.objects.filter(user_id=user, payment_type='upi', type__in=['sale','event_sale']).aggregate(Sum('advance_amount'))['advance_amount__sum']
+        upi_sale = upi_sale if upi_sale is not None else 0
+        print("upi_sale ::", upi_sale)
+        upi_purchase = Transaction.objects.filter(user_id=user, payment_type='upi', type__in=['purchase','event_purchase']).aggregate(Sum('advance_amount'))['advance_amount__sum']
+        upi_purchase = upi_purchase if upi_purchase is not None else 0
+        print("upi_purchase ::", upi_purchase)
+
+
+        data = {'total_cash': (cash_payment_in + cash_sale) - (cash_payment_out + cash_purchase),
+                'total_cheque': (cheque_payment_in + cheque_sale) - (cheque_payment_out + cheque_purchase),
+                'total_net_banking': (net_banking_payment_in + net_banking_sale) - (net_banking_payment_out + net_banking_purchase),
+                'total_upi': (upi_payment_in + upi_sale) - (upi_payment_out + upi_purchase)}
+
+        print("DATA ::: ",data)
+        return Response(data)
 
 
 
