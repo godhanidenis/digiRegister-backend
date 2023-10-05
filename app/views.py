@@ -1643,7 +1643,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                 
 
                 ### CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON RESCIVED OR PAID AMOUNT
-                new_advance_amount = float(transaction_data.get('advance_amount', None))
+                new_advance_amount = transaction_data.get('advance_amount', None)
                 # print("new_advance_amount ::: ",new_advance_amount)
                 new_advance_amount = new_advance_amount if new_advance_amount is not None else 0
                 if new_advance_amount is not None:
