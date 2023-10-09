@@ -2964,6 +2964,14 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 to_transaction.recived_or_paid_amount = to_transaction.recived_or_paid_amount - link.linked_amount
                 to_transaction.save()
 
+            to_linktrasactions = LinkTransaction.objects.filter(to_transaction_id=pk)
+            print("ALL LINKED TRANSACTION :: ", linktrasactions)
+            for to_link in to_linktrasactions:
+                from_transaction_id = to_link.from_transaction_id
+                from_trasaction = Transaction.objects.get(pk=from_transaction_id.id)
+                from_trasaction.recived_or_paid_amount = from_trasaction.recived_or_paid_amount - to_link.linked_amount
+                from_trasaction.save()
+
             if customer_id is not None:
                 try:
                     balance = Balance.objects.get(customer_id=customer_id)
@@ -2997,6 +3005,14 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 # print("TO TRANACTION :: ", to_transaction)
                 to_transaction.recived_or_paid_amount = to_transaction.recived_or_paid_amount - link.linked_amount
                 to_transaction.save()
+
+            to_linktrasactions = LinkTransaction.objects.filter(to_transaction_id=pk)
+            print("ALL LINKED TRANSACTION :: ", linktrasactions)
+            for to_link in to_linktrasactions:
+                from_transaction_id = to_link.from_transaction_id
+                from_trasaction = Transaction.objects.get(pk=from_transaction_id.id)
+                from_trasaction.recived_or_paid_amount = from_trasaction.recived_or_paid_amount - to_link.linked_amount
+                from_trasaction.save()
 
             if customer_id is not None:
                 try:
@@ -3035,6 +3051,14 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 # print("TO TRANACTION :: ", from_transaction)
                 from_transaction.used_amount = from_transaction.used_amount - link.linked_amount
                 from_transaction.save()
+
+            from_linktrasactions = LinkTransaction.objects.filter(from_transaction_id=pk)
+            print("ALL LINKED TRANSACTION :: ", linktrasactions)
+            for from_link in from_linktrasactions:
+                to_transaction_id = to_link.to_transaction_id
+                to_trasaction = Transaction.objects.get(pk=to_transaction_id.id)
+                to_trasaction.recived_or_paid_amount = to_trasaction.recived_or_paid_amount - from_link.linked_amount
+                to_trasaction.save()
             
             if customer_id is not None:
                 try:
@@ -3069,6 +3093,14 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 # print("TO TRANACTION :: ", from_transaction)
                 from_transaction.used_amount = from_transaction.used_amount - link.linked_amount
                 from_transaction.save()
+
+            from_linktrasactions = LinkTransaction.objects.filter(from_transaction_id=pk)
+            print("ALL LINKED TRANSACTION :: ", linktrasactions)
+            for from_link in from_linktrasactions:
+                to_transaction_id = to_link.to_transaction_id
+                to_trasaction = Transaction.objects.get(pk=to_transaction_id.id)
+                to_trasaction.recived_or_paid_amount = to_trasaction.recived_or_paid_amount - from_link.linked_amount
+                to_trasaction.save()
                 
             if customer_id is not None:
                 try:
@@ -3142,6 +3174,14 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 from_transaction.used_amount = from_transaction.used_amount - link.linked_amount
                 from_transaction.save()
             
+            from_linktrasactions = LinkTransaction.objects.filter(from_transaction_id=pk)
+            print("ALL LINKED TRANSACTION :: ", linktrasactions)
+            for from_link in from_linktrasactions:
+                to_transaction_id = to_link.to_transaction_id
+                to_trasaction = Transaction.objects.get(pk=to_transaction_id.id)
+                to_trasaction.recived_or_paid_amount = to_trasaction.recived_or_paid_amount - from_link.linked_amount
+                to_trasaction.save()
+            
             if customer_id is not None:
                 try:
                     balance = Balance.objects.get(customer_id=customer_id)
@@ -3175,7 +3215,15 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 # print("TO TRANACTION :: ", from_transaction)
                 from_transaction.used_amount = from_transaction.used_amount - link.linked_amount
                 from_transaction.save()
-                
+
+            from_linktrasactions = LinkTransaction.objects.filter(from_transaction_id=pk)
+            print("ALL LINKED TRANSACTION :: ", linktrasactions)
+            for from_link in from_linktrasactions:
+                to_transaction_id = to_link.to_transaction_id
+                to_trasaction = Transaction.objects.get(pk=to_transaction_id.id)
+                to_trasaction.recived_or_paid_amount = to_trasaction.recived_or_paid_amount - from_link.linked_amount
+                to_trasaction.save()
+
             if customer_id is not None:
                 try:
                     balance = Balance.objects.get(customer_id=customer_id)
