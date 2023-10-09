@@ -3010,13 +3010,9 @@ class TransactionViewSet(viewsets.ModelViewSet):
             linktrasactions = LinkTransaction.objects.filter(from_transaction_id=pk)
             # print("ALL LINKED TRANSACTION :: ", linktrasactions)
             for link in linktrasactions:
-                # print("SINGLE TRANACTION :: ", link)
                 to_transaction_id = link.to_transaction_id
-                # print("TO TRANACTION ID :: ", to_transaction_id)
-                # print("LINKED AMOUNT ::", link.linked_amount, "type :: ",type(link.linked_amount))
                 new_amount = link.linked_amount
                 to_transaction = Transaction.objects.get(pk=to_transaction_id.id)
-                # print("TO TRANACTION :: ", to_transaction)
                 to_transaction.recived_or_paid_amount = to_transaction.recived_or_paid_amount - link.linked_amount
                 to_transaction.save()
 
@@ -3064,13 +3060,9 @@ class TransactionViewSet(viewsets.ModelViewSet):
             linktrasactions = LinkTransaction.objects.filter(from_transaction_id=pk)
             # print("ALL LINKED TRANSACTION :: ", linktrasactions)
             for link in linktrasactions:
-                # print("SINGLE TRANACTION :: ", link)
                 to_transaction_id = link.to_transaction_id
-                # print("TO TRANACTION ID :: ", to_transaction_id)
-                new_amount = link.linked_amount
-                # print("LINKED AMOUNT ::", link.linked_amount)               
+                new_amount = link.linked_amount          
                 to_transaction = Transaction.objects.get(pk=to_transaction_id.id)
-                # print("TO TRANACTION :: ", to_transaction)
                 to_transaction.recived_or_paid_amount = to_transaction.recived_or_paid_amount - link.linked_amount
                 to_transaction.save()
 
@@ -3122,13 +3114,9 @@ class TransactionViewSet(viewsets.ModelViewSet):
             linktrasactions = LinkTransaction.objects.filter(to_transaction_id=pk)
             # print("ALL LINKED TRANSACTION :: ", linktrasactions)
             for link in linktrasactions:
-                # print("SINGLE TRANACTION :: ", link)
                 from_transaction_id = link.from_transaction_id
-                # print("FROM TRANACTION ID :: ", from_transaction_id)
-                # print("LINKED AMOUNT ::", link.linked_amount)
                 new_amount = link.linked_amount
                 from_transaction = Transaction.objects.get(pk=from_transaction_id.id)
-                # print("TO TRANACTION :: ", from_transaction)
                 from_transaction.used_amount = from_transaction.used_amount - link.linked_amount
                 from_transaction.save()
 
@@ -3138,7 +3126,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
             from_linktrasactions = LinkTransaction.objects.filter(from_transaction_id=pk)
             print("ALL LINKED TRANSACTION :: ", linktrasactions)
             for from_link in from_linktrasactions:
-                to_transaction_id = to_link.to_transaction_id
+                to_transaction_id = from_link.to_transaction_id
                 new_amount = from_link.linked_amount
                 to_trasaction = Transaction.objects.get(pk=to_transaction_id.id)
                 to_trasaction.recived_or_paid_amount = to_trasaction.recived_or_paid_amount - from_link.linked_amount
@@ -3176,13 +3164,9 @@ class TransactionViewSet(viewsets.ModelViewSet):
             linktrasactions = LinkTransaction.objects.filter(to_transaction_id=pk)
             # print("ALL LINKED TRANSACTION :: ", linktrasactions)
             for link in linktrasactions:
-                # print("SINGLE TRANACTION :: ", link)
                 from_transaction_id = link.from_transaction_id
-                # print("FROM TRANACTION ID :: ", from_transaction_id)
                 new_amount = link.linked_amount
-                # print("LINKED AMOUNT ::", link.linked_amount)
                 from_transaction = Transaction.objects.get(pk=from_transaction_id.id)
-                # print("TO TRANACTION :: ", from_transaction)
                 from_transaction.used_amount = from_transaction.used_amount - link.linked_amount
                 from_transaction.save()
 
@@ -3192,7 +3176,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
             from_linktrasactions = LinkTransaction.objects.filter(from_transaction_id=pk)
             print("ALL LINKED TRANSACTION :: ", linktrasactions)
             for from_link in from_linktrasactions:
-                to_transaction_id = to_link.to_transaction_id
+                to_transaction_id = from_link.to_transaction_id
                 new_amount = from_link.linked_amount
                 to_trasaction = Transaction.objects.get(pk=to_transaction_id.id)
                 to_trasaction.recived_or_paid_amount = to_trasaction.recived_or_paid_amount - from_link.linked_amount
@@ -3268,13 +3252,9 @@ class TransactionViewSet(viewsets.ModelViewSet):
             linktrasactions = LinkTransaction.objects.filter(to_transaction_id=pk)
             # print("ALL LINKED TRANSACTION :: ", linktrasactions)
             for link in linktrasactions:
-                # print("SINGLE TRANACTION :: ", link)
                 from_transaction_id = link.from_transaction_id
-                # print("FROM TRANACTION ID :: ", from_transaction_id)
                 new_amount = link.linked_amount
-                # print("LINKED AMOUNT ::", link.linked_amount)
                 from_transaction = Transaction.objects.get(pk=from_transaction_id.id)
-                # print("TO TRANACTION :: ", from_transaction)
                 from_transaction.used_amount = from_transaction.used_amount - link.linked_amount
                 from_transaction.save()
 
@@ -3284,7 +3264,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
             from_linktrasactions = LinkTransaction.objects.filter(from_transaction_id=pk)
             print("ALL LINKED TRANSACTION :: ", linktrasactions)
             for from_link in from_linktrasactions:
-                to_transaction_id = to_link.to_transaction_id
+                to_transaction_id = from_link.to_transaction_id
                 new_amount = from_link.linked_amount
                 to_trasaction = Transaction.objects.get(pk=to_transaction_id.id)
                 to_trasaction.recived_or_paid_amount = to_trasaction.recived_or_paid_amount - from_link.linked_amount
@@ -3338,7 +3318,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
             from_linktrasactions = LinkTransaction.objects.filter(from_transaction_id=pk)
             print("ALL LINKED TRANSACTION :: ", linktrasactions)
             for from_link in from_linktrasactions:
-                to_transaction_id = to_link.to_transaction_id
+                to_transaction_id = from_link.to_transaction_id
                 new_amount = from_link.linked_amount
                 to_trasaction = Transaction.objects.get(pk=to_transaction_id.id)
                 to_trasaction.recived_or_paid_amount = to_trasaction.recived_or_paid_amount - from_link.linked_amount
