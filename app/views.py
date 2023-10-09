@@ -2106,9 +2106,9 @@ class TransactionViewSet(viewsets.ModelViewSet):
         staff_id = transaction_data.get('staff_id', None)
         # print("staff_id :: ",staff_id)
 
-        new_amount = transaction_instance.total_amount - transaction_instance.recived_or_paid_amount
+        new_amount = transaction_instance.total_amount - transaction_instance.used_amount
         print("New Amount ::: ", new_amount)
-        balance_amount(customer_id, staff_id, 0 , new_amount, transaction_instance.type)
+        balance_amount(customer_id, staff_id, 0, new_amount, transaction_instance.type)
 
         # if transaction_instance.type == 'payment_in':
         #     # print("PAYMENT IN")
@@ -2233,7 +2233,10 @@ class TransactionViewSet(viewsets.ModelViewSet):
         transaction = Transaction.objects.get(pk=pk)
         # print("Transaction :: ", transaction)
 
-        old_amount = transaction.total_amount - transaction.recived_or_paid_amount
+        if transaction.type in ('payment_in', 'payment_out'):
+            old_amount = transaction.total_amount - transaction.used_amount
+        else:
+            old_amount = transaction.total_amount - transaction.recived_or_paid_amount
 
         data={}
 
@@ -2814,7 +2817,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
             staff_id = transaction_instance.staff_id.id if transaction_instance.staff_id is not None else None
             # print("staff_id :::",staff_id)
 
-            new_amount = transaction_instance.total_amount - transaction_instance.recived_or_paid_amount
+            new_amount = transaction_instance.total_amount - transaction_instance.used_amount
             print("New Amount ::: ", new_amount)
             balance_amount(customer_id, staff_id, old_amount, new_amount, transaction_instance.type)
 

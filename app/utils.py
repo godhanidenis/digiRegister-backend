@@ -246,9 +246,9 @@ def link_transaction(transaction_id, linktransaction_data, transaction_type=None
                     transaction.recived_or_paid_amount = transaction.recived_or_paid_amount + linktransaction.linked_amount
                     # print("transaction.recived_or_paid_amount ::: ", transaction.recived_or_paid_amount)
                     transaction.save()
-                    # to_new_amount = transaction.total_amount - transaction.recived_or_paid_amount
-                    # print("to_new_amount ::: ", to_new_amount)
-                    # balance_amount(to_customer_id, to_staff_id, to_old_amount, to_new_amount, transaction.type)
+                    to_new_amount = transaction.total_amount - transaction.recived_or_paid_amount
+                    print("to_new_amount ::: ", to_new_amount)
+                    balance_amount(to_customer_id, to_staff_id, to_old_amount, to_new_amount, transaction.type)
 
                 elif transaction.type == 'payment_out':
                     # print("RESCIVED AMOUNT :: ", transaction.used_amount, "TYPE :: ", type(transaction.used_amount))
@@ -256,9 +256,9 @@ def link_transaction(transaction_id, linktransaction_data, transaction_type=None
                     transaction.used_amount = transaction.used_amount + linktransaction.linked_amount
                     # print("transaction.used_amount ::: ",transaction.used_amount)
                     transaction.save()
-                    # to_new_amount = transaction.total_amount - transaction.used_amount
-                    # print("to_new_amount ::: ", to_new_amount)
-                    # balance_amount(to_customer_id, to_staff_id, to_old_amount, to_new_amount, transaction.type)
+                    to_new_amount = transaction.total_amount - transaction.used_amount
+                    print("to_new_amount ::: ", to_new_amount)
+                    balance_amount(to_customer_id, to_staff_id, to_old_amount, to_new_amount, transaction.type)
             
             elif from_transaction.type in ('payment_out', 'event_sale', 'sale'):
 
@@ -268,9 +268,9 @@ def link_transaction(transaction_id, linktransaction_data, transaction_type=None
                     transaction.recived_or_paid_amount = transaction.recived_or_paid_amount + linktransaction.linked_amount
                     # print("transaction.recived_or_paid_amount ::: ", transaction.recived_or_paid_amount)                    
                     transaction.save()
-                    # to_new_amount = transaction.total_amount - transaction.recived_or_paid_amount
-                    # print("to_new_amount ::: ", to_new_amount)
-                    # balance_amount(to_customer_id, to_staff_id, to_old_amount, to_new_amount, transaction.type)
+                    to_new_amount = transaction.total_amount - transaction.recived_or_paid_amount
+                    print("to_new_amount ::: ", to_new_amount)
+                    balance_amount(to_customer_id, to_staff_id, to_old_amount, to_new_amount, transaction.type)
 
                 elif transaction.type == 'payment_in':
                     # print("RESCIVED AMOUNT :: ", transaction.used_amount, "TYPE :: ", type(transaction.used_amount))
@@ -278,9 +278,10 @@ def link_transaction(transaction_id, linktransaction_data, transaction_type=None
                     transaction.used_amount = transaction.used_amount + linktransaction.linked_amount
                     # print("transaction.used_amount ::: ",transaction.used_amount)
                     transaction.save()
-                    # to_new_amount = transaction.total_amount - transaction.used_amount
-                    # print("to_new_amount ::: ", to_new_amount)
-                    # balance_amount(to_customer_id, to_staff_id, to_old_amount, to_new_amount, transaction.type)
+
+                    to_new_amount = transaction.total_amount - transaction.used_amount
+                    print("to_new_amount ::: ", to_new_amount)
+                    balance_amount(to_customer_id, to_staff_id, to_old_amount, to_new_amount, transaction.type)
 
     if update_linktransactions is not None:
         all_linktransaction = []
