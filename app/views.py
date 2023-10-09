@@ -538,69 +538,43 @@ class QuotationViewSet(viewsets.ModelViewSet):
         else:
             return Response(transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
-        ## ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE
         if transaction['is_converted'] == 'true':
-            # print("ADD BALANCE")
-            try:
-                balance = Balance.objects.get(customer_id = transaction_instance.customer_id.id)
-            except:
-                balance = None
-            # print("balance ::: ",balance)
-            if balance is None:
-                balance_data = {
-                    'customer_id': transaction_instance.customer_id.id,
-                    'amount': transaction_instance.total_amount
-                }
-                print("Balance DATA ::: ", balance_data)
-                balanceSerializer = BalanceSerializer(data = balance_data)
-                if balanceSerializer.is_valid():
-                    balanceSerializer.save()
-                else:
-                    return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            else:
-                balance_data = {
-                    'customer_id': transaction_instance.customer_id.id,
-                    'amount': balance.amount + float(transaction_instance.total_amount)
-                }
-                print("Balance DATA ::: ", balance_data)
-                balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
-                if balanceSerializer.is_valid():
-                    balanceSerializer.save()
-                else:
-                    return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            new_amount = transaction_instance.total_amount - transaction_instance.recived_or_paid_amount
+            print("New Amount ::: ", new_amount)
+            balance_amount(quotation_instance.customer_id.id, None, 0 , new_amount, transaction_instance.type)
 
         ### CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON RESCIVED OR PAID AMOUNT
-        advance_amount = transaction.get('advance_amount', None)
-        # print("advance_amount ::: ",advance_amount)
-        if advance_amount is not None:
-            # print("CHANGE IN BALANCE BASE ON RECIVED OR PAID AMOUNT")
-            try:
-                balance = Balance.objects.get(customer_id = transaction_instance.customer_id.id)
-            except:
-                balance = None
-            # print("balance ::: ",balance)
-            if balance is None:
-                balance_data = {
-                    'customer_id': transaction_instance.customer_id.id,
-                    'amount': advance_amount
-                }
-                # print("Balance DATA ::: ", balance_data)
-                balanceSerializer = BalanceSerializer(data = balance_data)
-                if balanceSerializer.is_valid():
-                    balanceSerializer.save()
-                else:
-                    return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            else:
-                balance_data = {
-                    'customer_id': transaction_instance.customer_id.id,
-                    'amount': balance.amount - float(advance_amount)
-                }
-                # print("Balance DATA ::: ", balance_data)
-                balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
-                if balanceSerializer.is_valid():
-                    balanceSerializer.save()
-                else:
-                    return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # advance_amount = transaction.get('advance_amount', None)
+        # # print("advance_amount ::: ",advance_amount)
+        # if advance_amount is not None:
+        #     # print("CHANGE IN BALANCE BASE ON RECIVED OR PAID AMOUNT")
+        #     try:
+        #         balance = Balance.objects.get(customer_id = transaction_instance.customer_id.id)
+        #     except:
+        #         balance = None
+        #     # print("balance ::: ",balance)
+        #     if balance is None:
+        #         balance_data = {
+        #             'customer_id': transaction_instance.customer_id.id,
+        #             'amount': advance_amount
+        #         }
+        #         # print("Balance DATA ::: ", balance_data)
+        #         balanceSerializer = BalanceSerializer(data = balance_data)
+        #         if balanceSerializer.is_valid():
+        #             balanceSerializer.save()
+        #         else:
+        #             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        #     else:
+        #         balance_data = {
+        #             'customer_id': transaction_instance.customer_id.id,
+        #             'amount': balance.amount - float(advance_amount)
+        #         }
+        #         # print("Balance DATA ::: ", balance_data)
+        #         balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+        #         if balanceSerializer.is_valid():
+        #             balanceSerializer.save()
+        #         else:
+        #             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         ### CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON SETTLED AMOUNT
         # settled_amount = transaction.get('settled_amount', None)
@@ -668,34 +642,38 @@ class QuotationViewSet(viewsets.ModelViewSet):
                 else:
                     return Response(i_transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                 
+                new_amount = t_instance.total_amount - t_instance.recived_or_paid_amount
+                print("New Amount ::: ", new_amount)
+                balance_amount(None, t_instance.staff_id.id, 0 , new_amount, transaction_instance.type)
+
                 ## ADD BALANCE AMOUNT FOR STAFF
-                try:
-                    balance = Balance.objects.get(staff_id=t_instance.staff_id.id)
-                except:
-                    balance = None
-                # print("BALANCE :: ",balance)
-                if balance is None:
-                    balance_data = {
-                        'staff_id' : t_instance.staff_id.id,
-                        'amount' : -float(t_instance.total_amount)
-                    }
-                    # print("Balance Data :: ", balance_data)
-                    balanceSerializer = BalanceSerializer(data=balance_data)
-                    if balanceSerializer.is_valid():
-                        balanceSerializer.save()
-                    else:
-                        return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                else:
-                    balance_data = {
-                        'staff_id' : t_instance.staff_id.id,
-                        'amount' : balance.amount - float(t_instance.total_amount)
-                    }
-                    # print("Balance Data :: ", balance_data)
-                    balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
-                    if balanceSerializer.is_valid():
-                        balanceSerializer.save()
-                    else:
-                        return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                # try:
+                #     balance = Balance.objects.get(staff_id=t_instance.staff_id.id)
+                # except:
+                #     balance = None
+                # # print("BALANCE :: ",balance)
+                # if balance is None:
+                #     balance_data = {
+                #         'staff_id' : t_instance.staff_id.id,
+                #         'amount' : -float(t_instance.total_amount)
+                #     }
+                #     # print("Balance Data :: ", balance_data)
+                #     balanceSerializer = BalanceSerializer(data=balance_data)
+                #     if balanceSerializer.is_valid():
+                #         balanceSerializer.save()
+                #     else:
+                #         return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                # else:
+                #     balance_data = {
+                #         'staff_id' : t_instance.staff_id.id,
+                #         'amount' : balance.amount - float(t_instance.total_amount)
+                #     }
+                #     # print("Balance Data :: ", balance_data)
+                #     balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+                #     if balanceSerializer.is_valid():
+                #         balanceSerializer.save()
+                #     else:
+                #         return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
             # print("FINAL INSTANCE :: ", finall_instance)
 
@@ -734,6 +712,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
 
         transaction = Transaction.objects.get(quotation_id = pk)
         # print("Transaction :", transaction)
+        old_amount = transaction.total_amount - transaction.recived_or_paid_amount
         # print("transaction.is_converted ::",type(transaction.is_converted) , transaction.is_converted)
         # print("GGGGG ::",transaction.is_converted == False)
 
@@ -1148,68 +1127,72 @@ class QuotationViewSet(viewsets.ModelViewSet):
                     return Response(copy_transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                 # print("copy_transaction_instance :: ",copy_transaction_instance) 
 
+                new_amount = copy_transaction_instance.total_amount - copy_transaction_instance.recived_or_paid_amount
+                print("New Amount ::: ", new_amount)
+                balance_amount(copy_transaction_instance.customer_id.id, None, 0 , new_amount, copy_transaction_instance.type)
+
                 ## ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE
                 # print("ADD BALANCE")
-                try:
-                    balance = Balance.objects.get(customer_id = copy_transaction_instance.customer_id.id)
-                except:
-                    balance = None
-                # print("balance ::: ",balance)
-                if balance is None:
-                    balance_data = {
-                        'customer_id': copy_transaction_instance.customer_id.id,
-                        'amount': copy_transaction_instance.total_amount
-                    }
-                    # print("Balance DATA ::: ", balance_data)
-                    balanceSerializer = BalanceSerializer(data = balance_data)
-                    if balanceSerializer.is_valid():
-                        balanceSerializer.save()
-                    else:
-                        return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                else:
-                    balance_data = {
-                        'customer_id': copy_transaction_instance.customer_id.id,
-                        'amount': balance.amount + float(copy_transaction_instance.total_amount)
-                    }
-                    # print("Balance DATA ::: ", balance_data)
-                    balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
-                    if balanceSerializer.is_valid():
-                        balanceSerializer.save()
-                    else:
-                        return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                # try:
+                #     balance = Balance.objects.get(customer_id = copy_transaction_instance.customer_id.id)
+                # except:
+                #     balance = None
+                # # print("balance ::: ",balance)
+                # if balance is None:
+                #     balance_data = {
+                #         'customer_id': copy_transaction_instance.customer_id.id,
+                #         'amount': copy_transaction_instance.total_amount
+                #     }
+                #     # print("Balance DATA ::: ", balance_data)
+                #     balanceSerializer = BalanceSerializer(data = balance_data)
+                #     if balanceSerializer.is_valid():
+                #         balanceSerializer.save()
+                #     else:
+                #         return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                # else:
+                #     balance_data = {
+                #         'customer_id': copy_transaction_instance.customer_id.id,
+                #         'amount': balance.amount + float(copy_transaction_instance.total_amount)
+                #     }
+                #     # print("Balance DATA ::: ", balance_data)
+                #     balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+                #     if balanceSerializer.is_valid():
+                #         balanceSerializer.save()
+                #     else:
+                #         return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
                 ### CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON RESCIVED OR PAID AMOUNT
-                advance_amount = transaction_data.get('advance_amount', None)
-                # print("advance_amount ::: ",advance_amount)
-                if advance_amount is not None:
-                    # print("CHANGE IN BALANCE BASE ON RECIVED OR PAID AMOUNT")
-                    try:
-                        balance = Balance.objects.get(customer_id = copy_transaction_instance.customer_id.id)
-                    except:
-                        balance = None
-                    # print("balance ::: ",balance)
-                    if balance is None:
-                        balance_data = {
-                            'customer_id': copy_transaction_instance.customer_id.id,
-                            'amount': advance_amount
-                        }
-                        # print("Balance DATA ::: ", balance_data)
-                        balanceSerializer = BalanceSerializer(data = balance_data)
-                        if balanceSerializer.is_valid():
-                            balanceSerializer.save()
-                        else:
-                            return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                    else:
-                        balance_data = {
-                            'customer_id': copy_transaction_instance.customer_id.id,
-                            'amount': balance.amount - float(advance_amount)
-                        }
-                        # print("Balance DATA ::: ", balance_data)
-                        balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
-                        if balanceSerializer.is_valid():
-                            balanceSerializer.save()
-                        else:
-                            return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                # advance_amount = transaction_data.get('advance_amount', None)
+                # # print("advance_amount ::: ",advance_amount)
+                # if advance_amount is not None:
+                #     # print("CHANGE IN BALANCE BASE ON RECIVED OR PAID AMOUNT")
+                #     try:
+                #         balance = Balance.objects.get(customer_id = copy_transaction_instance.customer_id.id)
+                #     except:
+                #         balance = None
+                #     # print("balance ::: ",balance)
+                #     if balance is None:
+                #         balance_data = {
+                #             'customer_id': copy_transaction_instance.customer_id.id,
+                #             'amount': advance_amount
+                #         }
+                #         # print("Balance DATA ::: ", balance_data)
+                #         balanceSerializer = BalanceSerializer(data = balance_data)
+                #         if balanceSerializer.is_valid():
+                #             balanceSerializer.save()
+                #         else:
+                #             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                #     else:
+                #         balance_data = {
+                #             'customer_id': copy_transaction_instance.customer_id.id,
+                #             'amount': balance.amount - float(advance_amount)
+                #         }
+                #         # print("Balance DATA ::: ", balance_data)
+                #         balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+                #         if balanceSerializer.is_valid():
+                #             balanceSerializer.save()
+                #         else:
+                #             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
                 ### CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON SETTLED AMOUNT
                 # settled_amount = transaction_data.get('settled_amount', None)
@@ -1244,8 +1227,6 @@ class QuotationViewSet(viewsets.ModelViewSet):
                 #         else:
                 #             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-
                 ### LINK TRNASACTION 
                 linktransaction_data = request.data.get('linktransaction_data', None)
                 # print("link_transaction_data :: ", linktransaction_data)
@@ -1279,34 +1260,38 @@ class QuotationViewSet(viewsets.ModelViewSet):
                     else:
                         return Response(i_transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                     
+                    new_amount = t_instance.total_amount - t_instance.recived_or_paid_amount
+                    print("New Amount ::: ", new_amount)
+                    balance_amount(None, t_instance.staff_id.id, 0 , new_amount, t_instance.type)
+
                     ## ADD BALANCE AMOUNT FOR STAFF
-                    try:
-                        balance = Balance.objects.get(staff_id=t_instance.staff_id.id)
-                    except:
-                        balance = None
-                    # print("BALANCE :: ",balance)
-                    if balance is None:
-                        balance_data = {
-                            'staff_id' : t_instance.staff_id.id,
-                            'amount' : -float(t_instance.total_amount)
-                        }
-                        # print("Balance Data :: ", balance_data)
-                        balanceSerializer = BalanceSerializer(data=balance_data)
-                        if balanceSerializer.is_valid():
-                            balanceSerializer.save()
-                        else:
-                            return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                    else:
-                        balance_data = {
-                            'staff_id' : t_instance.staff_id.id,
-                            'amount' : balance.amount - float(t_instance.total_amount)
-                        }
-                        # print("Balance Data :: ", balance_data)
-                        balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
-                        if balanceSerializer.is_valid():
-                            balanceSerializer.save()
-                        else:
-                            return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    # try:
+                    #     balance = Balance.objects.get(staff_id=t_instance.staff_id.id)
+                    # except:
+                    #     balance = None
+                    # # print("BALANCE :: ",balance)
+                    # if balance is None:
+                    #     balance_data = {
+                    #         'staff_id' : t_instance.staff_id.id,
+                    #         'amount' : -float(t_instance.total_amount)
+                    #     }
+                    #     # print("Balance Data :: ", balance_data)
+                    #     balanceSerializer = BalanceSerializer(data=balance_data)
+                    #     if balanceSerializer.is_valid():
+                    #         balanceSerializer.save()
+                    #     else:
+                    #         return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    # else:
+                    #     balance_data = {
+                    #         'staff_id' : t_instance.staff_id.id,
+                    #         'amount' : balance.amount - float(t_instance.total_amount)
+                    #     }
+                    #     # print("Balance Data :: ", balance_data)
+                    #     balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+                    #     if balanceSerializer.is_valid():
+                    #         balanceSerializer.save()
+                    #     else:
+                    #         return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
                     
                 # print("FINAL INSTANCE :: ", finall_instance)
@@ -1598,10 +1583,10 @@ class QuotationViewSet(viewsets.ModelViewSet):
                 # transaction_data['is_converted'] = False
                 # transaction_data['status'] = 'estimate'
 
-                old_total_amount = float(transaction.total_amount)
+                # old_total_amount = float(transaction.total_amount)
                 # print("old_total_amount ::: ",old_total_amount)
 
-                old_advance_amount = float(transaction.advance_amount)
+                # old_advance_amount = float(transaction.advance_amount)
                 # print("old_advance_amount ::: ",old_advance_amount)
 
                 # old_settled_amount = float(transaction.settled_amount)
@@ -1609,68 +1594,71 @@ class QuotationViewSet(viewsets.ModelViewSet):
 
                 t_serializer = TransactionSerializer(transaction, data=transaction_data, partial=True)
                 if t_serializer.is_valid():
-                    t_serializer.save()
+                    update_transaction = t_serializer.save()
                 else:
                     return Response(t_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
+                new_amount = update_transaction.total_amount - update_transaction.recived_or_paid_amount
+                print("New Amount ::: ", new_amount)
+                balance_amount(update_transaction.customer_id.id, None, old_amount , new_amount, update_transaction.type)
 
                 ## CHANGES IN CUSTOMER BALANCE
-                new_total_amount = float(transaction_data.get('total_amount', None))
-                # print("new_total_amount ::: ",new_total_amount)
-                try:
-                    balance = Balance.objects.get(customer_id=transaction.customer_id.id)
-                except:
-                    balance = None
+                # new_total_amount = float(transaction_data.get('total_amount', None))
+                # # print("new_total_amount ::: ",new_total_amount)
+                # try:
+                #     balance = Balance.objects.get(customer_id=transaction.customer_id.id)
+                # except:
+                #     balance = None
 
-                if balance is None:
-                    balance_data = {'customer_id': transaction.customer_id.id,
-                                    'amount': new_total_amount}
-                    # print("Balance DATA ::: ", balance_data)
-                    balanceSerializer = BalanceSerializer(data = balance_data)
-                    if balanceSerializer.is_valid():
-                        balanceSerializer.save()
-                    else:
-                        return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                else:
-                    balance_data = {'customer_id': transaction.customer_id.id,
-                                    'amount': (balance.amount - old_total_amount) + new_total_amount}
-                    # print("Balance DATA ::: ", balance_data)
-                    balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
-                    if balanceSerializer.is_valid():
-                        balanceSerializer.save()
-                    else:
-                        return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                # if balance is None:
+                #     balance_data = {'customer_id': transaction.customer_id.id,
+                #                     'amount': new_total_amount}
+                #     # print("Balance DATA ::: ", balance_data)
+                #     balanceSerializer = BalanceSerializer(data = balance_data)
+                #     if balanceSerializer.is_valid():
+                #         balanceSerializer.save()
+                #     else:
+                #         return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                # else:
+                #     balance_data = {'customer_id': transaction.customer_id.id,
+                #                     'amount': (balance.amount - old_total_amount) + new_total_amount}
+                #     # print("Balance DATA ::: ", balance_data)
+                #     balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+                #     if balanceSerializer.is_valid():
+                #         balanceSerializer.save()
+                #     else:
+                #         return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                 
 
                 ### CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON RESCIVED OR PAID AMOUNT
-                new_advance_amount = transaction_data.get('advance_amount', None)
-                # print("new_advance_amount ::: ",new_advance_amount)
-                new_advance_amount = new_advance_amount if new_advance_amount is not None else 0
-                if new_advance_amount is not None:
-                    new_advance_amount = float(new_advance_amount)
-                try:
-                    balance = Balance.objects.get(customer_id=transaction.customer_id.id)
-                except:
-                    balance = None
+                # new_advance_amount = transaction_data.get('advance_amount', None)
+                # # print("new_advance_amount ::: ",new_advance_amount)
+                # new_advance_amount = new_advance_amount if new_advance_amount is not None else 0
+                # if new_advance_amount is not None:
+                #     new_advance_amount = float(new_advance_amount)
+                # try:
+                #     balance = Balance.objects.get(customer_id=transaction.customer_id.id)
+                # except:
+                #     balance = None
 
-                if balance is None:
-                    balance_data = {'customer_id': transaction.customer_id.id,
-                                    'amount': new_advance_amount}
-                    # print("Balance DATA ::: ", balance_data)
-                    balanceSerializer = BalanceSerializer(data = balance_data)
-                    if balanceSerializer.is_valid():
-                        balanceSerializer.save()
-                    else:
-                        return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                else:
-                    balance_data = {'customer_id': transaction.customer_id.id,
-                                    'amount': (balance.amount + old_advance_amount) - new_advance_amount}
-                    # print("Balance DATA ::: ", balance_data)
-                    balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
-                    if balanceSerializer.is_valid():
-                        balanceSerializer.save()
-                    else:
-                        return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                # if balance is None:
+                #     balance_data = {'customer_id': transaction.customer_id.id,
+                #                     'amount': new_advance_amount}
+                #     # print("Balance DATA ::: ", balance_data)
+                #     balanceSerializer = BalanceSerializer(data = balance_data)
+                #     if balanceSerializer.is_valid():
+                #         balanceSerializer.save()
+                #     else:
+                #         return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                # else:
+                #     balance_data = {'customer_id': transaction.customer_id.id,
+                #                     'amount': (balance.amount + old_advance_amount) - new_advance_amount}
+                #     # print("Balance DATA ::: ", balance_data)
+                #     balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+                #     if balanceSerializer.is_valid():
+                #         balanceSerializer.save()
+                #     else:
+                #         return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                 
                 ### CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON SETTLED AMOUNT
                 # new_settled_amount = transaction_data.get('settled_amount', None)
@@ -1718,6 +1706,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                 try:
                     bill = Transaction.objects.get(exposuredetails_id = i.id)
                     # print("Bill :",bill)
+                    old_amount = bill.total_amount - bill.recived_or_paid_amount
                 except:
                     bill = None
 
@@ -1742,39 +1731,43 @@ class QuotationViewSet(viewsets.ModelViewSet):
                     else:
                         return Response(i_transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                     
+                    new_amount = t_instance.total_amount - t_instance.recived_or_paid_amount
+                    print("New Amount ::: ", new_amount)
+                    balance_amount(None, t_instance.staff_id.id, old_amount, new_amount, t_instance.type)
+
                     ## ADD BALANCE AMOUNT FOR STAFF
-                    try:
-                        balance = Balance.objects.get(staff_id=t_instance.staff_id.id)
-                    except:
-                        balance = None
-                    # print("BALANCE :: ",balance)
-                    if balance is None:
-                        balance_data = {
-                            'staff_id' : t_instance.staff_id.id,
-                            'amount' : - float(t_instance.total_amount)
-                        }
-                        # print("Balance Data :: ", balance_data)
-                        balanceSerializer = BalanceSerializer(data=balance_data)
-                        if balanceSerializer.is_valid():
-                            balanceSerializer.save()
-                        else:
-                            return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                    else:
-                        old_total_amount = bill.total_amount
-                        # print("old_total_amount ::: ", old_total_amount)
-                        new_total_amount = t_instance.total_amount
-                        # print("new_total_amount ::: ", new_total_amount)
-                        balance_data = {
-                            'staff_id' : t_instance.staff_id.id,
-                            'amount' : (balance.amount - old_total_amount) + new_total_amount
-                            # 'amount' : balance.amount + float(advance_amount)
-                        }
-                        # print("Balance Data :: ", balance_data)
-                        balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
-                        if balanceSerializer.is_valid():
-                            balanceSerializer.save()
-                        else:
-                            return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    # try:
+                    #     balance = Balance.objects.get(staff_id=t_instance.staff_id.id)
+                    # except:
+                    #     balance = None
+                    # # print("BALANCE :: ",balance)
+                    # if balance is None:
+                    #     balance_data = {
+                    #         'staff_id' : t_instance.staff_id.id,
+                    #         'amount' : - float(t_instance.total_amount)
+                    #     }
+                    #     # print("Balance Data :: ", balance_data)
+                    #     balanceSerializer = BalanceSerializer(data=balance_data)
+                    #     if balanceSerializer.is_valid():
+                    #         balanceSerializer.save()
+                    #     else:
+                    #         return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    # else:
+                    #     old_total_amount = bill.total_amount
+                    #     # print("old_total_amount ::: ", old_total_amount)
+                    #     new_total_amount = t_instance.total_amount
+                    #     # print("new_total_amount ::: ", new_total_amount)
+                    #     balance_data = {
+                    #         'staff_id' : t_instance.staff_id.id,
+                    #         'amount' : (balance.amount - old_total_amount) + new_total_amount
+                    #         # 'amount' : balance.amount + float(advance_amount)
+                    #     }
+                    #     # print("Balance Data :: ", balance_data)
+                    #     balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+                    #     if balanceSerializer.is_valid():
+                    #         balanceSerializer.save()
+                    #     else:
+                    #         return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                 else:
                     # print("NEW BILL")
                     i_transactionSerializer = TransactionSerializer(data=i_transaction_data)
@@ -1784,34 +1777,39 @@ class QuotationViewSet(viewsets.ModelViewSet):
                     else:
                         return Response(i_transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                     
+                    new_amount = t_instance.total_amount - t_instance.recived_or_paid_amount
+                    print("New Amount ::: ", new_amount)
+                    balance_amount(None, t_instance.staff_id.id, 0 , new_amount, t_instance.type)
+
+
                     ## ADD BALANCE AMOUNT FOR STAFF
-                    try:
-                        balance = Balance.objects.get(staff_id=t_instance.staff_id.id)
-                    except:
-                        balance = None
-                    # print("BALANCE :: ",balance)
-                    if balance is None:
-                        balance_data = {
-                            'staff_id' : t_instance.staff_id.id,
-                            'amount' : -float(t_instance.total_amount)
-                        }
-                        # print("Balance Data :: ", balance_data)
-                        balanceSerializer = BalanceSerializer(data=balance_data)
-                        if balanceSerializer.is_valid():
-                            balanceSerializer.save()
-                        else:
-                            return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                    else:
-                        balance_data = {
-                            'staff_id' : t_instance.staff_id.id,
-                            'amount' : balance.amount - float(t_instance.total_amount)
-                        }
-                        # print("Balance Data :: ", balance_data)
-                        balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
-                        if balanceSerializer.is_valid():
-                            balanceSerializer.save()
-                        else:
-                            return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    # try:
+                    #     balance = Balance.objects.get(staff_id=t_instance.staff_id.id)
+                    # except:
+                    #     balance = None
+                    # # print("BALANCE :: ",balance)
+                    # if balance is None:
+                    #     balance_data = {
+                    #         'staff_id' : t_instance.staff_id.id,
+                    #         'amount' : -float(t_instance.total_amount)
+                    #     }
+                    #     # print("Balance Data :: ", balance_data)
+                    #     balanceSerializer = BalanceSerializer(data=balance_data)
+                    #     if balanceSerializer.is_valid():
+                    #         balanceSerializer.save()
+                    #     else:
+                    #         return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    # else:
+                    #     balance_data = {
+                    #         'staff_id' : t_instance.staff_id.id,
+                    #         'amount' : balance.amount - float(t_instance.total_amount)
+                    #     }
+                    #     # print("Balance Data :: ", balance_data)
+                    #     balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+                    #     if balanceSerializer.is_valid():
+                    #         balanceSerializer.save()
+                    #     else:
+                    #         return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
             # print("FINAL INSTANCE :: ", finall_instance)
 
@@ -1875,133 +1873,142 @@ class InventoryDescriptionViewSet(viewsets.ModelViewSet):
         else:
             return Response(transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
+        customer_id = transaction_instance.customer_id.id if transaction_instance.customer_id is not None else None
+        # print("customer_id :::",customer_id)
+        staff_id = transaction_instance.staff_id.id if transaction_instance.staff_id is not None else None
+        # print("staff_id :::",staff_id)
+        
+        new_amount = transaction_instance.total_amount - transaction_instance.recived_or_paid_amount
+        print("New Amount ::: ", new_amount)
+        balance_amount(customer_id, staff_id, 0, new_amount, transaction_instance.type)
+        
         if linktransaction_data is not None:
             link_transaction(transaction_instance.id, linktransaction_data)
 
-        if transaction_instance.type == 'sale':
-            ## ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE
-            try:
-                balance = Balance.objects.get(customer_id = transaction_instance.customer_id.id)
-            except:
-                balance = None
-            # print("balance ::: ",balance)
-            if balance is None:
-                balance_data = {
-                    'customer_id': transaction_instance.customer_id.id,
-                    'amount': transaction_instance.total_amount
-                }
-                # print("Balance DATA ::: ", balance_data)
-                balanceSerializer = BalanceSerializer(data = balance_data)
-                if balanceSerializer.is_valid():
-                    balanceSerializer.save()
-                else:
-                    return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            else:
-                balance_data = {
-                    'customer_id': transaction_instance.customer_id.id,
-                    'amount': balance.amount + float(transaction_instance.total_amount)
-                }
-                # print("Balance DATA ::: ", balance_data)
-                balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
-                if balanceSerializer.is_valid():
-                    balanceSerializer.save()
-                else:
-                    return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # if transaction_instance.type == 'sale':
+        #     ## ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE
+        #     try:
+        #         balance = Balance.objects.get(customer_id = transaction_instance.customer_id.id)
+        #     except:
+        #         balance = None
+        #     # print("balance ::: ",balance)
+        #     if balance is None:
+        #         balance_data = {
+        #             'customer_id': transaction_instance.customer_id.id,
+        #             'amount': transaction_instance.total_amount
+        #         }
+        #         # print("Balance DATA ::: ", balance_data)
+        #         balanceSerializer = BalanceSerializer(data = balance_data)
+        #         if balanceSerializer.is_valid():
+        #             balanceSerializer.save()
+        #         else:
+        #             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        #     else:
+        #         balance_data = {
+        #             'customer_id': transaction_instance.customer_id.id,
+        #             'amount': balance.amount + float(transaction_instance.total_amount)
+        #         }
+        #         # print("Balance DATA ::: ", balance_data)
+        #         balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+        #         if balanceSerializer.is_valid():
+        #             balanceSerializer.save()
+        #         else:
+        #             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            ### CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON RESCIVED OR PAID AMOUNT
-            advance_amount = transaction_data.get('advance_amount', None)
-            # print("advance_amount ::: ",advance_amount)
-            if advance_amount is not None:
-                # print("CHANGE IN BALANCE BASE ON RECIVED OR PAID AMOUNT")
-                try:
-                    balance = Balance.objects.get(customer_id = transaction_instance.customer_id.id)
-                except:
-                    balance = None
-                # print("balance ::: ",balance)
-                if balance is None:
-                    balance_data = {
-                        'customer_id': transaction_instance.customer_id.id,
-                        'amount': advance_amount
-                    }
-                    # print("Balance DATA ::: ", balance_data)
-                    balanceSerializer = BalanceSerializer(data = balance_data)
-                    if balanceSerializer.is_valid():
-                        balanceSerializer.save()
-                    else:
-                        return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                else:
-                    balance_data = {
-                        'customer_id': transaction_instance.customer_id.id,
-                        'amount': balance.amount - float(advance_amount)
-                    }
-                    # print("Balance DATA ::: ", balance_data)
-                    balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
-                    if balanceSerializer.is_valid():
-                        balanceSerializer.save()
-                    else:
-                        return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        #     ### CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON RESCIVED OR PAID AMOUNT
+        #     advance_amount = transaction_data.get('advance_amount', None)
+        #     # print("advance_amount ::: ",advance_amount)
+        #     if advance_amount is not None:
+        #         # print("CHANGE IN BALANCE BASE ON RECIVED OR PAID AMOUNT")
+        #         try:
+        #             balance = Balance.objects.get(customer_id = transaction_instance.customer_id.id)
+        #         except:
+        #             balance = None
+        #         # print("balance ::: ",balance)
+        #         if balance is None:
+        #             balance_data = {
+        #                 'customer_id': transaction_instance.customer_id.id,
+        #                 'amount': advance_amount
+        #             }
+        #             # print("Balance DATA ::: ", balance_data)
+        #             balanceSerializer = BalanceSerializer(data = balance_data)
+        #             if balanceSerializer.is_valid():
+        #                 balanceSerializer.save()
+        #             else:
+        #                 return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        #         else:
+        #             balance_data = {
+        #                 'customer_id': transaction_instance.customer_id.id,
+        #                 'amount': balance.amount - float(advance_amount)
+        #             }
+        #             # print("Balance DATA ::: ", balance_data)
+        #             balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+        #             if balanceSerializer.is_valid():
+        #                 balanceSerializer.save()
+        #             else:
+        #                 return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        if transaction_instance.type in ('purchase', 'event_purchase'):
-            ## ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE
-            try:
-                balance = Balance.objects.get(customer_id = transaction_instance.customer_id.id)
-            except:
-                balance = None
-            # print("balance ::: ",balance)
-            if balance is None:
-                balance_data = {
-                    'customer_id': transaction_instance.customer_id.id,
-                    'amount': - float(transaction_instance.total_amount)
-                }
-                # print("Balance DATA ::: ", balance_data)
-                balanceSerializer = BalanceSerializer(data = balance_data)
-                if balanceSerializer.is_valid():
-                    balanceSerializer.save()
-                else:
-                    return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            else:
-                balance_data = {
-                    'customer_id': transaction_instance.customer_id.id,
-                    'amount': balance.amount - float(transaction_instance.total_amount)
-                }
-                # print("Balance DATA ::: ", balance_data)
-                balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
-                if balanceSerializer.is_valid():
-                    balanceSerializer.save()
-                else:
-                    return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # if transaction_instance.type in ('purchase', 'event_purchase'):
+        #     ## ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE
+        #     try:
+        #         balance = Balance.objects.get(customer_id = transaction_instance.customer_id.id)
+        #     except:
+        #         balance = None
+        #     # print("balance ::: ",balance)
+        #     if balance is None:
+        #         balance_data = {
+        #             'customer_id': transaction_instance.customer_id.id,
+        #             'amount': - float(transaction_instance.total_amount)
+        #         }
+        #         # print("Balance DATA ::: ", balance_data)
+        #         balanceSerializer = BalanceSerializer(data = balance_data)
+        #         if balanceSerializer.is_valid():
+        #             balanceSerializer.save()
+        #         else:
+        #             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        #     else:
+        #         balance_data = {
+        #             'customer_id': transaction_instance.customer_id.id,
+        #             'amount': balance.amount - float(transaction_instance.total_amount)
+        #         }
+        #         # print("Balance DATA ::: ", balance_data)
+        #         balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+        #         if balanceSerializer.is_valid():
+        #             balanceSerializer.save()
+        #         else:
+        #             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            ### CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON RESCIVED OR PAID AMOUNT
-            advance_amount = transaction_data.get('advance_amount', None)
-            if advance_amount is not None:
-                # print("CHANGE IN BALANCE BASE ON RECIVED OR PAID AMOUNT")
-                try:
-                    balance = Balance.objects.get(customer_id = transaction_instance.customer_id.id)
-                except:
-                    balance = None
-                # print("balance ::: ",balance)
-                if balance is None:
-                    balance_data = {
-                        'customer_id': transaction_instance.customer_id.id,
-                        'amount': advance_amount
-                    }
-                    # print("Balance DATA ::: ", balance_data)
-                    balanceSerializer = BalanceSerializer(data = balance_data)
-                    if balanceSerializer.is_valid():
-                        balanceSerializer.save()
-                    else:
-                        return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                else:
-                    balance_data = {
-                        'customer_id': transaction_instance.customer_id.id,
-                        'amount': balance.amount + float(advance_amount)
-                    }
-                    # print("Balance DATA ::: ", balance_data)
-                    balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
-                    if balanceSerializer.is_valid():
-                        balanceSerializer.save()
-                    else:
-                        return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        #     ### CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON RESCIVED OR PAID AMOUNT
+        #     advance_amount = transaction_data.get('advance_amount', None)
+        #     if advance_amount is not None:
+        #         # print("CHANGE IN BALANCE BASE ON RECIVED OR PAID AMOUNT")
+        #         try:
+        #             balance = Balance.objects.get(customer_id = transaction_instance.customer_id.id)
+        #         except:
+        #             balance = None
+        #         # print("balance ::: ",balance)
+        #         if balance is None:
+        #             balance_data = {
+        #                 'customer_id': transaction_instance.customer_id.id,
+        #                 'amount': advance_amount
+        #             }
+        #             # print("Balance DATA ::: ", balance_data)
+        #             balanceSerializer = BalanceSerializer(data = balance_data)
+        #             if balanceSerializer.is_valid():
+        #                 balanceSerializer.save()
+        #             else:
+        #                 return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        #         else:
+        #             balance_data = {
+        #                 'customer_id': transaction_instance.customer_id.id,
+        #                 'amount': balance.amount + float(advance_amount)
+        #             }
+        #             # print("Balance DATA ::: ", balance_data)
+        #             balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+        #             if balanceSerializer.is_valid():
+        #                 balanceSerializer.save()
+        #             else:
+        #                 return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({
             "inventorydescription": InventoryDescriptionSerializer(all_instance, many=True).data,
@@ -2099,117 +2106,121 @@ class TransactionViewSet(viewsets.ModelViewSet):
         staff_id = transaction_data.get('staff_id', None)
         # print("staff_id :: ",staff_id)
 
-        if transaction_instance.type == 'payment_in':
-            # print("PAYMENT IN")
-            if customer_id is not None:
-                try:
-                    balance = Balance.objects.get(customer_id = customer_id)
-                except:
-                    balance = None
-                # print("balance ::: ",balance)
-                if balance is None:
-                    balance_data = {'customer_id': customer_id,
-                                    'amount': - float(transaction_instance.total_amount)}
-                    # print("Balance DATA ::: ", balance_data)
-                    balanceSerializer = BalanceSerializer(data = balance_data)
-                    if balanceSerializer.is_valid():
-                        balanceSerializer.save()
-                    else:
-                        return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                else:
-                    balance_data = {
-                        'customer_id': customer_id,
-                        'amount': balance.amount - float(transaction_instance.total_amount)
-                    }
-                    # print("Balance DATA ::: ", balance_data)
-                    balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
-                    if balanceSerializer.is_valid():
-                        balanceSerializer.save()
-                    else:
-                        return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        new_amount = transaction_instance.total_amount - transaction_instance.recived_or_paid_amount
+        print("New Amount ::: ", new_amount)
+        balance_amount(customer_id, staff_id, 0 , new_amount, transaction_instance.type)
 
-            if staff_id is not None:
-                try:
-                    balance = Balance.objects.get(staff_id = staff_id)
-                except:
-                    balance = None
-                # print("balance ::: ",balance)
-                if balance is None:
-                    balance_data = {'staff_id': staff_id,
-                                    'amount': - float(transaction_instance.total_amount)}
-                    # print("Balance DATA ::: ", balance_data)
-                    balanceSerializer = BalanceSerializer(data = balance_data)
-                    if balanceSerializer.is_valid():
-                        balanceSerializer.save()
-                    else:
-                        return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                else:
-                    balance_data = {
-                        'staff_id': staff_id,
-                        'amount': balance.amount - float(transaction_instance.total_amount)
-                    }
-                    # print("Balance DATA ::: ", balance_data)
-                    balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
-                    if balanceSerializer.is_valid():
-                        balanceSerializer.save()
-                    else:
-                        return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # if transaction_instance.type == 'payment_in':
+        #     # print("PAYMENT IN")
+        #     if customer_id is not None:
+        #         try:
+        #             balance = Balance.objects.get(customer_id = customer_id)
+        #         except:
+        #             balance = None
+        #         # print("balance ::: ",balance)
+        #         if balance is None:
+        #             balance_data = {'customer_id': customer_id,
+        #                             'amount': - float(transaction_instance.total_amount)}
+        #             # print("Balance DATA ::: ", balance_data)
+        #             balanceSerializer = BalanceSerializer(data = balance_data)
+        #             if balanceSerializer.is_valid():
+        #                 balanceSerializer.save()
+        #             else:
+        #                 return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        #         else:
+        #             balance_data = {
+        #                 'customer_id': customer_id,
+        #                 'amount': balance.amount - float(transaction_instance.total_amount)
+        #             }
+        #             # print("Balance DATA ::: ", balance_data)
+        #             balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+        #             if balanceSerializer.is_valid():
+        #                 balanceSerializer.save()
+        #             else:
+        #                 return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        if transaction_instance.type == 'payment_out':
-            # print("PAYMENT OUT")
-            if customer_id is not None:
-                try:
-                    balance = Balance.objects.get(customer_id = customer_id)
-                except:
-                    balance = None
-                # print("balance ::: ",balance)
-                if balance is None:
-                    balance_data = {'customer_id': customer_id,
-                                    'amount': transaction_instance.total_amount}
-                    # print("Balance DATA ::: ", balance_data)
-                    balanceSerializer = BalanceSerializer(data = balance_data)
-                    if balanceSerializer.is_valid():
-                        balanceSerializer.save()
-                    else:
-                        return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                else:
-                    balance_data = {
-                        'customer_id': customer_id,
-                        'amount': balance.amount + float(transaction_instance.total_amount)
-                    }
-                    # print("Balance DATA ::: ", balance_data)
-                    balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
-                    if balanceSerializer.is_valid():
-                        balanceSerializer.save()
-                    else:
-                        return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        #     if staff_id is not None:
+        #         try:
+        #             balance = Balance.objects.get(staff_id = staff_id)
+        #         except:
+        #             balance = None
+        #         # print("balance ::: ",balance)
+        #         if balance is None:
+        #             balance_data = {'staff_id': staff_id,
+        #                             'amount': - float(transaction_instance.total_amount)}
+        #             # print("Balance DATA ::: ", balance_data)
+        #             balanceSerializer = BalanceSerializer(data = balance_data)
+        #             if balanceSerializer.is_valid():
+        #                 balanceSerializer.save()
+        #             else:
+        #                 return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        #         else:
+        #             balance_data = {
+        #                 'staff_id': staff_id,
+        #                 'amount': balance.amount - float(transaction_instance.total_amount)
+        #             }
+        #             # print("Balance DATA ::: ", balance_data)
+        #             balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+        #             if balanceSerializer.is_valid():
+        #                 balanceSerializer.save()
+        #             else:
+        #                 return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            if staff_id is not None:
-                try:
-                    balance = Balance.objects.get(staff_id = staff_id)
-                except:
-                    balance = None
-                # print("balance ::: ",balance)
-                if balance is None:
-                    balance_data = {'staff_id': staff_id,
-                                    'amount': transaction_instance.total_amount}
-                    # print("Balance DATA ::: ", balance_data)
-                    balanceSerializer = BalanceSerializer(data = balance_data)
-                    if balanceSerializer.is_valid():
-                        balanceSerializer.save()
-                    else:
-                        return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                else:
-                    balance_data = {
-                        'staff_id': staff_id,
-                        'amount': balance.amount + float(transaction_instance.total_amount)
-                    }
-                    # print("Balance DATA ::: ", balance_data)
-                    balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
-                    if balanceSerializer.is_valid():
-                        balanceSerializer.save()
-                    else:
-                        return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # if transaction_instance.type == 'payment_out':
+        #     # print("PAYMENT OUT")
+        #     if customer_id is not None:
+        #         try:
+        #             balance = Balance.objects.get(customer_id = customer_id)
+        #         except:
+        #             balance = None
+        #         # print("balance ::: ",balance)
+        #         if balance is None:
+        #             balance_data = {'customer_id': customer_id,
+        #                             'amount': transaction_instance.total_amount}
+        #             # print("Balance DATA ::: ", balance_data)
+        #             balanceSerializer = BalanceSerializer(data = balance_data)
+        #             if balanceSerializer.is_valid():
+        #                 balanceSerializer.save()
+        #             else:
+        #                 return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        #         else:
+        #             balance_data = {
+        #                 'customer_id': customer_id,
+        #                 'amount': balance.amount + float(transaction_instance.total_amount)
+        #             }
+        #             # print("Balance DATA ::: ", balance_data)
+        #             balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+        #             if balanceSerializer.is_valid():
+        #                 balanceSerializer.save()
+        #             else:
+        #                 return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        #     if staff_id is not None:
+        #         try:
+        #             balance = Balance.objects.get(staff_id = staff_id)
+        #         except:
+        #             balance = None
+        #         # print("balance ::: ",balance)
+        #         if balance is None:
+        #             balance_data = {'staff_id': staff_id,
+        #                             'amount': transaction_instance.total_amount}
+        #             # print("Balance DATA ::: ", balance_data)
+        #             balanceSerializer = BalanceSerializer(data = balance_data)
+        #             if balanceSerializer.is_valid():
+        #                 balanceSerializer.save()
+        #             else:
+        #                 return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        #         else:
+        #             balance_data = {
+        #                 'staff_id': staff_id,
+        #                 'amount': balance.amount + float(transaction_instance.total_amount)
+        #             }
+        #             # print("Balance DATA ::: ", balance_data)
+        #             balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+        #             if balanceSerializer.is_valid():
+        #                 balanceSerializer.save()
+        #             else:
+        #                 return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         if linktransaction_data is not None:
             link_transaction(transaction_instance.id, linktransaction_data)
@@ -2221,6 +2232,9 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
         transaction = Transaction.objects.get(pk=pk)
         # print("Transaction :: ", transaction)
+
+        old_amount = transaction.total_amount - transaction.recived_or_paid_amount
+
         data={}
 
         if key == 'inventorydescription_update':
@@ -2279,10 +2293,10 @@ class TransactionViewSet(viewsets.ModelViewSet):
                         else:
                             return Response(o_inventory.errors, status=status.HTTP_400_BAD_REQUEST)
                         
-                old_total_amount = float(transaction.total_amount)
+                # old_total_amount = float(transaction.total_amount)
                 # print("old_total_amount ::: ",old_total_amount)
 
-                old_advance_amount = float(transaction.advance_amount)
+                # old_advance_amount = float(transaction.advance_amount)
                 # print("old_advance_amount ::: ",old_advance_amount)
 
                 if convert_status == 'true':
@@ -2296,121 +2310,130 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 else:
                     return Response(transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                 
-                new_total_amount = float(transaction_instance.total_amount)
+                customer_id = transaction_instance.customer_id.id if transaction_instance.customer_id is not None else None
+                # print("customer_id :::",customer_id)
+                staff_id = transaction_instance.staff_id.id if transaction_instance.staff_id is not None else None
+                # print("staff_id :::",staff_id)
+                
+                new_amount = transaction_instance.total_amount - transaction_instance.recived_or_paid_amount
+                print("New Amount ::: ", new_amount)
+                balance_amount(customer_id, staff_id, old_amount, new_amount, transaction_instance.type)
+                
+                # new_total_amount = float(transaction_instance.total_amount)
                 # print("new_total_amount ::: ",new_total_amount)
 
-                new_advance_amount = float(transaction_instance.advance_amount)
+                # new_advance_amount = float(transaction_instance.advance_amount)
                 # print("new_advance_amount ::: ",new_advance_amount)
 
-                if transaction_instance.type == 'sale':
-                    ## ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE
-                    try:
-                        balance = Balance.objects.get(customer_id = transaction_instance.customer_id.id)
-                    except:
-                        balance = None
-                    # print("balance ::: ",balance)
-                    if balance is None:
-                        # print("ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE")
-                        balance_data = {'customer_id': transaction_instance.customer_id.id,
-                                        'amount': transaction_instance.total_amount}
-                        # print("Balance DATA ::: ", balance_data)
-                        balanceSerializer = BalanceSerializer(data = balance_data)
-                        if balanceSerializer.is_valid():
-                            balanceSerializer.save()
-                        else:
-                            return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                    else:
-                        # print("ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE")
-                        balance_data = {'customer_id': transaction_instance.customer_id.id,
-                                        'amount': (balance.amount - old_total_amount) + new_total_amount}
-                        # print("Balance DATA ::: ", balance_data)
-                        balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
-                        if balanceSerializer.is_valid():
-                            balanceSerializer.save()
-                        else:
-                            return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                # if transaction_instance.type == 'sale':
+                #     ## ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE
+                #     try:
+                #         balance = Balance.objects.get(customer_id = transaction_instance.customer_id.id)
+                #     except:
+                #         balance = None
+                #     # print("balance ::: ",balance)
+                #     if balance is None:
+                #         # print("ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE")
+                #         balance_data = {'customer_id': transaction_instance.customer_id.id,
+                #                         'amount': transaction_instance.total_amount}
+                #         # print("Balance DATA ::: ", balance_data)
+                #         balanceSerializer = BalanceSerializer(data = balance_data)
+                #         if balanceSerializer.is_valid():
+                #             balanceSerializer.save()
+                #         else:
+                #             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                #     else:
+                #         # print("ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE")
+                #         balance_data = {'customer_id': transaction_instance.customer_id.id,
+                #                         'amount': (balance.amount - old_total_amount) + new_total_amount}
+                #         # print("Balance DATA ::: ", balance_data)
+                #         balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+                #         if balanceSerializer.is_valid():
+                #             balanceSerializer.save()
+                #         else:
+                #             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-                    ### CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON RESCIVED OR PAID AMOUNT
-                    try:
-                        balance = Balance.objects.get(customer_id = transaction_instance.customer_id.id)
-                    except:
-                        balance = None
-                    # print("balance ::: ",balance)
-                    if balance is None:
-                        # print("CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON RESCIVED OR PAID AMOUNT")
-                        balance_data = {'customer_id': transaction_instance.customer_id.id,
-                                        'amount': - float(transaction_instance.advance_amount)}
-                        # print("Balance DATA ::: ", balance_data)
-                        balanceSerializer = BalanceSerializer(data = balance_data)
-                        if balanceSerializer.is_valid():
-                            balanceSerializer.save()
-                        else:
-                            return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                    else:
-                        # print("CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON RESCIVED OR PAID AMOUNT")
-                        balance_data = {'customer_id': transaction.customer_id.id,
-                                        'amount': (balance.amount + old_advance_amount) - new_advance_amount}
-                        # print("Balance DATA ::: ", balance_data)
-                        balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
-                        if balanceSerializer.is_valid():
-                            balanceSerializer.save()
-                        else:
-                            return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                #     ### CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON RESCIVED OR PAID AMOUNT
+                #     try:
+                #         balance = Balance.objects.get(customer_id = transaction_instance.customer_id.id)
+                #     except:
+                #         balance = None
+                #     # print("balance ::: ",balance)
+                #     if balance is None:
+                #         # print("CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON RESCIVED OR PAID AMOUNT")
+                #         balance_data = {'customer_id': transaction_instance.customer_id.id,
+                #                         'amount': - float(transaction_instance.advance_amount)}
+                #         # print("Balance DATA ::: ", balance_data)
+                #         balanceSerializer = BalanceSerializer(data = balance_data)
+                #         if balanceSerializer.is_valid():
+                #             balanceSerializer.save()
+                #         else:
+                #             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                #     else:
+                #         # print("CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON RESCIVED OR PAID AMOUNT")
+                #         balance_data = {'customer_id': transaction.customer_id.id,
+                #                         'amount': (balance.amount + old_advance_amount) - new_advance_amount}
+                #         # print("Balance DATA ::: ", balance_data)
+                #         balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+                #         if balanceSerializer.is_valid():
+                #             balanceSerializer.save()
+                #         else:
+                #             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-                if transaction_instance.type == 'purchase':
-                    ## ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE
-                    try:
-                        balance = Balance.objects.get(customer_id = transaction_instance.customer_id.id)
-                    except:
-                        balance = None
-                    # print("balance ::: ",balance)
-                    if balance is None:
-                        print("ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE")
-                        balance_data = {'customer_id': transaction_instance.customer_id.id,
-                                        'amount': - float(transaction_instance.total_amount)}
-                        print("Balance DATA ::: ", balance_data)
-                        balanceSerializer = BalanceSerializer(data = balance_data)
-                        if balanceSerializer.is_valid():
-                            balanceSerializer.save()
-                        else:
-                            return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                    else:
-                        print("ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE")
-                        balance_data = {'customer_id': transaction_instance.customer_id.id,
-                                        'amount': (balance.amount + old_total_amount) - new_total_amount}
-                        print("Balance DATA ::: ", balance_data)
-                        balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
-                        if balanceSerializer.is_valid():
-                            balanceSerializer.save()
-                        else:
-                            return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                # if transaction_instance.type == 'purchase':
+                #     ## ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE
+                #     try:
+                #         balance = Balance.objects.get(customer_id = transaction_instance.customer_id.id)
+                #     except:
+                #         balance = None
+                #     # print("balance ::: ",balance)
+                #     if balance is None:
+                #         print("ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE")
+                #         balance_data = {'customer_id': transaction_instance.customer_id.id,
+                #                         'amount': - float(transaction_instance.total_amount)}
+                #         print("Balance DATA ::: ", balance_data)
+                #         balanceSerializer = BalanceSerializer(data = balance_data)
+                #         if balanceSerializer.is_valid():
+                #             balanceSerializer.save()
+                #         else:
+                #             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                #     else:
+                #         print("ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE")
+                #         balance_data = {'customer_id': transaction_instance.customer_id.id,
+                #                         'amount': (balance.amount + old_total_amount) - new_total_amount}
+                #         print("Balance DATA ::: ", balance_data)
+                #         balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+                #         if balanceSerializer.is_valid():
+                #             balanceSerializer.save()
+                #         else:
+                #             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-                    ### CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON RESCIVED OR PAID AMOUNT
-                    try:
-                        balance = Balance.objects.get(customer_id = transaction_instance.customer_id.id)
-                    except:
-                        balance = None
-                    # print("balance ::: ",balance)
-                    if balance is None:
-                        # print("CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON RESCIVED OR PAID AMOUNT")
-                        balance_data = {'customer_id': transaction_instance.customer_id.id,
-                                        'amount': float(transaction_instance.advance_amount)}
-                        # print("Balance DATA ::: ", balance_data)
-                        balanceSerializer = BalanceSerializer(data = balance_data)
-                        if balanceSerializer.is_valid():
-                            balanceSerializer.save()
-                        else:
-                            return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                    else:
-                        # print("CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON RESCIVED OR PAID AMOUNT")
-                        balance_data = {'customer_id': transaction.customer_id.id,
-                                        'amount': (balance.amount - old_advance_amount) + new_advance_amount}
-                        # print("Balance DATA ::: ", balance_data)
-                        balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
-                        if balanceSerializer.is_valid():
-                            balanceSerializer.save()
-                        else:
-                            return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                #     ### CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON RESCIVED OR PAID AMOUNT
+                #     try:
+                #         balance = Balance.objects.get(customer_id = transaction_instance.customer_id.id)
+                #     except:
+                #         balance = None
+                #     # print("balance ::: ",balance)
+                #     if balance is None:
+                #         # print("CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON RESCIVED OR PAID AMOUNT")
+                #         balance_data = {'customer_id': transaction_instance.customer_id.id,
+                #                         'amount': float(transaction_instance.advance_amount)}
+                #         # print("Balance DATA ::: ", balance_data)
+                #         balanceSerializer = BalanceSerializer(data = balance_data)
+                #         if balanceSerializer.is_valid():
+                #             balanceSerializer.save()
+                #         else:
+                #             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                #     else:
+                #         # print("CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON RESCIVED OR PAID AMOUNT")
+                #         balance_data = {'customer_id': transaction.customer_id.id,
+                #                         'amount': (balance.amount - old_advance_amount) + new_advance_amount}
+                #         # print("Balance DATA ::: ", balance_data)
+                #         balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+                #         if balanceSerializer.is_valid():
+                #             balanceSerializer.save()
+                #         else:
+                #             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
                 # print("convert_status == 'true' ::: ", convert_status == 'true')
@@ -2446,130 +2469,139 @@ class TransactionViewSet(viewsets.ModelViewSet):
                         else:
                             return Response(copy_transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                         
-                        if copy_trnasaction_instance.type == 'sale':
-                            ## ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE
-                            try:
-                                balance = Balance.objects.get(customer_id = copy_trnasaction_instance.customer_id.id)
-                            except:
-                                balance = None
-                            # print("balance ::: ",balance)
-                            if balance is None:
-                                balance_data = {
-                                    'customer_id': copy_trnasaction_instance.customer_id.id,
-                                    'amount': copy_trnasaction_instance.total_amount
-                                }
-                                # print("Balance DATA ::: ", balance_data)
-                                balanceSerializer = BalanceSerializer(data = balance_data)
-                                if balanceSerializer.is_valid():
-                                    balanceSerializer.save()
-                                else:
-                                    return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                            else:
-                                balance_data = {
-                                    'customer_id': copy_trnasaction_instance.customer_id.id,
-                                    'amount': balance.amount + float(copy_trnasaction_instance.total_amount)
-                                }
-                                # print("Balance DATA ::: ", balance_data)
-                                balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
-                                if balanceSerializer.is_valid():
-                                    balanceSerializer.save()
-                                else:
-                                    return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                        customer_id = copy_trnasaction_instance.customer_id.id if copy_trnasaction_instance.customer_id is not None else None
+                        # print("customer_id :::",customer_id)
+                        staff_id = copy_trnasaction_instance.staff_id.id if copy_trnasaction_instance.staff_id is not None else None
+                        # print("staff_id :::",staff_id)
+                        
+                        new_amount = copy_trnasaction_instance.total_amount - copy_trnasaction_instance.recived_or_paid_amount
+                        print("New Amount ::: ", new_amount)
+                        balance_amount(copy_trnasaction_instance.customer_id.id, None, 0 , new_amount, copy_trnasaction_instance.type)
 
-                            ### CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON RESCIVED OR PAID AMOUNT
-                            advance_amount = transaction_data.get('advance_amount', None)
-                            # print("advance_amount ::: ",advance_amount)
-                            if advance_amount is not None:
-                                # print("CHANGE IN BALANCE BASE ON RECIVED OR PAID AMOUNT")
-                                try:
-                                    balance = Balance.objects.get(customer_id = copy_trnasaction_instance.customer_id.id)
-                                except:
-                                    balance = None
-                                # print("balance ::: ",balance)
-                                if balance is None:
-                                    balance_data = {
-                                        'customer_id': copy_trnasaction_instance.customer_id.id,
-                                        'amount': advance_amount
-                                    }
-                                    # print("Balance DATA ::: ", balance_data)
-                                    balanceSerializer = BalanceSerializer(data = balance_data)
-                                    if balanceSerializer.is_valid():
-                                        balanceSerializer.save()
-                                    else:
-                                        return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                                else:
-                                    balance_data = {
-                                        'customer_id': copy_trnasaction_instance.customer_id.id,
-                                        'amount': balance.amount - float(advance_amount)
-                                    }
-                                    # print("Balance DATA ::: ", balance_data)
-                                    balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
-                                    if balanceSerializer.is_valid():
-                                        balanceSerializer.save()
-                                    else:
-                                        return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                        # if copy_trnasaction_instance.type == 'sale':
+                        #     ## ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE
+                        #     try:
+                        #         balance = Balance.objects.get(customer_id = copy_trnasaction_instance.customer_id.id)
+                        #     except:
+                        #         balance = None
+                        #     # print("balance ::: ",balance)
+                        #     if balance is None:
+                        #         balance_data = {
+                        #             'customer_id': copy_trnasaction_instance.customer_id.id,
+                        #             'amount': copy_trnasaction_instance.total_amount
+                        #         }
+                        #         # print("Balance DATA ::: ", balance_data)
+                        #         balanceSerializer = BalanceSerializer(data = balance_data)
+                        #         if balanceSerializer.is_valid():
+                        #             balanceSerializer.save()
+                        #         else:
+                        #             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                        #     else:
+                        #         balance_data = {
+                        #             'customer_id': copy_trnasaction_instance.customer_id.id,
+                        #             'amount': balance.amount + float(copy_trnasaction_instance.total_amount)
+                        #         }
+                        #         # print("Balance DATA ::: ", balance_data)
+                        #         balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+                        #         if balanceSerializer.is_valid():
+                        #             balanceSerializer.save()
+                        #         else:
+                        #             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-                        if copy_trnasaction_instance.type == 'purchase':
-                            ## ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE
-                            try:
-                                balance = Balance.objects.get(customer_id = copy_trnasaction_instance.customer_id.id)
-                            except:
-                                balance = None
-                            # print("balance ::: ",balance)
-                            if balance is None:
-                                balance_data = {
-                                    'customer_id': copy_trnasaction_instance.customer_id.id,
-                                    'amount': - float(copy_trnasaction_instance.total_amount)
-                                }
-                                # print("Balance DATA ::: ", balance_data)
-                                balanceSerializer = BalanceSerializer(data = balance_data)
-                                if balanceSerializer.is_valid():
-                                    balanceSerializer.save()
-                                else:
-                                    return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                            else:
-                                balance_data = {
-                                    'customer_id': copy_trnasaction_instance.customer_id.id,
-                                    'amount': balance.amount - float(copy_trnasaction_instance.total_amount)
-                                }
-                                # print("Balance DATA ::: ", balance_data)
-                                balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
-                                if balanceSerializer.is_valid():
-                                    balanceSerializer.save()
-                                else:
-                                    return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                        #     ### CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON RESCIVED OR PAID AMOUNT
+                        #     advance_amount = transaction_data.get('advance_amount', None)
+                        #     # print("advance_amount ::: ",advance_amount)
+                        #     if advance_amount is not None:
+                        #         # print("CHANGE IN BALANCE BASE ON RECIVED OR PAID AMOUNT")
+                        #         try:
+                        #             balance = Balance.objects.get(customer_id = copy_trnasaction_instance.customer_id.id)
+                        #         except:
+                        #             balance = None
+                        #         # print("balance ::: ",balance)
+                        #         if balance is None:
+                        #             balance_data = {
+                        #                 'customer_id': copy_trnasaction_instance.customer_id.id,
+                        #                 'amount': advance_amount
+                        #             }
+                        #             # print("Balance DATA ::: ", balance_data)
+                        #             balanceSerializer = BalanceSerializer(data = balance_data)
+                        #             if balanceSerializer.is_valid():
+                        #                 balanceSerializer.save()
+                        #             else:
+                        #                 return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                        #         else:
+                        #             balance_data = {
+                        #                 'customer_id': copy_trnasaction_instance.customer_id.id,
+                        #                 'amount': balance.amount - float(advance_amount)
+                        #             }
+                        #             # print("Balance DATA ::: ", balance_data)
+                        #             balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+                        #             if balanceSerializer.is_valid():
+                        #                 balanceSerializer.save()
+                        #             else:
+                        #                 return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-                            ### CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON RESCIVED OR PAID AMOUNT
-                            advance_amount = transaction_data.get('advance_amount', None)
-                            if advance_amount is not None:
-                                # print("CHANGE IN BALANCE BASE ON RECIVED OR PAID AMOUNT")
-                                try:
-                                    balance = Balance.objects.get(customer_id = copy_trnasaction_instance.customer_id.id)
-                                except:
-                                    balance = None
-                                # print("balance ::: ",balance)
-                                if balance is None:
-                                    balance_data = {
-                                        'customer_id': copy_trnasaction_instance.customer_id.id,
-                                        'amount': advance_amount
-                                    }
-                                    # print("Balance DATA ::: ", balance_data)
-                                    balanceSerializer = BalanceSerializer(data = balance_data)
-                                    if balanceSerializer.is_valid():
-                                        balanceSerializer.save()
-                                    else:
-                                        return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                                else:
-                                    balance_data = {
-                                        'customer_id': copy_trnasaction_instance.customer_id.id,
-                                        'amount': balance.amount + float(advance_amount)
-                                    }
-                                    # print("Balance DATA ::: ", balance_data)
-                                    balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
-                                    if balanceSerializer.is_valid():
-                                        balanceSerializer.save()
-                                    else:
-                                        return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                        # if copy_trnasaction_instance.type == 'purchase':
+                        #     ## ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE
+                        #     try:
+                        #         balance = Balance.objects.get(customer_id = copy_trnasaction_instance.customer_id.id)
+                        #     except:
+                        #         balance = None
+                        #     # print("balance ::: ",balance)
+                        #     if balance is None:
+                        #         balance_data = {
+                        #             'customer_id': copy_trnasaction_instance.customer_id.id,
+                        #             'amount': - float(copy_trnasaction_instance.total_amount)
+                        #         }
+                        #         # print("Balance DATA ::: ", balance_data)
+                        #         balanceSerializer = BalanceSerializer(data = balance_data)
+                        #         if balanceSerializer.is_valid():
+                        #             balanceSerializer.save()
+                        #         else:
+                        #             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                        #     else:
+                        #         balance_data = {
+                        #             'customer_id': copy_trnasaction_instance.customer_id.id,
+                        #             'amount': balance.amount - float(copy_trnasaction_instance.total_amount)
+                        #         }
+                        #         # print("Balance DATA ::: ", balance_data)
+                        #         balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+                        #         if balanceSerializer.is_valid():
+                        #             balanceSerializer.save()
+                        #         else:
+                        #             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+                        #     ### CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON RESCIVED OR PAID AMOUNT
+                        #     advance_amount = transaction_data.get('advance_amount', None)
+                        #     if advance_amount is not None:
+                        #         # print("CHANGE IN BALANCE BASE ON RECIVED OR PAID AMOUNT")
+                        #         try:
+                        #             balance = Balance.objects.get(customer_id = copy_trnasaction_instance.customer_id.id)
+                        #         except:
+                        #             balance = None
+                        #         # print("balance ::: ",balance)
+                        #         if balance is None:
+                        #             balance_data = {
+                        #                 'customer_id': copy_trnasaction_instance.customer_id.id,
+                        #                 'amount': advance_amount
+                        #             }
+                        #             # print("Balance DATA ::: ", balance_data)
+                        #             balanceSerializer = BalanceSerializer(data = balance_data)
+                        #             if balanceSerializer.is_valid():
+                        #                 balanceSerializer.save()
+                        #             else:
+                        #                 return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                        #         else:
+                        #             balance_data = {
+                        #                 'customer_id': copy_trnasaction_instance.customer_id.id,
+                        #                 'amount': balance.amount + float(advance_amount)
+                        #             }
+                        #             # print("Balance DATA ::: ", balance_data)
+                        #             balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+                        #             if balanceSerializer.is_valid():
+                        #                 balanceSerializer.save()
+                        #             else:
+                        #                 return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
             else:
                 if delete_inventorys is not None:
@@ -2607,10 +2639,10 @@ class TransactionViewSet(viewsets.ModelViewSet):
                         else:
                             return Response(o_inventory.errors, status=status.HTTP_400_BAD_REQUEST)
                         
-                old_total_amount = float(transaction.total_amount)
+                # old_total_amount = float(transaction.total_amount)
                 # print("old_total_amount ::: ",old_total_amount)
 
-                old_advance_amount = float(transaction.advance_amount)
+                # old_advance_amount = float(transaction.advance_amount)
                 # print("old_advance_amount ::: ",old_advance_amount)
 
                 transaction_data['inventorydescription'] = inventorydescription_ids 
@@ -2621,122 +2653,131 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 else:
                     return Response(transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                 
-                new_total_amount = float(transaction_instance.total_amount)
+                customer_id = transaction_instance.customer_id.id if transaction_instance.customer_id is not None else None
+                # print("customer_id :::",customer_id)
+                staff_id = transaction_instance.staff_id.id if transaction_instance.staff_id is not None else None
+                # print("staff_id :::",staff_id)
+                
+                new_amount = transaction_instance.total_amount - transaction_instance.recived_or_paid_amount
+                print("New Amount ::: ", new_amount)
+                balance_amount(transaction_instance.customer_id.id, None, old_amount, new_amount, transaction_instance.type)
+                
+                # new_total_amount = float(transaction_instance.total_amount)
                 # print("new_total_amount ::: ",new_total_amount)
 
-                new_advance_amount = float(transaction_instance.advance_amount)
+                # new_advance_amount = float(transaction_instance.advance_amount)
                 # print("new_advance_amount ::: ",new_advance_amount)
 
-                if transaction_instance.type == 'sale':
-                    ## ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE
+                # if transaction_instance.type == 'sale':
+                #     ## ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE
                     
-                    try:
-                        balance = Balance.objects.get(customer_id = transaction_instance.customer_id.id)
-                    except:
-                        balance = None
-                    # print("balance ::: ",balance)
-                    if balance is None:
-                        # print("ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE")
-                        balance_data = {'customer_id': transaction_instance.customer_id.id,
-                                        'amount': transaction_instance.total_amount}
-                        # print("Balance DATA ::: ", balance_data)
-                        balanceSerializer = BalanceSerializer(data = balance_data)
-                        if balanceSerializer.is_valid():
-                            balanceSerializer.save()
-                        else:
-                            return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                    else:
-                        # print("ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE")
-                        balance_data = {'customer_id': transaction_instance.customer_id.id,
-                                        'amount': (balance.amount - old_total_amount) + new_total_amount}
-                        # print("Balance DATA ::: ", balance_data)
-                        balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
-                        if balanceSerializer.is_valid():
-                            balanceSerializer.save()
-                        else:
-                            return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                #     try:
+                #         balance = Balance.objects.get(customer_id = transaction_instance.customer_id.id)
+                #     except:
+                #         balance = None
+                #     # print("balance ::: ",balance)
+                #     if balance is None:
+                #         # print("ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE")
+                #         balance_data = {'customer_id': transaction_instance.customer_id.id,
+                #                         'amount': transaction_instance.total_amount}
+                #         # print("Balance DATA ::: ", balance_data)
+                #         balanceSerializer = BalanceSerializer(data = balance_data)
+                #         if balanceSerializer.is_valid():
+                #             balanceSerializer.save()
+                #         else:
+                #             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                #     else:
+                #         # print("ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE")
+                #         balance_data = {'customer_id': transaction_instance.customer_id.id,
+                #                         'amount': (balance.amount - old_total_amount) + new_total_amount}
+                #         # print("Balance DATA ::: ", balance_data)
+                #         balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+                #         if balanceSerializer.is_valid():
+                #             balanceSerializer.save()
+                #         else:
+                #             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-                    ### CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON RESCIVED OR PAID AMOUNT
-                    try:
-                        balance = Balance.objects.get(customer_id = transaction_instance.customer_id.id)
-                    except:
-                        balance = None
-                    # print("balance ::: ",balance)
-                    if balance is None:
-                        # print("CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON RESCIVED OR PAID AMOUNT")
-                        balance_data = {'customer_id': transaction_instance.customer_id.id,
-                                        'amount': - float(transaction_instance.advance_amount)}
-                        # print("Balance DATA ::: ", balance_data)
-                        balanceSerializer = BalanceSerializer(data = balance_data)
-                        if balanceSerializer.is_valid():
-                            balanceSerializer.save()
-                        else:
-                            return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                    else:
-                        # print("CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON RESCIVED OR PAID AMOUNT")
-                        balance_data = {'customer_id': transaction.customer_id.id,
-                                        'amount': (balance.amount + old_advance_amount) - new_advance_amount}
-                        # print("Balance DATA ::: ", balance_data)
-                        balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
-                        if balanceSerializer.is_valid():
-                            balanceSerializer.save()
-                        else:
-                            return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                #     ### CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON RESCIVED OR PAID AMOUNT
+                #     try:
+                #         balance = Balance.objects.get(customer_id = transaction_instance.customer_id.id)
+                #     except:
+                #         balance = None
+                #     # print("balance ::: ",balance)
+                #     if balance is None:
+                #         # print("CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON RESCIVED OR PAID AMOUNT")
+                #         balance_data = {'customer_id': transaction_instance.customer_id.id,
+                #                         'amount': - float(transaction_instance.advance_amount)}
+                #         # print("Balance DATA ::: ", balance_data)
+                #         balanceSerializer = BalanceSerializer(data = balance_data)
+                #         if balanceSerializer.is_valid():
+                #             balanceSerializer.save()
+                #         else:
+                #             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                #     else:
+                #         # print("CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON RESCIVED OR PAID AMOUNT")
+                #         balance_data = {'customer_id': transaction.customer_id.id,
+                #                         'amount': (balance.amount + old_advance_amount) - new_advance_amount}
+                #         # print("Balance DATA ::: ", balance_data)
+                #         balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+                #         if balanceSerializer.is_valid():
+                #             balanceSerializer.save()
+                #         else:
+                #             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-                if transaction_instance.type == 'purchase':
-                    ## ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE
-                    try:
-                        balance = Balance.objects.get(customer_id = transaction_instance.customer_id.id)
-                    except:
-                        balance = None
-                    # print("balance ::: ",balance)
-                    if balance is None:
-                        # print("ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE")
-                        balance_data = {'customer_id': transaction_instance.customer_id.id,
-                                        'amount': - float(transaction_instance.total_amount)}
-                        # print("Balance DATA ::: ", balance_data)
-                        balanceSerializer = BalanceSerializer(data = balance_data)
-                        if balanceSerializer.is_valid():
-                            balanceSerializer.save()
-                        else:
-                            return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                    else:
-                        # print("ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE")
-                        balance_data = {'customer_id': transaction_instance.customer_id.id,
-                                        'amount': (balance.amount + old_total_amount) - new_total_amount}
-                        # print("Balance DATA ::: ", balance_data)
-                        balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
-                        if balanceSerializer.is_valid():
-                            balanceSerializer.save()
-                        else:
-                            return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                # if transaction_instance.type == 'purchase':
+                #     ## ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE
+                #     try:
+                #         balance = Balance.objects.get(customer_id = transaction_instance.customer_id.id)
+                #     except:
+                #         balance = None
+                #     # print("balance ::: ",balance)
+                #     if balance is None:
+                #         # print("ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE")
+                #         balance_data = {'customer_id': transaction_instance.customer_id.id,
+                #                         'amount': - float(transaction_instance.total_amount)}
+                #         # print("Balance DATA ::: ", balance_data)
+                #         balanceSerializer = BalanceSerializer(data = balance_data)
+                #         if balanceSerializer.is_valid():
+                #             balanceSerializer.save()
+                #         else:
+                #             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                #     else:
+                #         # print("ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE")
+                #         balance_data = {'customer_id': transaction_instance.customer_id.id,
+                #                         'amount': (balance.amount + old_total_amount) - new_total_amount}
+                #         # print("Balance DATA ::: ", balance_data)
+                #         balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+                #         if balanceSerializer.is_valid():
+                #             balanceSerializer.save()
+                #         else:
+                #             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-                    ### CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON RESCIVED OR PAID AMOUNT
-                    try:
-                        balance = Balance.objects.get(customer_id = transaction_instance.customer_id.id)
-                    except:
-                        balance = None
-                    # print("balance ::: ",balance)
-                    if balance is None:
-                        # print("CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON RESCIVED OR PAID AMOUNT")
-                        balance_data = {'customer_id': transaction_instance.customer_id.id,
-                                        'amount': float(transaction_instance.advance_amount)}
-                        # print("Balance DATA ::: ", balance_data)
-                        balanceSerializer = BalanceSerializer(data = balance_data)
-                        if balanceSerializer.is_valid():
-                            balanceSerializer.save()
-                        else:
-                            return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                    else:
-                        # print("CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON RESCIVED OR PAID AMOUNT")
-                        balance_data = {'customer_id': transaction.customer_id.id,
-                                        'amount': (balance.amount - old_advance_amount) + new_advance_amount}
-                        # print("Balance DATA ::: ", balance_data)
-                        balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
-                        if balanceSerializer.is_valid():
-                            balanceSerializer.save()
-                        else:
-                            return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                #     ### CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON RESCIVED OR PAID AMOUNT
+                #     try:
+                #         balance = Balance.objects.get(customer_id = transaction_instance.customer_id.id)
+                #     except:
+                #         balance = None
+                #     # print("balance ::: ",balance)
+                #     if balance is None:
+                #         # print("CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON RESCIVED OR PAID AMOUNT")
+                #         balance_data = {'customer_id': transaction_instance.customer_id.id,
+                #                         'amount': float(transaction_instance.advance_amount)}
+                #         # print("Balance DATA ::: ", balance_data)
+                #         balanceSerializer = BalanceSerializer(data = balance_data)
+                #         if balanceSerializer.is_valid():
+                #             balanceSerializer.save()
+                #         else:
+                #             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                #     else:
+                #         # print("CHANGE IN CUSTOMER'S BALANCE AMOUNT BASE ON RESCIVED OR PAID AMOUNT")
+                #         balance_data = {'customer_id': transaction.customer_id.id,
+                #                         'amount': (balance.amount - old_advance_amount) + new_advance_amount}
+                #         # print("Balance DATA ::: ", balance_data)
+                #         balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+                #         if balanceSerializer.is_valid():
+                #             balanceSerializer.save()
+                #         else:
+                #             return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
             # print("PKKKK :: ",pk)
             if linktransaction_data is not None:
@@ -2755,7 +2796,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
             # old_amount = transaction.recived_or_paid_amount
             # print("OLD AMOUNT :: ",old_amount)
-            old_total_amount = float(transaction.total_amount)
+            # old_total_amount = float(transaction.total_amount)
             # print("old_total_amount :::",old_total_amount)
 
             transactionSerializer = TransactionSerializer(transaction, data=transaction_data, partial=True)
@@ -2765,121 +2806,125 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 return Response(transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
             
-            new_total_amount = float(transaction_instance.total_amount)
+            # new_total_amount = float(transaction_instance.total_amount)
             # print("new_total_amount :::",new_total_amount)
 
-            customer_id = transaction_data.get('customer_id', None)
+            customer_id = transaction_instance.customer_id.id if transaction_instance.customer_id is not None else None
             # print("customer_id :::",customer_id)
-            staff_id = transaction_data.get('staff_id', None)
+            staff_id = transaction_instance.staff_id.id if transaction_instance.staff_id is not None else None
             # print("staff_id :::",staff_id)
 
-            if transaction_instance.type == 'payment_in':
-                # print("PAYMENT IN")
-                if customer_id is not None:
-                    try:
-                        balance = Balance.objects.get(customer_id = customer_id)
-                    except:
-                        balance = None
-                    # print("balance ::: ",balance)
-                    if balance is None:
-                        balance_data = {'customer_id': customer_id,
-                                        'amount': - float(transaction_instance.total_amount)}
-                        # print("Balance DATA ::: ", balance_data)
-                        balanceSerializer = BalanceSerializer(data = balance_data)
-                        if balanceSerializer.is_valid():
-                            balanceSerializer.save()
-                        else:
-                            return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                    else:
-                        balance_data = {'customer_id': customer_id,
-                                        'amount': (balance.amount + old_total_amount) - new_total_amount}
-                        # print("Balance DATA ::: ", balance_data)
-                        balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
-                        if balanceSerializer.is_valid():
-                            balanceSerializer.save()
-                        else:
-                            return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            new_amount = transaction_instance.total_amount - transaction_instance.recived_or_paid_amount
+            print("New Amount ::: ", new_amount)
+            balance_amount(customer_id, staff_id, old_amount, new_amount, transaction_instance.type)
 
-                if staff_id is not None:
-                    try:
-                        balance = Balance.objects.get(staff_id = staff_id)
-                    except:
-                        balance = None
-                    # print("balance ::: ",balance)
-                    if balance is None:
-                        balance_data = {'staff_id': staff_id,
-                                        'amount': - float(transaction_instance.total_amount)}
-                        # print("Balance DATA ::: ", balance_data)
-                        balanceSerializer = BalanceSerializer(data = balance_data)
-                        if balanceSerializer.is_valid():
-                            balanceSerializer.save()
-                        else:
-                            return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                    else:
-                        balance_data = {'staff_id': staff_id,
-                                        'amount': (balance.amount + old_total_amount) - new_total_amount}
-                        # print("Balance DATA ::: ", balance_data)
-                        balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
-                        if balanceSerializer.is_valid():
-                            balanceSerializer.save()
-                        else:
-                            return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            # if transaction_instance.type == 'payment_in':
+            #     # print("PAYMENT IN")
+            #     if customer_id is not None:
+            #         try:
+            #             balance = Balance.objects.get(customer_id = customer_id)
+            #         except:
+            #             balance = None
+            #         # print("balance ::: ",balance)
+            #         if balance is None:
+            #             balance_data = {'customer_id': customer_id,
+            #                             'amount': - float(transaction_instance.total_amount)}
+            #             # print("Balance DATA ::: ", balance_data)
+            #             balanceSerializer = BalanceSerializer(data = balance_data)
+            #             if balanceSerializer.is_valid():
+            #                 balanceSerializer.save()
+            #             else:
+            #                 return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            #         else:
+            #             balance_data = {'customer_id': customer_id,
+            #                             'amount': (balance.amount + old_total_amount) - new_total_amount}
+            #             # print("Balance DATA ::: ", balance_data)
+            #             balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+            #             if balanceSerializer.is_valid():
+            #                 balanceSerializer.save()
+            #             else:
+            #                 return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            if transaction_instance.type == 'payment_out':
-                # print("PAYMENT OUT")
-                if customer_id is not None:
-                    try:
-                        balance = Balance.objects.get(customer_id = customer_id)
-                    except:
-                        balance = None
-                    # print("balance ::: ",balance)
-                    if balance is None:
-                        balance_data = {'customer_id': customer_id,
-                                        'amount': transaction_instance.total_amount}
-                        # print("Balance DATA ::: ", balance_data)
-                        balanceSerializer = BalanceSerializer(data = balance_data)
-                        if balanceSerializer.is_valid():
-                            balanceSerializer.save()
-                        else:
-                            return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                    else:
-                        balance_data = {
-                            'customer_id': customer_id,
-                            'amount': (balance.amount - old_total_amount) + new_total_amount
-                        }
-                        # print("Balance DATA ::: ", balance_data)
-                        balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
-                        if balanceSerializer.is_valid():
-                            balanceSerializer.save()
-                        else:
-                            return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            #     if staff_id is not None:
+            #         try:
+            #             balance = Balance.objects.get(staff_id = staff_id)
+            #         except:
+            #             balance = None
+            #         # print("balance ::: ",balance)
+            #         if balance is None:
+            #             balance_data = {'staff_id': staff_id,
+            #                             'amount': - float(transaction_instance.total_amount)}
+            #             # print("Balance DATA ::: ", balance_data)
+            #             balanceSerializer = BalanceSerializer(data = balance_data)
+            #             if balanceSerializer.is_valid():
+            #                 balanceSerializer.save()
+            #             else:
+            #                 return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            #         else:
+            #             balance_data = {'staff_id': staff_id,
+            #                             'amount': (balance.amount + old_total_amount) - new_total_amount}
+            #             # print("Balance DATA ::: ", balance_data)
+            #             balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+            #             if balanceSerializer.is_valid():
+            #                 balanceSerializer.save()
+            #             else:
+            #                 return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-                if staff_id is not None:
-                    try:
-                        balance = Balance.objects.get(staff_id = staff_id)
-                    except:
-                        balance = None
-                    # print("balance ::: ",balance)
-                    if balance is None:
-                        balance_data = {'staff_id': staff_id,
-                                        'amount': transaction_instance.total_amount}
-                        # print("Balance DATA ::: ", balance_data)
-                        balanceSerializer = BalanceSerializer(data = balance_data)
-                        if balanceSerializer.is_valid():
-                            balanceSerializer.save()
-                        else:
-                            return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                    else:
-                        balance_data = {
-                            'staff_id': staff_id,
-                            'amount': (balance.amount - old_total_amount) + new_total_amount
-                        }
-                        # print("Balance DATA ::: ", balance_data)
-                        balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
-                        if balanceSerializer.is_valid():
-                            balanceSerializer.save()
-                        else:
-                            return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            # if transaction_instance.type == 'payment_out':
+            #     # print("PAYMENT OUT")
+            #     if customer_id is not None:
+            #         try:
+            #             balance = Balance.objects.get(customer_id = customer_id)
+            #         except:
+            #             balance = None
+            #         # print("balance ::: ",balance)
+            #         if balance is None:
+            #             balance_data = {'customer_id': customer_id,
+            #                             'amount': transaction_instance.total_amount}
+            #             # print("Balance DATA ::: ", balance_data)
+            #             balanceSerializer = BalanceSerializer(data = balance_data)
+            #             if balanceSerializer.is_valid():
+            #                 balanceSerializer.save()
+            #             else:
+            #                 return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            #         else:
+            #             balance_data = {
+            #                 'customer_id': customer_id,
+            #                 'amount': (balance.amount - old_total_amount) + new_total_amount
+            #             }
+            #             # print("Balance DATA ::: ", balance_data)
+            #             balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+            #             if balanceSerializer.is_valid():
+            #                 balanceSerializer.save()
+            #             else:
+            #                 return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            #     if staff_id is not None:
+            #         try:
+            #             balance = Balance.objects.get(staff_id = staff_id)
+            #         except:
+            #             balance = None
+            #         # print("balance ::: ",balance)
+            #         if balance is None:
+            #             balance_data = {'staff_id': staff_id,
+            #                             'amount': transaction_instance.total_amount}
+            #             # print("Balance DATA ::: ", balance_data)
+            #             balanceSerializer = BalanceSerializer(data = balance_data)
+            #             if balanceSerializer.is_valid():
+            #                 balanceSerializer.save()
+            #             else:
+            #                 return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            #         else:
+            #             balance_data = {
+            #                 'staff_id': staff_id,
+            #                 'amount': (balance.amount - old_total_amount) + new_total_amount
+            #             }
+            #             # print("Balance DATA ::: ", balance_data)
+            #             balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+            #             if balanceSerializer.is_valid():
+            #                 balanceSerializer.save()
+            #             else:
+            #                 return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
             # print("PKKKK :: ",pk)
             if linktransaction_data is not None:
@@ -2891,7 +2936,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
             transaction_data = request.data.get('transaction_data')
             # print("Trnasaction Data :: ",transaction_data)
 
-            old_total_amount = float(transaction.total_amount)
+            # old_total_amount = float(transaction.total_amount)
             # print("old_total_amount ::: ",old_total_amount)
 
             transactionSerializer = TransactionSerializer(transaction, data=transaction_data, partial=True)
@@ -2900,32 +2945,42 @@ class TransactionViewSet(viewsets.ModelViewSet):
             else:
                 return Response(transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
-            new_total_amount = float(transaction.total_amount)
+            customer_id = transaction_instance.customer_id.id if transaction_instance.customer_id is not None else None
+            # print("customer_id :::",customer_id)
+            staff_id = transaction_instance.staff_id.id if transaction_instance.staff_id is not None else None
+            # print("staff_id :::",staff_id)
+            
+            new_amount = transaction_instance.total_amount - transaction_instance.recived_or_paid_amount
+            print("New Amount ::: ", new_amount)
+            balance_amount(customer_id, staff_id, old_amount, new_amount, transaction_instance.type)
+
+            
+            # new_total_amount = float(transaction.total_amount)
             # print("new_total_amount ::: ",new_total_amount)
 
-            try:
-                balance = Balance.object.get(staff_id=transaction_data['staff_id'])
-            except:
-                balance = None
-            # print("balance ::: ",balance)
-            if balance is None:
-                balance_data = {'staff_id': staff_id,
-                                'amount': - float(transaction_instance.total_amount)}
-                # print("Balance DATA ::: ", balance_data)
-                balanceSerializer = BalanceSerializer(data = balance_data)
-                if balanceSerializer.is_valid():
-                    balanceSerializer.save()
-                else:
-                    return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            else:
-                balance_data = {'staff_id': staff_id,
-                                'amount': (balance.amount - old_total_amount) + new_total_amount}
-                # print("Balance DATA ::: ", balance_data)
-                balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
-                if balanceSerializer.is_valid():
-                    balanceSerializer.save()
-                else:
-                    return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            # try:
+            #     balance = Balance.object.get(staff_id=transaction_data['staff_id'])
+            # except:
+            #     balance = None
+            # # print("balance ::: ",balance)
+            # if balance is None:
+            #     balance_data = {'staff_id': staff_id,
+            #                     'amount': - float(transaction_instance.total_amount)}
+            #     # print("Balance DATA ::: ", balance_data)
+            #     balanceSerializer = BalanceSerializer(data = balance_data)
+            #     if balanceSerializer.is_valid():
+            #         balanceSerializer.save()
+            #     else:
+            #         return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            # else:
+            #     balance_data = {'staff_id': staff_id,
+            #                     'amount': (balance.amount - old_total_amount) + new_total_amount}
+            #     # print("Balance DATA ::: ", balance_data)
+            #     balanceSerializer = BalanceSerializer(balance, data=balance_data, partial=True)
+            #     if balanceSerializer.is_valid():
+            #         balanceSerializer.save()
+            #     else:
+            #         return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
             data['tranasaction_data'] = TransactionSerializer(transaction_instance).data
@@ -2959,38 +3014,50 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 to_transaction_id = link.to_transaction_id
                 # print("TO TRANACTION ID :: ", to_transaction_id)
                 # print("LINKED AMOUNT ::", link.linked_amount, "type :: ",type(link.linked_amount))
+                new_amount = link.linked_amount
                 to_transaction = Transaction.objects.get(pk=to_transaction_id.id)
                 # print("TO TRANACTION :: ", to_transaction)
                 to_transaction.recived_or_paid_amount = to_transaction.recived_or_paid_amount - link.linked_amount
                 to_transaction.save()
 
+                print("New Amount ::: ", new_amount)
+                balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
+
             to_linktrasactions = LinkTransaction.objects.filter(to_transaction_id=pk)
             print("ALL LINKED TRANSACTION :: ", linktrasactions)
             for to_link in to_linktrasactions:
                 from_transaction_id = to_link.from_transaction_id
+                new_amount = to_link.linked_amount
                 from_trasaction = Transaction.objects.get(pk=from_transaction_id.id)
                 from_trasaction.recived_or_paid_amount = from_trasaction.recived_or_paid_amount - to_link.linked_amount
                 from_trasaction.save()
 
-            if customer_id is not None:
-                try:
-                    balance = Balance.objects.get(customer_id=customer_id)
-                except:
-                    balance = None
-                # print("BALANCE :: ",balance)
-                if balance is not None:
-                    balance.amount = balance.amount + transaction_object.total_amount
-                    balance.save()
+                print("New Amount ::: ", new_amount)
+                balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
 
-            if staff_id is not None:
-                    try:
-                        balance = Balance.objects.get(staff_id=staff_id)
-                    except:
-                        balance = None
-                    # print("BALANCE :: ",balance)
-                    if balance is not None:
-                        balance.amount = balance.amount + transaction_object.total_amount
-                        balance.save()
+            new_amount = transaction_object.total_amount - transaction_object.used_amount
+            print("New Amount ::: ", new_amount)
+            balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
+
+            # if customer_id is not None:
+            #     try:
+            #         balance = Balance.objects.get(customer_id=customer_id)
+            #     except:
+            #         balance = None
+            #     # print("BALANCE :: ",balance)
+            #     if balance is not None:
+            #         balance.amount = balance.amount + transaction_object.total_amount
+            #         balance.save()
+
+            # if staff_id is not None:
+            #         try:
+            #             balance = Balance.objects.get(staff_id=staff_id)
+            #         except:
+            #             balance = None
+            #         # print("BALANCE :: ",balance)
+            #         if balance is not None:
+            #             balance.amount = balance.amount + transaction_object.total_amount
+            #             balance.save()
 
         if transaction_object.type == 'payment_out':
             # print("PAYMENT IN TYPE")
@@ -3000,39 +3067,51 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 # print("SINGLE TRANACTION :: ", link)
                 to_transaction_id = link.to_transaction_id
                 # print("TO TRANACTION ID :: ", to_transaction_id)
+                new_amount = link.linked_amount
                 # print("LINKED AMOUNT ::", link.linked_amount)               
                 to_transaction = Transaction.objects.get(pk=to_transaction_id.id)
                 # print("TO TRANACTION :: ", to_transaction)
                 to_transaction.recived_or_paid_amount = to_transaction.recived_or_paid_amount - link.linked_amount
                 to_transaction.save()
 
+                print("New Amount ::: ", new_amount)
+                balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
+
             to_linktrasactions = LinkTransaction.objects.filter(to_transaction_id=pk)
             print("ALL LINKED TRANSACTION :: ", linktrasactions)
             for to_link in to_linktrasactions:
                 from_transaction_id = to_link.from_transaction_id
+                new_amount = to_link.linked_amount
                 from_trasaction = Transaction.objects.get(pk=from_transaction_id.id)
                 from_trasaction.recived_or_paid_amount = from_trasaction.recived_or_paid_amount - to_link.linked_amount
                 from_trasaction.save()
 
-            if customer_id is not None:
-                try:
-                    balance = Balance.objects.get(customer_id=customer_id)
-                except:
-                    balance = None
-                # print("BALANCE :: ",balance)
-                if balance is not None:
-                    balance.amount = balance.amount - transaction_object.total_amount
-                    balance.save()
+                print("New Amount ::: ", new_amount)
+                balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
 
-            if staff_id is not None:
-                try:
-                    balance = Balance.objects.get(staff_id=staff_id)
-                except:
-                    balance = None
-                # print("BALANCE :: ",balance)
-                if balance is not None:
-                    balance.amount = balance.amount - transaction_object.total_amount
-                    balance.save()
+            new_amount = transaction_object.total_amount - transaction_object.used_amount
+            print("New Amount ::: ", new_amount)
+            balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
+
+            # if customer_id is not None:
+            #     try:
+            #         balance = Balance.objects.get(customer_id=customer_id)
+            #     except:
+            #         balance = None
+            #     # print("BALANCE :: ",balance)
+            #     if balance is not None:
+            #         balance.amount = balance.amount - transaction_object.total_amount
+            #         balance.save()
+
+            # if staff_id is not None:
+            #     try:
+            #         balance = Balance.objects.get(staff_id=staff_id)
+            #     except:
+            #         balance = None
+            #     # print("BALANCE :: ",balance)
+            #     if balance is not None:
+            #         balance.amount = balance.amount - transaction_object.total_amount
+            #         balance.save()
 
         if transaction_object.type == 'sale_order':
             # print("SALE ORDER TYPE")
@@ -3047,38 +3126,50 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 from_transaction_id = link.from_transaction_id
                 # print("FROM TRANACTION ID :: ", from_transaction_id)
                 # print("LINKED AMOUNT ::", link.linked_amount)
+                new_amount = link.linked_amount
                 from_transaction = Transaction.objects.get(pk=from_transaction_id.id)
                 # print("TO TRANACTION :: ", from_transaction)
                 from_transaction.used_amount = from_transaction.used_amount - link.linked_amount
                 from_transaction.save()
 
+                print("New Amount ::: ", new_amount)
+                balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
+
             from_linktrasactions = LinkTransaction.objects.filter(from_transaction_id=pk)
             print("ALL LINKED TRANSACTION :: ", linktrasactions)
             for from_link in from_linktrasactions:
                 to_transaction_id = to_link.to_transaction_id
+                new_amount = from_link.linked_amount
                 to_trasaction = Transaction.objects.get(pk=to_transaction_id.id)
                 to_trasaction.recived_or_paid_amount = to_trasaction.recived_or_paid_amount - from_link.linked_amount
                 to_trasaction.save()
-            
-            if customer_id is not None:
-                try:
-                    balance = Balance.objects.get(customer_id=customer_id)
-                except:
-                    balance = None
-                # print("BALANCE :: ",balance)
-                if balance is not None:
-                    balance.amount = (balance.amount + transaction_object.advance_amount) - transaction_object.total_amount
-                    balance.save() 
 
-            if staff_id is not None:
-                    try:
-                        balance = Balance.objects.get(staff_id=staff_id)
-                    except:
-                        balance = None
-                    # print("BALANCE :: ",balance)
-                    if balance is not None:
-                        balance.amount = (balance.amount + transaction_object.advance_amount) - transaction_object.total_amount
-                        balance.save()
+                print("New Amount ::: ", new_amount)
+                balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
+
+            new_amount = transaction_object.total_amount - transaction_object.recived_or_paid_amount
+            print("New Amount ::: ", new_amount)
+            balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
+
+            # if customer_id is not None:
+            #     try:
+            #         balance = Balance.objects.get(customer_id=customer_id)
+            #     except:
+            #         balance = None
+            #     # print("BALANCE :: ",balance)
+            #     if balance is not None:
+            #         balance.amount = (balance.amount + transaction_object.advance_amount) - transaction_object.total_amount
+            #         balance.save() 
+
+            # if staff_id is not None:
+            #         try:
+            #             balance = Balance.objects.get(staff_id=staff_id)
+            #         except:
+            #             balance = None
+            #         # print("BALANCE :: ",balance)
+            #         if balance is not None:
+            #             balance.amount = (balance.amount + transaction_object.advance_amount) - transaction_object.total_amount
+            #             balance.save()
 
         if transaction_object.type == 'event_sale':
             # print("EVENT PURCHASE TYPE")
@@ -3088,29 +3179,41 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 # print("SINGLE TRANACTION :: ", link)
                 from_transaction_id = link.from_transaction_id
                 # print("FROM TRANACTION ID :: ", from_transaction_id)
+                new_amount = link.linked_amount
                 # print("LINKED AMOUNT ::", link.linked_amount)
                 from_transaction = Transaction.objects.get(pk=from_transaction_id.id)
                 # print("TO TRANACTION :: ", from_transaction)
                 from_transaction.used_amount = from_transaction.used_amount - link.linked_amount
                 from_transaction.save()
 
+                print("New Amount ::: ", new_amount)
+                balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
+
             from_linktrasactions = LinkTransaction.objects.filter(from_transaction_id=pk)
             print("ALL LINKED TRANSACTION :: ", linktrasactions)
             for from_link in from_linktrasactions:
                 to_transaction_id = to_link.to_transaction_id
+                new_amount = from_link.linked_amount
                 to_trasaction = Transaction.objects.get(pk=to_transaction_id.id)
                 to_trasaction.recived_or_paid_amount = to_trasaction.recived_or_paid_amount - from_link.linked_amount
                 to_trasaction.save()
+
+                print("New Amount ::: ", new_amount)
+                balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
                 
-            if customer_id is not None:
-                try:
-                    balance = Balance.objects.get(customer_id=customer_id)
-                except:
-                    balance = None
-                # print("BALANCE :: ",balance)
-                if balance is not None:
-                    balance.amount = (balance.amount + transaction_object.advance_amount) - transaction_object.total_amount
-                    balance.save()
+            new_amount = transaction_object.total_amount - transaction_object.recived_or_paid_amount
+            print("New Amount ::: ", new_amount)
+            balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
+
+            # if customer_id is not None:
+            #     try:
+            #         balance = Balance.objects.get(customer_id=customer_id)
+            #     except:
+            #         balance = None
+            #     # print("BALANCE :: ",balance)
+            #     if balance is not None:
+            #         balance.amount = (balance.amount + transaction_object.advance_amount) - transaction_object.total_amount
+            #         balance.save()
 
             # if staff_id is not None:
             #     try:
@@ -3168,39 +3271,51 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 # print("SINGLE TRANACTION :: ", link)
                 from_transaction_id = link.from_transaction_id
                 # print("FROM TRANACTION ID :: ", from_transaction_id)
+                new_amount = link.linked_amount
                 # print("LINKED AMOUNT ::", link.linked_amount)
                 from_transaction = Transaction.objects.get(pk=from_transaction_id.id)
                 # print("TO TRANACTION :: ", from_transaction)
                 from_transaction.used_amount = from_transaction.used_amount - link.linked_amount
                 from_transaction.save()
+
+                print("New Amount ::: ", new_amount)
+                balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
             
             from_linktrasactions = LinkTransaction.objects.filter(from_transaction_id=pk)
             print("ALL LINKED TRANSACTION :: ", linktrasactions)
             for from_link in from_linktrasactions:
                 to_transaction_id = to_link.to_transaction_id
+                new_amount = from_link.linked_amount
                 to_trasaction = Transaction.objects.get(pk=to_transaction_id.id)
                 to_trasaction.recived_or_paid_amount = to_trasaction.recived_or_paid_amount - from_link.linked_amount
                 to_trasaction.save()
-            
-            if customer_id is not None:
-                try:
-                    balance = Balance.objects.get(customer_id=customer_id)
-                except:
-                    balance = None
-                # print("BALANCE :: ",balance)
-                if balance is not None:
-                    balance.amount = (balance.amount - transaction_object.advance_amount) + transaction_object.total_amount
-                    balance.save()
 
-            if staff_id is not None:
-                    try:
-                        balance = Balance.objects.get(staff_id=staff_id)
-                    except:
-                        balance = None
-                    # print("BALANCE :: ",balance)
-                    if balance is not None:
-                        balance.amount = (balance.amount - transaction_object.advance_amount) + transaction_object.total_amount
-                        balance.save()
+                print("New Amount ::: ", new_amount)
+                balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
+            
+            new_amount = transaction_object.total_amount - transaction_object.recived_or_paid_amount
+            print("New Amount ::: ", new_amount)
+            balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
+
+            # if customer_id is not None:
+            #     try:
+            #         balance = Balance.objects.get(customer_id=customer_id)
+            #     except:
+            #         balance = None
+            #     # print("BALANCE :: ",balance)
+            #     if balance is not None:
+            #         balance.amount = (balance.amount - transaction_object.advance_amount) + transaction_object.total_amount
+            #         balance.save()
+
+            # if staff_id is not None:
+            #         try:
+            #             balance = Balance.objects.get(staff_id=staff_id)
+            #         except:
+            #             balance = None
+            #         # print("BALANCE :: ",balance)
+            #         if balance is not None:
+            #             balance.amount = (balance.amount - transaction_object.advance_amount) + transaction_object.total_amount
+            #             balance.save()
 
         if transaction_object.type == 'event_purchase':
             # print("EVENT PURCHASE TYPE")
@@ -3210,39 +3325,51 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 # print("SINGLE TRANACTION :: ", link)
                 from_transaction_id = link.from_transaction_id
                 # print("FROM TRANACTION ID :: ", from_transaction_id)
+                new_amount = link.linked_amount
                 # print("LINKED AMOUNT ::", link.linked_amount)
                 from_transaction = Transaction.objects.get(pk=from_transaction_id.id)
                 # print("TO TRANACTION :: ", from_transaction)
                 from_transaction.used_amount = from_transaction.used_amount - link.linked_amount
                 from_transaction.save()
 
+                print("New Amount ::: ", new_amount)
+                balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
+
             from_linktrasactions = LinkTransaction.objects.filter(from_transaction_id=pk)
             print("ALL LINKED TRANSACTION :: ", linktrasactions)
             for from_link in from_linktrasactions:
                 to_transaction_id = to_link.to_transaction_id
+                new_amount = from_link.linked_amount
                 to_trasaction = Transaction.objects.get(pk=to_transaction_id.id)
                 to_trasaction.recived_or_paid_amount = to_trasaction.recived_or_paid_amount - from_link.linked_amount
                 to_trasaction.save()
 
-            if customer_id is not None:
-                try:
-                    balance = Balance.objects.get(customer_id=customer_id)
-                except:
-                    balance = None
-                # print("BALANCE :: ",balance)
-                if balance is not None:
-                    balance.amount = (balance.amount - transaction_object.advance_amount) + transaction_object.total_amount
-                    balance.save()
+                print("New Amount ::: ", new_amount)
+                balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
 
-            if staff_id is not None:
-                    try:
-                        balance = Balance.objects.get(staff_id=staff_id)
-                    except:
-                        balance = None
-                    # print("BALANCE :: ",balance)
-                    if balance is not None:
-                        balance.amount = (balance.amount - transaction_object.advance_amount) + transaction_object.total_amount
-                        balance.save()
+            new_amount = transaction_object.total_amount - transaction_object.recived_or_paid_amount
+            print("New Amount ::: ", new_amount)
+            balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
+
+            # if customer_id is not None:
+            #     try:
+            #         balance = Balance.objects.get(customer_id=customer_id)
+            #     except:
+            #         balance = None
+            #     # print("BALANCE :: ",balance)
+            #     if balance is not None:
+            #         balance.amount = (balance.amount - transaction_object.advance_amount) + transaction_object.total_amount
+            #         balance.save()
+
+            # if staff_id is not None:
+            #         try:
+            #             balance = Balance.objects.get(staff_id=staff_id)
+            #         except:
+            #             balance = None
+            #         # print("BALANCE :: ",balance)
+            #         if balance is not None:
+            #             balance.amount = (balance.amount - transaction_object.advance_amount) + transaction_object.total_amount
+            #             balance.save()
 
         transaction_object.delete()
 
