@@ -3033,7 +3033,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 new_amount = to_link.linked_amount
                 from_trasaction = Transaction.objects.get(pk=from_transaction_id.id)
 
-                if from_transaction.type in ('payment_in', 'payment_out'):
+                if from_trasaction.type in ('payment_in', 'payment_out'):
                     from_trasaction.used_amount = from_trasaction.used_amount - to_link.linked_amount
                 else:
                     from_trasaction.recived_or_paid_amount = from_trasaction.recived_or_paid_amount - to_link.linked_amount
@@ -3075,7 +3075,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 new_amount = link.linked_amount          
                 to_transaction = Transaction.objects.get(pk=to_transaction_id.id)
 
-                if to_transaction in ('payment_in', 'payment_out'):
+                if to_transaction.type in ('payment_in', 'payment_out'):
                     to_transaction.used_amount = to_transaction.used_amount - link.linked_amount
                 else:
                     to_transaction.recived_or_paid_amount = to_transaction.recived_or_paid_amount - link.linked_amount
@@ -3091,7 +3091,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 new_amount = to_link.linked_amount
                 from_trasaction = Transaction.objects.get(pk=from_transaction_id.id)
 
-                if to_transaction in ('payment_in', 'payment_out'):
+                if from_trasaction.type in ('payment_in', 'payment_out'):
                     from_trasaction.used_amount = from_trasaction.used_amount - to_link.linked_amount
                 else:
                     from_trasaction.recived_or_paid_amount = from_trasaction.recived_or_paid_amount - to_link.linked_amount
@@ -3138,7 +3138,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 new_amount = link.linked_amount
                 from_transaction = Transaction.objects.get(pk=from_transaction_id.id)
 
-                if to_transaction in ('payment_in', 'payment_out'):
+                if from_transaction.type in ('payment_in', 'payment_out'):
                     from_transaction.used_amount = from_transaction.used_amount - link.linked_amount
                 else:
                     from_transaction.recived_or_paid_amount = from_transaction.recived_or_paid_amount - link.linked_amount
@@ -3155,7 +3155,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 new_amount = from_link.linked_amount
                 to_trasaction = Transaction.objects.get(pk=to_transaction_id.id)
 
-                if to_transaction in ('payment_in', 'payment_out'):
+                if to_trasaction.type in ('payment_in', 'payment_out'):
                     to_trasaction.used_amount = to_trasaction.used_amount - from_link.linked_amount
                 else:
                     to_trasaction.recived_or_paid_amount = to_trasaction.recived_or_paid_amount - from_link.linked_amount
@@ -3198,7 +3198,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 new_amount = link.linked_amount
                 from_transaction = Transaction.objects.get(pk=from_transaction_id.id)
 
-                if to_transaction in ('payment_in', 'payment_out'):
+                if from_transaction.type in ('payment_in', 'payment_out'):
                     from_transaction.used_amount = from_transaction.used_amount - link.linked_amount
                 else:
                     from_transaction.recived_or_paid_amount = from_transaction.recived_or_paid_amount - link.linked_amount
@@ -3215,7 +3215,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 new_amount = from_link.linked_amount
                 to_trasaction = Transaction.objects.get(pk=to_transaction_id.id)
 
-                if to_transaction in ('payment_in', 'payment_out'):
+                if to_trasaction.type in ('payment_in', 'payment_out'):
                     to_trasaction.used_amount = to_trasaction.used_amount - from_link.linked_amount
                 else:
                     to_trasaction.recived_or_paid_amount = to_trasaction.recived_or_paid_amount - from_link.linked_amount
@@ -3296,7 +3296,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 new_amount = link.linked_amount
                 from_transaction = Transaction.objects.get(pk=from_transaction_id.id)
 
-                if to_transaction in ('payment_in', 'payment_out'):
+                if from_transaction.type in ('payment_in', 'payment_out'):
                     from_transaction.used_amount = from_transaction.used_amount - link.linked_amount
                 else:
                     from_transaction.recived_or_paid_amount = from_transaction.recived_or_paid_amount - link.linked_amount
@@ -3313,7 +3313,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 new_amount = from_link.linked_amount
                 to_trasaction = Transaction.objects.get(pk=to_transaction_id.id)
 
-                if to_transaction in ('payment_in', 'payment_out'):
+                if to_trasaction.type in ('payment_in', 'payment_out'):
                     to_trasaction.used_amount = to_trasaction.used_amount - from_link.linked_amount
                 else:
                     to_trasaction.recived_or_paid_amount = to_trasaction.recived_or_paid_amount - from_link.linked_amount
@@ -3360,7 +3360,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 from_transaction = Transaction.objects.get(pk=from_transaction_id.id)
                 # print("TO TRANACTION :: ", from_transaction)
 
-                if to_transaction in ('payment_in', 'payment_out'):
+                if from_transaction.type in ('payment_in', 'payment_out'):
                     from_transaction.used_amount = from_transaction.used_amount - link.linked_amount
                 else:
                     from_transaction.recived_or_paid_amount = from_transaction.recived_or_paid_amount - link.linked_amount
@@ -3377,7 +3377,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 new_amount = from_link.linked_amount
                 to_trasaction = Transaction.objects.get(pk=to_transaction_id.id)
 
-                if to_transaction in ('payment_in', 'payment_out'):
+                if to_trasaction.type in ('payment_in', 'payment_out'):
                     to_trasaction.used_amount = to_trasaction.used_amount - from_link.linked_amount
                 else:
                     to_trasaction.recived_or_paid_amount = to_trasaction.recived_or_paid_amount - from_link.linked_amount
