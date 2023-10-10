@@ -95,7 +95,7 @@ class StudioDetails(models.Model):
 class Customer(models.Model):
     user_id = models.ForeignKey(User,null=True, blank=True, on_delete=models.CASCADE)
     full_name = models.CharField(max_length=100, null=True, blank=True)
-    mobile_no = models.CharField(max_length=15, unique=True)
+    mobile_no = models.CharField(max_length=15, null=False, blank=False)
     email = models.EmailField(max_length=100, null=True, blank=True)
     address = models.CharField(max_length=200, null=True, blank=True)
     social_media = models.CharField(max_length=2000, null=True, blank=True)
@@ -126,7 +126,7 @@ class Inventory(models.Model):
 class Staff(models.Model):
     user_id = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE)
     full_name = models.CharField(max_length=100, null=True, blank=True)
-    mobile_no = models.CharField(max_length=15,unique=True)
+    mobile_no = models.CharField(max_length=15, null=False, blank=False)
     email = models.EmailField(max_length=100, null=True, blank=True)
     address = models.CharField(max_length=200, null=True, blank=True)
     # studio_name = models.CharField(max_length=150, null=True, blank=True)
