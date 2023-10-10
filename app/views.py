@@ -3483,22 +3483,24 @@ def StaffStatus(request):
 def EventDetail(request):
     if request.method == 'POST':
         today = request.data.get('today', None)
-        # print("TODAY :: ", today)
+        print("TODAY :: ", today)
         user_id = request.data.get('user_id', None)
-        # print("user_id :: ", user_id)
+        print("user_id :: ", user_id)
 
         eventdays = EventDay.objects.filter(event_date=today)
-        # print("EVENT DAYS :: ", eventdays)
+        print("EVENT DAYS :: ", eventdays)
 
         data = []
 
         for eventday in eventdays:
             transaction = Transaction.objects.get(quotation_id=eventday.quotation_id)
-            # print("TRANSACTION TYPE :: ", transaction.type)
-            # print("TRANSACTION USER ID :: ",transaction.user_id.id)
+            print("TRANSACTION TYPE :: ", transaction.type)
+            print("TRANSACTION USER ID :: ",transaction.user_id.id)
             if transaction.type == 'event_sale' and transaction.user_id.id == user_id:
                 eventdetails = EventDetails.objects.filter(eventday_id=eventday.id)
+                print("Event Details :: ",eventdetails)
                 for eventdetail in eventdetails:
+                    print("Event Detail :: ",eventdetail)
                     event_detail_data = {
                         'eventdetail_id': eventdetail.event_id.id,
                         'event_name': eventdetail.event_id.event_name,
@@ -3508,13 +3510,14 @@ def EventDetail(request):
                     }
 
                     exposuredetails = ExposureDetails.objects.filter(eventdetails__id=eventdetail.id)
-                    for exposuredetail in exposuredetails:
+                    print("Exposure Details :: ", exposuredetails)
+                    if len(exposuredetails) == 0:
                         exposuredetail_data = {
-                            'staff_name': exposuredetail.staff_id.full_name,
-                            'staff_mobile_no': exposuredetail.staff_id.mobile_no,
-                            'event_detail': [event_detail_data],  # Add the event_detail_data here
-                        }
-
+                                'staff_name': '',
+                                'staff_mobile_no': '',
+                                'event_detail': [event_detail_data],  # Add the event_detail_data here
+                            }
+                        
                         customer_name = eventday.quotation_id.customer_id.full_name
                         customer_mobile_no = eventday.quotation_id.customer_id.mobile_no
 
@@ -3534,6 +3537,34 @@ def EventDetail(request):
                                 'customer_mobile_no': customer_mobile_no,
                                 'exposuredetails_data': [exposuredetail_data],
                             })
+                    else:
+                        for exposuredetail in exposuredetails:
+                            print("Exposure Detail :: ", exposuredetail)
+                            exposuredetail_data = {
+                                'staff_name': exposuredetail.staff_id.full_name,
+                                'staff_mobile_no': exposuredetail.staff_id.mobile_no,
+                                'event_detail': [event_detail_data],  # Add the event_detail_data here
+                            }
+
+                            customer_name = eventday.quotation_id.customer_id.full_name
+                            customer_mobile_no = eventday.quotation_id.customer_id.mobile_no
+
+                            # Find the customer data in the existing list or create a new entry
+                            customer_entry = next((entry for entry in data if entry['customer_name'] == customer_name and entry['customer_mobile_no'] == customer_mobile_no), None)
+
+                            if customer_entry:
+                                staff_entry = next((staff for staff in customer_entry['exposuredetails_data'] if staff['staff_name'] == exposuredetail_data['staff_name'] and staff['staff_mobile_no'] == exposuredetail_data['staff_mobile_no']), None)
+
+                                if staff_entry:
+                                    staff_entry['event_detail'].append(event_detail_data)
+                                else:
+                                    customer_entry['exposuredetails_data'].append(exposuredetail_data)
+                            else:
+                                data.append({
+                                    'customer_name': customer_name,
+                                    'customer_mobile_no': customer_mobile_no,
+                                    'exposuredetails_data': [exposuredetail_data],
+                                })
 
         return Response(data)
 
