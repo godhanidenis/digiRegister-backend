@@ -429,6 +429,16 @@ def link_transaction(transaction_id, linktransaction_data, transaction_type=None
             # print("Link Transaction :: ", d_linktransaction.to_transaction_id.id)
             # print("LINK AMOUNT ::: ", d_linktransaction.linked_amount)
 
+            from_transaction = Transaction.objects.get(id = d_linktransaction.from_transaction_id.id)
+            
+            if from_transaction.type in ('event_sale', 'sale', 'event_purchase', 'purchase'):
+                from_transaction.recived_or_paid_amount = from_transaction.recived_or_paid_amount - d_linktransaction.linked_amount
+                from_transaction.save()
+            else:
+                from_transaction.used_amount = from_transaction.used_amount - d_linktransaction.linked_amount
+                from_transaction.save()
+
+
             transaction = Transaction.objects.get(id = d_linktransaction.to_transaction_id.id)
             # print("Transaction :: ", transaction)
             # print("Transaction Type :: ", transaction.type)
