@@ -498,7 +498,7 @@ def link_transaction(transaction_id, linktransaction_data, transaction_type=None
                         from_transaction.save()
 
                         from_new_amount = from_transaction.total_amount - from_transaction.used_amount
-                        print("to_new_amount ::: ", to_new_amount)
+                        print("from_new_amount ::: ", from_new_amount)
                         balance_amount(from_customer_id, from_staff_id, from_old_amount, from_new_amount, from_transaction.type)
 
             d_linktransaction.delete()
