@@ -612,7 +612,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
 
         ### LINK TRNASACTION 
         if transaction['is_converted'] == 'true' and linktransaction_data is not None:
-            link_transaction(transaction_instance.id, linktransaction_data)
+            link_transaction(transaction_instance.id, linktransaction_data, transaction_instance.type)
 
         ### ADD BILL FOR EXOISURE ###
         if transaction['is_converted'] == 'true':
@@ -1231,7 +1231,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                 linktransaction_data = request.data.get('linktransaction_data', None)
                 # print("link_transaction_data :: ", linktransaction_data)
                 if linktransaction_data is not None:
-                    link_transaction(copy_transaction_instance.id, linktransaction_data)
+                    link_transaction(copy_transaction_instance.id, linktransaction_data, copy_transaction_instance.type)
 
                 ### ADD BILL FOR EXOISURE ###
                 # print("copy_final_exposuredetails_data :: ",copy_final_exposuredetails_data)
@@ -1693,7 +1693,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
 
             ### LINK TRNASACTION 
             if linktransaction_data is not None:
-                link_transaction(transaction_data['id'], linktransaction_data)
+                link_transaction(transaction_data['id'], linktransaction_data, update_transaction.type)
 
             # print("final_exposuredetails_data :: ",final_exposuredetails_data)
             finall_instance = []
@@ -1883,7 +1883,7 @@ class InventoryDescriptionViewSet(viewsets.ModelViewSet):
         balance_amount(customer_id, staff_id, 0, new_amount, transaction_instance.type)
         
         if linktransaction_data is not None:
-            link_transaction(transaction_instance.id, linktransaction_data)
+            link_transaction(transaction_instance.id, linktransaction_data, transaction_instance.type)
 
         # if transaction_instance.type == 'sale':
         #     ## ADD TOTAL AMOUNT IN CUSTOMER'S BALANCE
@@ -2223,7 +2223,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
         #                 return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         if linktransaction_data is not None:
-            link_transaction(transaction_instance.id, linktransaction_data)
+            link_transaction(transaction_instance.id, linktransaction_data, transaction_instance.type)
 
         return Response(data)
 
@@ -2784,7 +2784,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
             # print("PKKKK :: ",pk)
             if linktransaction_data is not None:
-                link_transaction(pk, linktransaction_data)
+                link_transaction(pk, linktransaction_data, transaction_instance.type)
 
             data['tranasaction_data'] = TransactionSerializer(transaction_instance).data
             data['inventorydescription_data'] = InventoryDescriptionSerializer(all_inventory, many=True).data
