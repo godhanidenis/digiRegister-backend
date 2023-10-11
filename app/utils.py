@@ -7,11 +7,11 @@ from datetime import datetime
 import pytz
 
 def balance_amount(customer_id, staff_id, old_amount, new_amount, type):
-    print("customer_id :: ",customer_id)
-    print("staff_id :: ",staff_id)
-    print("old_amount :: ",old_amount)
-    print("new_amount :: ",new_amount)
-    print("type :: ",type)
+    # print("customer_id :: ",customer_id)
+    # print("staff_id :: ",staff_id)
+    # print("old_amount :: ",old_amount)
+    # print("new_amount :: ",new_amount)
+    # print("type :: ",type)
 
     if customer_id is not None:
         try:
@@ -83,11 +83,11 @@ def balance_amount(customer_id, staff_id, old_amount, new_amount, type):
 
 
 def balance_delete_amount(customer_id, staff_id, old_amount, new_amount, type):
-    print("customer_id :: ",customer_id)
-    print("staff_id :: ",staff_id)
-    print("old_amount :: ",old_amount)
-    print("new_amount :: ",new_amount)
-    print("type :: ",type)
+    # print("customer_id :: ",customer_id)
+    # print("staff_id :: ",staff_id)
+    # print("old_amount :: ",old_amount)
+    # print("new_amount :: ",new_amount)
+    # print("type :: ",type)
 
     if customer_id is not None:
         try:
@@ -430,6 +430,13 @@ def link_transaction(transaction_id, linktransaction_data, transaction_type=None
             # print("LINK AMOUNT ::: ", d_linktransaction.linked_amount)
 
             from_transaction = Transaction.objects.get(id = d_linktransaction.from_transaction_id.id)
+
+            from_customer_id = from_transaction.customer_id.id if from_transaction.customer_id is not None else None
+            # print("to_customer_id :::",to_customer_id)
+            from_staff_id = from_transaction.staff_id.id if from_transaction.staff_id is not None else None
+            # print("to_staff_id :::",to_staff_id)
+
+            from_old_amount = from_transaction.total_amount - from_transaction.used_amount
             
             if from_transaction.type in ('event_sale', 'sale', 'event_purchase', 'purchase'):
                 from_transaction.recived_or_paid_amount = from_transaction.recived_or_paid_amount - d_linktransaction.linked_amount
@@ -443,6 +450,7 @@ def link_transaction(transaction_id, linktransaction_data, transaction_type=None
             # print("Transaction :: ", transaction)
             # print("Transaction Type :: ", transaction.type)
 
+            
             to_customer_id = transaction.customer_id.id if transaction.customer_id is not None else None
             # print("to_customer_id :::",to_customer_id)
             to_staff_id = transaction.staff_id.id if transaction.staff_id is not None else None
@@ -454,11 +462,20 @@ def link_transaction(transaction_id, linktransaction_data, transaction_type=None
                 to_old_amount = transaction.total_amount - transaction.recived_or_paid_amount
 
             if transaction.type in ('event_sale', 'sale', 'event_purchase', 'purchase'):
-                # print("RESCIVED AMOUNT :: ", transaction.recived_or_paid_amount, "TYPE :: ", type(transaction.recived_or_paid_amount))
-                # print("LINKED AMOUNT :: ", d_linktransaction.linked_amount, "TYPE :: ", type(d_linktransaction.linked_amount))
-                transaction.recived_or_paid_amount = transaction.recived_or_paid_amount - d_linktransaction.linked_amount
-                # print("transaction.recived_or_paid_amount :::",transaction.recived_or_paid_amount)
-                transaction.save()
+                if from_transaction.type in ('payment_in', 'payment_out'):
+                    from_transaction.used_amount = from_transaction.used_amount - d_linktransaction.linked_amount
+                    from_transaction.save()
+
+                    from_new_amount = from_transaction.total_amount - from_transaction.used_amount
+                    print("from_new_amount ::: ", from_new_amount)
+                    balance_amount(from_customer_id, from_staff_id, from_old_amount, from_new_amount, from_transaction.type)
+                else:
+
+                    # print("RESCIVED AMOUNT :: ", transaction.recived_or_paid_amount, "TYPE :: ", type(transaction.recived_or_paid_amount))
+                    # print("LINKED AMOUNT :: ", d_linktransaction.linked_amount, "TYPE :: ", type(d_linktransaction.linked_amount))
+                    transaction.recived_or_paid_amount = transaction.recived_or_paid_amount - d_linktransaction.linked_amount
+                    print("transaction.recived_or_paid_amount :::",transaction.recived_or_paid_amount)
+                    transaction.save()
 
                 to_new_amount = transaction.total_amount - transaction.recived_or_paid_amount
                 print("to_new_amount ::: ", to_new_amount)
@@ -487,15 +504,6 @@ def link_transaction(transaction_id, linktransaction_data, transaction_type=None
                         to_new_amount = transaction.total_amount - transaction.used_amount
                         print("to_new_amount ::: ", to_new_amount)
                         balance_amount(to_customer_id, to_staff_id, to_old_amount, to_new_amount, transaction.type)
-                
-                from_transaction = Transaction.objects.get(id = d_linktransaction.from_transaction_id.id)
-
-                from_customer_id = from_transaction.customer_id.id if from_transaction.customer_id is not None else None
-                # print("to_customer_id :::",to_customer_id)
-                from_staff_id = from_transaction.staff_id.id if from_transaction.staff_id is not None else None
-                # print("to_staff_id :::",to_staff_id)
-
-                from_old_amount = from_transaction.total_amount - from_transaction.used_amount
 
                 if transaction_type is not None:
                     if from_transaction.type != transaction_type:
