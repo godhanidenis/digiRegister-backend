@@ -6,6 +6,122 @@ from .serializers import *
 from datetime import datetime
 import pytz
 
+def balance_amount(customer_id, staff_id, old_amount, new_amount, type):
+    # print("customer_id :: ",customer_id)
+    # print("staff_id :: ",staff_id)
+    # print("old_amount :: ",old_amount)
+    # print("new_amount :: ",new_amount)
+    # print("type :: ",type)
+
+    if customer_id is not None:
+        try:
+            balance = Balance.objects.get(customer_id=customer_id)
+        except:
+            balance = None
+
+        if type in ('sale', 'event_sale', 'payment_out'):
+            if balance is None:
+                balance_data = {'customer_id': customer_id,
+                                'amount': new_amount}
+                # print("Balance DATA ::: ", balance_data)
+                balanceSerializer = BalanceSerializer(data = balance_data)
+                if balanceSerializer.is_valid():
+                    balanceSerializer.save()
+                else:
+                    return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                balance.amount = balance.amount + (new_amount - old_amount)
+                balance.save()
+
+        if type in ('purchase', 'event_purchase', 'payment_in'):
+            if balance is None:
+                balance_data = {'customer_id': customer_id,
+                                'amount': - new_amount}
+                # print("Balance DATA ::: ", balance_data)
+                balanceSerializer = BalanceSerializer(data = balance_data)
+                if balanceSerializer.is_valid():
+                    balanceSerializer.save()
+                else:
+                    return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                balance.amount = balance.amount - (new_amount - old_amount)
+                balance.save()
+
+    if staff_id is not None:
+        try:
+            balance = Balance.objects.get(staff_id=staff_id)
+        except:
+            balance = None
+        if type in ('sale', 'event_sale', 'payment_out'):
+            if balance is None:
+                balance_data = {'staff_id': staff_id,
+                                'amount': new_amount}
+                # print("Balance DATA ::: ", balance_data)
+                balanceSerializer = BalanceSerializer(data = balance_data)
+                if balanceSerializer.is_valid():
+                    balanceSerializer.save()
+                else:
+                    return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                balance.amount = balance.amount + (new_amount - old_amount)
+                balance.save()
+
+        if type in ('purchase', 'event_purchase', 'payment_in'):
+            if balance is None:
+                balance_data = {'staff_id': staff_id,
+                                'amount': - new_amount}
+                # print("Balance DATA ::: ", balance_data)
+                balanceSerializer = BalanceSerializer(data = balance_data)
+                if balanceSerializer.is_valid():
+                    balanceSerializer.save()
+                else:
+                    return Response(balanceSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                balance.amount = balance.amount - (new_amount - old_amount)
+                balance.save()
+
+
+
+def balance_delete_amount(customer_id, staff_id, old_amount, new_amount, type):
+    # print("customer_id :: ",customer_id)
+    # print("staff_id :: ",staff_id)
+    # print("old_amount :: ",old_amount)
+    # print("new_amount :: ",new_amount)
+    # print("type :: ",type)
+
+    if customer_id is not None:
+        try:
+            balance = Balance.objects.get(customer_id=customer_id)
+        except:
+            balance = None
+
+        if type in ('sale', 'event_sale', 'payment_out'):
+            if balance is not None:
+                balance.amount = balance.amount - (new_amount - old_amount)
+                balance.save()
+
+        if type in ('purchase', 'event_purchase', 'payment_in'):
+            if balance is not None:
+                balance.amount = balance.amount + (new_amount - old_amount)
+                balance.save()
+
+    if staff_id is not None:
+        try:
+            balance = Balance.objects.get(staff_id=staff_id)
+        except:
+            balance = None
+        if type in ('sale', 'event_sale', 'payment_out'):
+            if balance is not None:
+                balance.amount = balance.amount - (new_amount - old_amount)
+                balance.save()
+
+        if type in ('purchase', 'event_purchase', 'payment_in'):
+            if balance is not None:
+                balance.amount = balance.amount + (new_amount - old_amount)
+                balance.save()
+
+
+
 def quotation_get(quotation_id):
     quotation_id = quotation_id
     # print("Quotation ID :: ",quotation_id)
@@ -99,19 +215,28 @@ def link_transaction(transaction_id, linktransaction_data, transaction_type=None
                 return Response(linktransactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
         for linktransaction in all_linktransaction:
-            # print("Single transaction :: ", linktransaction)
-            # print("FROM TRANSACTION ID :: ", linktransaction.from_transaction_id.id)
-            # print("TO TRANSACTION ID :: ",linktransaction.to_transaction_id.id)
-            # print("AMOUNT :: ", linktransaction.linked_amount, "TYPE :: ", type(linktransaction.linked_amount))
+            print("Single transaction :: ", linktransaction)
+            print("FROM TRANSACTION ID :: ", linktransaction.from_transaction_id.id)
+            print("TO TRANSACTION ID :: ",linktransaction.to_transaction_id.id)
+            print("AMOUNT :: ", linktransaction.linked_amount, "TYPE :: ", type(linktransaction.linked_amount))
 
             from_transaction = Transaction.objects.get(id=linktransaction.from_transaction_id.id)
-            # print("From Transaction :: ", from_transaction)
-            # print("From Transaction Type :: ", from_transaction.type)
-
-            transaction = Transaction.objects.get(id = linktransaction.to_transaction_id.id)
-            # print("Transaction :: ", transaction)
-            # print("Transaction Type :: ", transaction.type)
+            print("From Transaction :: ", from_transaction)
+            print("From Transaction Type :: ", from_transaction.type)
             
+            transaction = Transaction.objects.get(id = linktransaction.to_transaction_id.id)
+            print("Transaction :: ", transaction)
+            print("Transaction Type :: ", transaction.type)
+
+            to_customer_id = transaction.customer_id.id if transaction.customer_id is not None else None
+            # print("to_customer_id :::",to_customer_id)
+            to_staff_id = transaction.staff_id.id if transaction.staff_id is not None else None
+            # print("to_staff_id :::",to_staff_id)
+
+            if transaction.type in ('payment_in', 'payment_out'):
+                to_old_amount = transaction.total_amount - transaction.used_amount
+            else:
+                to_old_amount = transaction.total_amount - transaction.recived_or_paid_amount
 
             if from_transaction.type in ('payment_in' , 'event_purchase' , 'purchase'):
                 
@@ -122,12 +247,20 @@ def link_transaction(transaction_id, linktransaction_data, transaction_type=None
                     # print("transaction.recived_or_paid_amount ::: ", transaction.recived_or_paid_amount)
                     transaction.save()
 
+                    to_new_amount = transaction.total_amount - transaction.recived_or_paid_amount
+                    print("to_new_amount ::: ", to_new_amount)
+                    balance_amount(to_customer_id, to_staff_id, to_old_amount, to_new_amount, transaction.type)
+
                 elif transaction.type == 'payment_out':
                     # print("RESCIVED AMOUNT :: ", transaction.used_amount, "TYPE :: ", type(transaction.used_amount))
                     # print("AMOUNT :: ", linktransaction.linked_amount, "TYPE :: ", type(linktransaction.linked_amount))
                     transaction.used_amount = transaction.used_amount + linktransaction.linked_amount
                     # print("transaction.used_amount ::: ",transaction.used_amount)
                     transaction.save()
+
+                    to_new_amount = transaction.total_amount - transaction.used_amount
+                    print("to_new_amount ::: ", to_new_amount)
+                    balance_amount(to_customer_id, to_staff_id, to_old_amount, to_new_amount, transaction.type)
             
             elif from_transaction.type in ('payment_out', 'event_sale', 'sale'):
 
@@ -138,6 +271,10 @@ def link_transaction(transaction_id, linktransaction_data, transaction_type=None
                     # print("transaction.recived_or_paid_amount ::: ", transaction.recived_or_paid_amount)                    
                     transaction.save()
 
+                    to_new_amount = transaction.total_amount - transaction.recived_or_paid_amount
+                    print("to_new_amount ::: ", to_new_amount)
+                    balance_amount(to_customer_id, to_staff_id, to_old_amount, to_new_amount, transaction.type)
+
                 elif transaction.type == 'payment_in':
                     # print("RESCIVED AMOUNT :: ", transaction.used_amount, "TYPE :: ", type(transaction.used_amount))
                     # print("AMOUNT :: ", linktransaction.linked_amount, "TYPE :: ", type(linktransaction.linked_amount))
@@ -145,17 +282,153 @@ def link_transaction(transaction_id, linktransaction_data, transaction_type=None
                     # print("transaction.used_amount ::: ",transaction.used_amount)
                     transaction.save()
 
+                    to_new_amount = transaction.total_amount - transaction.used_amount
+                    print("to_new_amount ::: ", to_new_amount)
+                    balance_amount(to_customer_id, to_staff_id, to_old_amount, to_new_amount, transaction.type)
+
     if update_linktransactions is not None:
         all_linktransaction = []
         # print("*** --- UPDATE LINK TRANSACTION --- ***")
-        for update_single in update_linktransactions:
-            # print("update_single :: ", update_single)
-            link = LinkTransaction.objects.get(pk=update_single['id'])
-            # print("LINK TRANSACTION :: ", link)
-            old_amount = link.linked_amount
-            # print("OLD AMOUNT :: ", old_amount)
+        # for update_single in update_linktransactions:
+        #     # print("update_single :: ", update_single)
+        #     link = LinkTransaction.objects.get(pk=update_single['id'])
+        #     # print("LINK TRANSACTION :: ", link)
+        #     old_amount = link.linked_amount
+        #     # print("OLD AMOUNT :: ", old_amount)
 
-            linktransactionSerializer = LinkTransactionSerializer(link, data=update_single, partial=True)
+        #     linktransactionSerializer = LinkTransactionSerializer(link, data=update_single, partial=True)
+        #     if linktransactionSerializer.is_valid():
+        #         linktransaction_instance = linktransactionSerializer.save()
+        #         # print("linktransaction_instance ::: ",linktransaction_instance)
+        #         all_linktransaction.append(linktransaction_instance)
+        #     else:
+        #         return Response(linktransactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        #     new_amount = linktransaction_instance.linked_amount
+        #     # print("NEW AMOUNT :: ",new_amount)
+
+        #     from_transaction = Transaction.objects.get(id = linktransaction_instance.from_transaction_id.id)
+        #     # print("From Transaction :: ", from_transaction)
+        #     # print("From Transaction Type :: ", from_transaction.type)
+
+        #     transaction = Transaction.objects.get(id = linktransaction_instance.to_transaction_id.id)
+        #     # print("Transaction :: ", transaction)
+        #     # print("Transaction Type :: ", transaction.type)
+
+        #     to_customer_id = transaction.customer_id.id if transaction.customer_id is not None else None
+        #     print("to_customer_id :::",to_customer_id)
+        #     to_staff_id = transaction.staff_id.id if transaction.staff_id is not None else None
+        #     print("to_staff_id :::",to_staff_id)
+
+        #     if transaction.type in ('payment_in', 'payment_out'):
+        #         to_old_amount = transaction.total_amount - transaction.used_amount
+        #     else:
+        #         to_old_amount = transaction.total_amount - transaction.recived_or_paid_amount
+            
+
+        #     if from_transaction.type in ('payment_in', 'event_purchase', 'purchase'):
+
+        #         if transaction.type in ('event_sale', 'sale'):
+
+        #             # print("RESCIVED AMOUNT :: ", transaction.recived_or_paid_amount, "TYPE :: ", type(transaction.recived_or_paid_amount))
+        #             if (old_amount - new_amount) > 0:
+        #                 differnece =  old_amount - new_amount
+        #                 # print("DIFFERNECE :: ", differnece)
+        #                 updated_amount = transaction.recived_or_paid_amount - differnece
+        #                 # print("UPDATED AMOUNT :: ", updated_amount)
+        #                 transaction.recived_or_paid_amount = transaction.recived_or_paid_amount - differnece
+        #                 transaction.save()
+                        
+        #             if (new_amount - old_amount) > 0:
+        #                 differnece =  new_amount - old_amount
+        #                 # print("DIFFERNECE :: ", differnece)
+        #                 updated_amount = transaction.recived_or_paid_amount + differnece
+        #                 # print("UPDATED AMOUNTTTTTT :: ", updated_amount)
+        #                 transaction.recived_or_paid_amount = transaction.recived_or_paid_amount + differnece
+        #                 transaction.save()
+
+        #             to_new_amount = transaction.total_amount - transaction.recived_or_paid_amount
+        #             print("to_new_amount ::: ", to_new_amount)
+        #             balance_amount(to_customer_id, to_staff_id, to_old_amount, to_new_amount, transaction.type)
+
+        #         elif transaction.type == 'payment_out':
+                    
+        #             # print("RESCIVED AMOUNT :: ", transaction.used_amount, "TYPE :: ", type(transaction.used_amount))
+        #             if (old_amount - new_amount) > 0:
+        #                 differnece =  old_amount - new_amount
+        #                 # print("DIFFERNECE :: ", differnece)
+        #                 updated_amount = transaction.used_amount - differnece
+        #                 # print("UPDATED AMOUNT :: ", updated_amount)
+        #                 transaction.used_amount = transaction.used_amount - differnece
+        #                 transaction.save()
+                        
+        #             if (new_amount - old_amount) > 0:
+        #                 differnece =  new_amount - old_amount
+        #                 # print("DIFFERNECE :: ", differnece)
+        #                 updated_amount = transaction.used_amount + differnece
+        #                 # print("UPDATED AMOUNTTTTTT :: ", updated_amount)
+        #                 transaction.used_amount = transaction.used_amount + differnece
+        #                 transaction.save()
+
+        #             to_new_amount = transaction.total_amount - transaction.used_amount
+        #             print("to_new_amount ::: ", to_new_amount)
+        #             balance_amount(to_customer_id, to_staff_id, to_old_amount, to_new_amount, transaction.type)
+
+        #     elif from_transaction.type in ('payment_out', 'event_sale', 'sale'):
+
+        #         if transaction.type in ('event_purchase', 'purchase'):
+        #             # print("RESCIVED AMOUNT :: ", transaction.recived_or_paid_amount, "TYPE :: ", type(transaction.recived_or_paid_amount))
+        #             if (old_amount - new_amount) > 0:
+        #                 differnece =  old_amount - new_amount
+        #                 # print("DIFFERNECE :: ", differnece)
+        #                 updated_amount = transaction.recived_or_paid_amount - differnece
+        #                 # print("UPDATED AMOUNT :: ", updated_amount)
+        #                 transaction.recived_or_paid_amount = transaction.recived_or_paid_amount - differnece
+        #                 transaction.save()
+                        
+        #             if (new_amount - old_amount) > 0:
+        #                 differnece =  new_amount - old_amount
+        #                 # print("DIFFERNECE :: ", differnece)
+        #                 updated_amount = transaction.recived_or_paid_amount + differnece
+        #                 # print("UPDATED AMOUNTTTTTT :: ", updated_amount)
+        #                 transaction.recived_or_paid_amount = transaction.recived_or_paid_amount + differnece
+        #                 transaction.save()
+
+        #             to_new_amount = transaction.total_amount - transaction.recived_or_paid_amount
+        #             print("to_new_amount ::: ", to_new_amount)
+        #             balance_amount(to_customer_id, to_staff_id, to_old_amount, to_new_amount, transaction.type)
+
+        #         elif transaction.type == 'payment_in':
+        #             # print("RESCIVED AMOUNT :: ", transaction.used_amount, "TYPE :: ", type(transaction.used_amount))
+        #             if (old_amount - new_amount) > 0:
+        #                 differnece =  old_amount - new_amount
+        #                 # print("DIFFERNECE :: ", differnece)
+        #                 updated_amount = transaction.used_amount - differnece
+        #                 # print("UPDATED AMOUNT :: ", updated_amount)
+        #                 transaction.used_amount = transaction.used_amount - differnece
+        #                 transaction.save()
+                        
+        #             if (new_amount - old_amount) > 0:
+        #                 differnece =  new_amount - old_amount
+        #                 # print("DIFFERNECE :: ", differnece)
+        #                 updated_amount = transaction.used_amount + differnece
+        #                 # print("UPDATED AMOUNTTTTTT :: ", updated_amount)
+        #                 transaction.used_amount = transaction.used_amount + differnece
+        #                 transaction.save()
+
+        #             to_new_amount = transaction.total_amount - transaction.used_amount
+        #             print("to_new_amount ::: ", to_new_amount)
+        #             balance_amount(to_customer_id, to_staff_id, to_old_amount, to_new_amount, transaction.type)
+
+
+        for single_update in update_linktransactions:
+            print("single_update : ", single_update)
+            u_linktransaction = LinkTransaction.objects.get(pk=single_update['id'])
+            print("u_linktransaction : ", u_linktransaction)
+            old_linkedamount = u_linktransaction.linked_amount
+            print("old_linkedamount : ", old_linkedamount)
+
+            linktransactionSerializer = LinkTransactionSerializer(u_linktransaction, data=single_update, partial=True)
             if linktransactionSerializer.is_valid():
                 linktransaction_instance = linktransactionSerializer.save()
                 # print("linktransaction_instance ::: ",linktransaction_instance)
@@ -163,142 +436,324 @@ def link_transaction(transaction_id, linktransaction_data, transaction_type=None
             else:
                 return Response(linktransactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            new_amount = linktransaction_instance.linked_amount
-            # print("NEW AMOUNT :: ",new_amount)
+            new_linkedamount = linktransaction_instance.linked_amount
+            print("new_linkedamount : ",new_linkedamount)
 
-            from_transaction = Transaction.objects.get(id = linktransaction_instance.from_transaction_id.id)
-            # print("From Transaction :: ", from_transaction)
-            # print("From Transaction Type :: ", from_transaction.type)
+            from_transaction = Transaction.objects.get(id=linktransaction_instance.from_transaction_id.id)
+            print("from_transaction :: ",from_transaction)
+            from_customer_id = from_transaction.customer_id.id if from_transaction.customer_id is not None else None
+            print("from_customer_id ::",from_customer_id)
+            from_staff_id = from_transaction.staff_id.id if from_transaction.staff_id is not None else None
+            print("from_staff_id ::",from_staff_id)
+            from_type = from_transaction.type
+            print("from_type :: ",from_type)
+            if from_transaction.type in ('payment_in', 'payment_out'):
+                from_old_amount = from_transaction.total_amount - from_transaction.used_amount
+            else:
+                from_old_amount = from_transaction.total_amount - from_transaction.recived_or_paid_amount
+            print("from_old_amount :: ",from_old_amount)
 
-            transaction = Transaction.objects.get(id = linktransaction_instance.to_transaction_id.id)
-            # print("Transaction :: ", transaction)
-            # print("Transaction Type :: ", transaction.type)
-            
 
-            if from_transaction.type in ('payment_in', 'event_purchase', 'purchase'):
+            to_transaction = Transaction.objects.get(id=linktransaction_instance.to_transaction_id.id)
+            print("to_transaction :: ",to_transaction)
+            to_customer_id = to_transaction.customer_id.id if to_transaction.customer_id is not None else None
+            print("to_customer_id :::",to_customer_id)
+            to_staff_id = to_transaction.staff_id.id if to_transaction.staff_id is not None else None
+            print("to_staff_id :::",to_staff_id)
+            to_type = to_transaction.type
+            print("to_type :: ",to_type)
+            if to_transaction.type in ('payment_in', 'payment_out'):
+                to_old_amount = to_transaction.total_amount - to_transaction.used_amount
+            else:
+                to_old_amount = to_transaction.total_amount - to_transaction.recived_or_paid_amount
 
-                if transaction.type in ('event_sale', 'sale'):
+            if transaction_type in ('event_sale', 'sale', 'payment_out'):
 
-                    # print("RESCIVED AMOUNT :: ", transaction.recived_or_paid_amount, "TYPE :: ", type(transaction.recived_or_paid_amount))
-                    if (old_amount - new_amount) > 0:
-                        differnece =  old_amount - new_amount
-                        # print("DIFFERNECE :: ", differnece)
-                        updated_amount = transaction.recived_or_paid_amount - differnece
-                        # print("UPDATED AMOUNT :: ", updated_amount)
-                        transaction.recived_or_paid_amount = transaction.recived_or_paid_amount - differnece
-                        transaction.save()
-                        
-                    if (new_amount - old_amount) > 0:
-                        differnece =  new_amount - old_amount
-                        # print("DIFFERNECE :: ", differnece)
-                        updated_amount = transaction.recived_or_paid_amount + differnece
-                        # print("UPDATED AMOUNTTTTTT :: ", updated_amount)
-                        transaction.recived_or_paid_amount = transaction.recived_or_paid_amount + differnece
-                        transaction.save()
+                if from_type in ('event_sale', 'sale', 'payment_out'):
+                    if to_type in ('purchase', 'event_purchase'):
+                        to_transaction.recived_or_paid_amount = (to_transaction.recived_or_paid_amount + old_linkedamount) - old_linkedamount
+                        to_transaction.save()
 
-                elif transaction.type == 'payment_out':
-                    
-                    # print("RESCIVED AMOUNT :: ", transaction.used_amount, "TYPE :: ", type(transaction.used_amount))
-                    if (old_amount - new_amount) > 0:
-                        differnece =  old_amount - new_amount
-                        # print("DIFFERNECE :: ", differnece)
-                        updated_amount = transaction.used_amount - differnece
-                        # print("UPDATED AMOUNT :: ", updated_amount)
-                        transaction.used_amount = transaction.used_amount - differnece
-                        transaction.save()
-                        
-                    if (new_amount - old_amount) > 0:
-                        differnece =  new_amount - old_amount
-                        # print("DIFFERNECE :: ", differnece)
-                        updated_amount = transaction.used_amount + differnece
-                        # print("UPDATED AMOUNTTTTTT :: ", updated_amount)
-                        transaction.used_amount = transaction.used_amount + differnece
-                        transaction.save()
+                        to_new_amount = to_transaction.total_amount - to_transaction.recived_or_paid_amount
+                        # print("to_new_amount ::: ", to_new_amount)
+                        balance_amount(to_customer_id, to_staff_id, to_old_amount, to_new_amount, to_transaction.type)
+                    else:
+                        to_transaction.used_amount = (to_transaction.used_amount + old_linkedamount) - new_linkedamount
+                        to_transaction.save()
 
-            elif from_transaction.type in ('payment_out', 'event_sale', 'sale'):
+                        to_new_amount = transaction.total_amount - transaction.used_amount
+                        # print("to_new_amount ::: ", to_new_amount)
+                        balance_amount(to_customer_id, to_staff_id, to_old_amount, to_new_amount, transaction.type)
 
-                if transaction.type in ('event_purchase', 'purchase'):
-                    # print("RESCIVED AMOUNT :: ", transaction.recived_or_paid_amount, "TYPE :: ", type(transaction.recived_or_paid_amount))
-                    if (old_amount - new_amount) > 0:
-                        differnece =  old_amount - new_amount
-                        # print("DIFFERNECE :: ", differnece)
-                        updated_amount = transaction.recived_or_paid_amount - differnece
-                        # print("UPDATED AMOUNT :: ", updated_amount)
-                        transaction.recived_or_paid_amount = transaction.recived_or_paid_amount - differnece
-                        transaction.save()
-                        
-                    if (new_amount - old_amount) > 0:
-                        differnece =  new_amount - old_amount
-                        # print("DIFFERNECE :: ", differnece)
-                        updated_amount = transaction.recived_or_paid_amount + differnece
-                        # print("UPDATED AMOUNTTTTTT :: ", updated_amount)
-                        transaction.recived_or_paid_amount = transaction.recived_or_paid_amount + differnece
-                        transaction.save()
+                elif to_type in ('event_sale', 'sale', 'payment_out'):
+                    if from_type in ('purchase', 'event_purchase'):
+                        from_transaction.recived_or_paid_amount = (from_transaction.recived_or_paid_amount + old_linkedamount) - new_linkedamount
+                        from_transaction.save()
 
-                elif transaction.type == 'payment_in':
-                    # print("RESCIVED AMOUNT :: ", transaction.used_amount, "TYPE :: ", type(transaction.used_amount))
-                    if (old_amount - new_amount) > 0:
-                        differnece =  old_amount - new_amount
-                        # print("DIFFERNECE :: ", differnece)
-                        updated_amount = transaction.used_amount - differnece
-                        # print("UPDATED AMOUNT :: ", updated_amount)
-                        transaction.used_amount = transaction.used_amount - differnece
-                        transaction.save()
-                        
-                    if (new_amount - old_amount) > 0:
-                        differnece =  new_amount - old_amount
-                        # print("DIFFERNECE :: ", differnece)
-                        updated_amount = transaction.used_amount + differnece
-                        # print("UPDATED AMOUNTTTTTT :: ", updated_amount)
-                        transaction.used_amount = transaction.used_amount + differnece
-                        transaction.save()
+                        from_new_amount = from_transaction.total_amount - from_transaction.used_amount
+                        # print("from_new_amount ::: ", from_new_amount)
+                        balance_amount(from_customer_id, from_staff_id, from_old_amount, from_new_amount, from_transaction.type)
+                    else:
+                        from_transaction.used_amount = (from_transaction.used_amount + old_linkedamount) - new_linkedamount
+                        from_transaction.save()
+
+                        from_new_amount = from_transaction.total_amount - from_transaction.used_amount
+                        # print("from_new_amount ::: ", from_new_amount)
+                        balance_amount(from_customer_id, from_staff_id, from_old_amount, from_new_amount, from_transaction.type)
+
+            elif transaction_type in ('payment_in' , 'event_purchase' , 'purchase'):
+
+                if from_type in ('payment_in' , 'event_purchase' , 'purchase'):
+                    if to_type in ('sale', 'event_sale'):
+                        to_transaction.recived_or_paid_amount = (to_transaction.recived_or_paid_amount + old_linkedamount) - old_linkedamount
+                        to_transaction.save()
+
+                        to_new_amount = to_transaction.total_amount - to_transaction.recived_or_paid_amount
+                        # print("to_new_amount ::: ", to_new_amount)
+                        balance_amount(to_customer_id, to_staff_id, to_old_amount, to_new_amount, to_transaction.type)
+                    else:
+                        to_transaction.used_amount = (to_transaction.used_amount + old_linkedamount) - new_linkedamount
+                        to_transaction.save()
+
+                        to_new_amount = to_transaction.total_amount - to_transaction.used_amount
+                        # print("to_new_amount ::: ", to_new_amount)
+                        balance_amount(to_customer_id, to_staff_id, to_old_amount, to_new_amount, to_transaction.type)
+
+                elif to_type in ('payment_in' , 'event_purchase' , 'purchase'):
+                    if from_type in ('sale', 'event_sale'):
+                        from_transaction.recived_or_paid_amount = (from_transaction.recived_or_paid_amount + old_linkedamount) - new_linkedamount
+                        from_transaction.save()
+
+                        from_new_amount = from_transaction.total_amount - from_transaction.used_amount
+                        # print("from_new_amount ::: ", from_new_amount)
+                        balance_amount(from_customer_id, from_staff_id, from_old_amount, from_new_amount, from_transaction.type)
+                    else:
+                        from_transaction.used_amount = (from_transaction.used_amount + old_linkedamount) - new_linkedamount
+                        from_transaction.save()
+
+                        from_new_amount = from_transaction.total_amount - from_transaction.used_amount
+                        # print("from_new_amount ::: ", from_new_amount)
+                        balance_amount(from_customer_id, from_staff_id, from_old_amount, from_new_amount, from_transaction.type)
 
     if delete_linktransactions is not None:
         # print("*** --- DELETE LINK TRANSACTION --- ***")
+        # for single_delete in delete_linktransactions:
+        #     # print("single_delete :: ", single_delete)
+
+        #     d_linktransaction = LinkTransaction.objects.get(pk = single_delete)
+        #     # print("Link Transaction :: ", d_linktransaction.to_transaction_id.id)
+        #     # print("LINK AMOUNT ::: ", d_linktransaction.linked_amount)
+
+        #     from_transaction = Transaction.objects.get(id = d_linktransaction.from_transaction_id.id)
+
+        #     from_customer_id = from_transaction.customer_id.id if from_transaction.customer_id is not None else None
+        #     # print("to_customer_id :::",to_customer_id)
+        #     from_staff_id = from_transaction.staff_id.id if from_transaction.staff_id is not None else None
+        #     # print("to_staff_id :::",to_staff_id)
+
+        #     if from_transaction.type in ('payment_in', 'payment_out'):
+        #         from_old_amount = from_transaction.total_amount - from_transaction.used_amount
+        #     else:
+        #         from_old_amount = from_transaction.total_amount - from_transaction.recived_or_paid_amount
+            
+        #     # if from_transaction.type in ('event_sale', 'sale', 'event_purchase', 'purchase'):
+        #     #     from_transaction.recived_or_paid_amount = from_transaction.recived_or_paid_amount - d_linktransaction.linked_amount
+        #     #     from_transaction.save()
+        #     # else:
+        #     #     from_transaction.used_amount = from_transaction.used_amount - d_linktransaction.linked_amount
+        #     #     from_transaction.save()
+
+
+        #     transaction = Transaction.objects.get(id = d_linktransaction.to_transaction_id.id)
+        #     # print("Transaction :: ", transaction)
+        #     # print("Transaction Type :: ", transaction.type)
+
+            
+        #     to_customer_id = transaction.customer_id.id if transaction.customer_id is not None else None
+        #     # print("to_customer_id :::",to_customer_id)
+        #     to_staff_id = transaction.staff_id.id if transaction.staff_id is not None else None
+        #     # print("to_staff_id :::",to_staff_id)
+
+        #     if transaction.type in ('payment_in', 'payment_out'):
+        #         to_old_amount = transaction.total_amount - transaction.used_amount
+        #     else:
+        #         to_old_amount = transaction.total_amount - transaction.recived_or_paid_amount
+
+        #     print("transaction_type :: ",transaction_type)
+        #     print("transaction.type :: ",transaction.type)
+        #     if transaction.type in ('event_sale', 'sale', 'event_purchase', 'purchase'):
+        #         if from_transaction.type in ('payment_in', 'payment_out'):
+        #             from_transaction.used_amount = from_transaction.used_amount - d_linktransaction.linked_amount
+        #             from_transaction.save()
+
+        #             from_new_amount = from_transaction.total_amount - from_transaction.used_amount
+        #             # print("from_new_amount ::: ", from_new_amount)
+        #             balance_amount(from_customer_id, from_staff_id, from_old_amount, from_new_amount, from_transaction.type)
+        #         else:
+
+        #             # print("RESCIVED AMOUNT :: ", transaction.recived_or_paid_amount, "TYPE :: ", type(transaction.recived_or_paid_amount))
+        #             # print("LINKED AMOUNT :: ", d_linktransaction.linked_amount, "TYPE :: ", type(d_linktransaction.linked_amount))
+        #             transaction.recived_or_paid_amount = transaction.recived_or_paid_amount - d_linktransaction.linked_amount
+        #             # print("transaction.recived_or_paid_amount :::",transaction.recived_or_paid_amount)
+        #             transaction.save()
+
+        #         to_new_amount = transaction.total_amount - transaction.recived_or_paid_amount
+        #         # print("to_new_amount ::: ", to_new_amount)
+        #         balance_amount(to_customer_id, to_staff_id, to_old_amount, to_new_amount, transaction.type)
+
+        #     elif transaction.type in ('payment_in', 'payment_out'):
+        #         if transaction_type is not None:
+        #             if transaction.type != transaction_type:
+        #                 # print("RESCIVED AMOUNT :: ", transaction.used_amount, "TYPE :: ", type(transaction.used_amount))
+        #                 # print("LINKED AMOUNT :: ", d_linktransaction.linked_amount, "TYPE :: ", type(d_linktransaction.linked_amount))
+        #                 transaction.used_amount = transaction.used_amount - d_linktransaction.linked_amount
+        #                 # print("transaction.used_amount :::",transaction.used_amount)
+        #                 transaction.save()
+
+        #                 to_new_amount = transaction.total_amount - transaction.used_amount
+        #                 # print("to_new_amount ::: ", to_new_amount)
+        #                 balance_amount(to_customer_id, to_staff_id, to_old_amount, to_new_amount, transaction.type)
+        #         else:
+        #             if from_transaction.type in ('event_sale', 'sale', 'event_purchase', 'purchase'):
+        #                 from_transaction.recived_or_paid_amount = from_transaction.recived_or_paid_amount - d_linktransaction.linked_amount
+        #                 from_transaction.save()
+
+        #                 from_new_amount = from_transaction.total_amount - from_transaction.recived_or_paid_amount
+        #                 # print("from_new_amount ::: ", from_new_amount)
+        #                 balance_amount(from_customer_id, from_staff_id, from_old_amount, from_new_amount, from_transaction.type)
+
+        #             else:
+        #                 # print("RESCIVED AMOUNT :: ", transaction.used_amount, "TYPE :: ", type(transaction.used_amount))
+        #                 # print("LINKED AMOUNT :: ", d_linktransaction.linked_amount, "TYPE :: ", type(d_linktransaction.linked_amount))
+        #                 transaction.used_amount = transaction.used_amount - d_linktransaction.linked_amount
+        #                 # print("transaction.used_amount :::",transaction.used_amount)
+        #                 transaction.save()
+
+        #             to_new_amount = transaction.total_amount - transaction.used_amount
+        #             # print("to_new_amount ::: ", to_new_amount)
+        #             balance_amount(to_customer_id, to_staff_id, to_old_amount, to_new_amount, transaction.type)
+
+        #         if transaction_type is not None:
+        #             if from_transaction.type != transaction_type:
+        #                 # print("From Transaction ::: ",from_transaction)
+        #                 # print("FROM TRASACTION TYPE :::", from_transaction.type)
+        #                 # print("RESCIVED AMOUNT :: ", from_transaction.used_amount, "TYPE :: ", type(from_transaction.used_amount))
+        #                 # print("LINKED AMOUNT :: ", d_linktransaction.linked_amount, "TYPE :: ", type(d_linktransaction.linked_amount))
+        #                 from_transaction.used_amount = from_transaction.used_amount - d_linktransaction.linked_amount
+        #                 # print("from_transaction.used_amount :::",from_transaction.used_amount)
+        #                 from_transaction.save()
+
+        #                 from_new_amount = from_transaction.total_amount - from_transaction.used_amount
+        #                 # print("from_new_amount ::: ", from_new_amount)
+        #                 balance_amount(from_customer_id, from_staff_id, from_old_amount, from_new_amount, from_transaction.type)
+
+        #     d_linktransaction.delete()
+
         for single_delete in delete_linktransactions:
-            # print("single_delete :: ", single_delete)
+            # print("single_delete : ",single_delete)
 
             d_linktransaction = LinkTransaction.objects.get(pk = single_delete)
-            # print("Link Transaction :: ", d_linktransaction.to_transaction_id.id)
-            # print("LINK AMOUNT ::: ", d_linktransaction.linked_amount)
+            # print("d_linktransaction : ",d_linktransaction)
+            # print("d_linktransaction.from_transaction_id : ",d_linktransaction.from_transaction_id.id)
+            # print("d_linktransaction.to_transaction_id : ",d_linktransaction.to_transaction_id.id)
+            # print("d_linktransaction.linked_amount : ",d_linktransaction.linked_amount)
 
-            transaction = Transaction.objects.get(id = d_linktransaction.to_transaction_id.id)
-            # print("Transaction :: ", transaction)
-            # print("Transaction Type :: ", transaction.type)
+            from_transaction = Transaction.objects.get(id=d_linktransaction.from_transaction_id.id)
+            # print("from_transaction :: ",from_transaction)
+            from_customer_id = from_transaction.customer_id.id if from_transaction.customer_id is not None else None
+            # print("from_customer_id ::",from_customer_id)
+            from_staff_id = from_transaction.staff_id.id if from_transaction.staff_id is not None else None
+            # print("from_staff_id ::",from_staff_id)
+            from_type = from_transaction.type
+            # print("from_type :: ",from_type)
+            if from_transaction.type in ('payment_in', 'payment_out'):
+                from_old_amount = from_transaction.total_amount - from_transaction.used_amount
+            else:
+                from_old_amount = from_transaction.total_amount - from_transaction.recived_or_paid_amount
+            # print("from_old_amount :: ",from_old_amount)
 
-            if transaction.type in ('event_sale', 'sale', 'event_purchase', 'purchase'):
-                # print("RESCIVED AMOUNT :: ", transaction.recived_or_paid_amount, "TYPE :: ", type(transaction.recived_or_paid_amount))
-                # print("LINKED AMOUNT :: ", d_linktransaction.linked_amount, "TYPE :: ", type(d_linktransaction.linked_amount))
-                transaction.recived_or_paid_amount = transaction.recived_or_paid_amount - d_linktransaction.linked_amount
-                # print("transaction.recived_or_paid_amount :::",transaction.recived_or_paid_amount)
-                transaction.save()
 
-            elif transaction.type in ('payment_in', 'payment_out'):
-                if transaction_type is not None:
-                    if transaction.type != transaction_type:
-                        # print("RESCIVED AMOUNT :: ", transaction.used_amount, "TYPE :: ", type(transaction.used_amount))
-                        # print("LINKED AMOUNT :: ", d_linktransaction.linked_amount, "TYPE :: ", type(d_linktransaction.linked_amount))
-                        transaction.used_amount = transaction.used_amount - d_linktransaction.linked_amount
-                        # print("transaction.used_amount :::",transaction.used_amount)
-                        transaction.save()
-                else:
-                    # print("RESCIVED AMOUNT :: ", transaction.used_amount, "TYPE :: ", type(transaction.used_amount))
-                        # print("LINKED AMOUNT :: ", d_linktransaction.linked_amount, "TYPE :: ", type(d_linktransaction.linked_amount))
-                        transaction.used_amount = transaction.used_amount - d_linktransaction.linked_amount
-                        # print("transaction.used_amount :::",transaction.used_amount)
-                        transaction.save()
-                
-                from_transaction = Transaction.objects.get(id = d_linktransaction.from_transaction_id.id)
-                if transaction_type is not None:
-                    if from_transaction.type != transaction_type:
-                        # print("From Transaction ::: ",from_transaction)
-                        # print("FROM TRASACTION TYPE :::", from_transaction.type)
-                        # print("RESCIVED AMOUNT :: ", from_transaction.used_amount, "TYPE :: ", type(from_transaction.used_amount))
-                        # print("LINKED AMOUNT :: ", d_linktransaction.linked_amount, "TYPE :: ", type(d_linktransaction.linked_amount))
-                        from_transaction.used_amount = from_transaction.used_amount - d_linktransaction.linked_amount
-                        # print("from_transaction.used_amount :::",from_transaction.used_amount)
+            to_transaction = Transaction.objects.get(id=d_linktransaction.to_transaction_id.id)
+            # print("to_transaction :: ",to_transaction)
+            to_customer_id = to_transaction.customer_id.id if to_transaction.customer_id is not None else None
+            # print("to_customer_id :::",to_customer_id)
+            to_staff_id = to_transaction.staff_id.id if to_transaction.staff_id is not None else None
+            # print("to_staff_id :::",to_staff_id)
+            to_type = to_transaction.type
+            # print("to_type :: ",to_type)
+            if to_transaction.type in ('payment_in', 'payment_out'):
+                to_old_amount = to_transaction.total_amount - to_transaction.used_amount
+            else:
+                to_old_amount = to_transaction.total_amount - to_transaction.recived_or_paid_amount
+            # print("to_old_amount :: ",to_old_amount)
+
+            if transaction_type in ('event_sale', 'sale', 'payment_out'):
+
+                if from_type in ('event_sale', 'sale', 'payment_out'):
+                    if to_type in ('purchase', 'event_purchase'):
+                        to_transaction.recived_or_paid_amount = to_transaction.recived_or_paid_amount - d_linktransaction.linked_amount
+                        to_transaction.save()
+
+                        to_new_amount = to_transaction.total_amount - to_transaction.recived_or_paid_amount
+                        # print("to_new_amount ::: ", to_new_amount)
+                        balance_amount(to_customer_id, to_staff_id, to_old_amount, to_new_amount, to_transaction.type)
+                    else:
+                        to_transaction.used_amount = to_transaction.used_amount - d_linktransaction.linked_amount
+                        to_transaction.save()
+
+                        to_new_amount = transaction.total_amount - transaction.used_amount
+                        # print("to_new_amount ::: ", to_new_amount)
+                        balance_amount(to_customer_id, to_staff_id, to_old_amount, to_new_amount, transaction.type)
+
+                elif to_type in ('event_sale', 'sale', 'payment_out'):
+                    if from_type in ('purchase', 'event_purchase'):
+                        from_transaction.recived_or_paid_amount = from_transaction.recived_or_paid_amount - d_linktransaction.linked_amount
                         from_transaction.save()
 
+                        from_new_amount = from_transaction.total_amount - from_transaction.used_amount
+                        # print("from_new_amount ::: ", from_new_amount)
+                        balance_amount(from_customer_id, from_staff_id, from_old_amount, from_new_amount, from_transaction.type)
+                    else:
+                        from_transaction.used_amount = from_transaction.used_amount - d_linktransaction.linked_amount
+                        from_transaction.save()
+
+                        from_new_amount = from_transaction.total_amount - from_transaction.used_amount
+                        # print("from_new_amount ::: ", from_new_amount)
+                        balance_amount(from_customer_id, from_staff_id, from_old_amount, from_new_amount, from_transaction.type)
+
+            elif transaction_type in ('payment_in' , 'event_purchase' , 'purchase'):
+
+                if from_type in ('payment_in' , 'event_purchase' , 'purchase'):
+                    if to_type in ('sale', 'event_sale'):
+                        to_transaction.recived_or_paid_amount = to_transaction.recived_or_paid_amount - d_linktransaction.linked_amount
+                        to_transaction.save()
+
+                        to_new_amount = to_transaction.total_amount - to_transaction.recived_or_paid_amount
+                        # print("to_new_amount ::: ", to_new_amount)
+                        balance_amount(to_customer_id, to_staff_id, to_old_amount, to_new_amount, to_transaction.type)
+                    else:
+                        to_transaction.used_amount = to_transaction.used_amount - d_linktransaction.linked_amount
+                        to_transaction.save()
+
+                        to_new_amount = to_transaction.total_amount - to_transaction.used_amount
+                        # print("to_new_amount ::: ", to_new_amount)
+                        balance_amount(to_customer_id, to_staff_id, to_old_amount, to_new_amount, to_transaction.type)
+
+                elif to_type in ('payment_in' , 'event_purchase' , 'purchase'):
+                    if from_type in ('sale', 'event_sale'):
+                        from_transaction.recived_or_paid_amount = from_transaction.recived_or_paid_amount - d_linktransaction.linked_amount
+                        from_transaction.save()
+
+                        from_new_amount = from_transaction.total_amount - from_transaction.used_amount
+                        # print("from_new_amount ::: ", from_new_amount)
+                        balance_amount(from_customer_id, from_staff_id, from_old_amount, from_new_amount, from_transaction.type)
+                    else:
+                        from_transaction.used_amount = from_transaction.used_amount - d_linktransaction.linked_amount
+                        from_transaction.save()
+
+                        from_new_amount = from_transaction.total_amount - from_transaction.used_amount
+                        # print("from_new_amount ::: ", from_new_amount)
+                        balance_amount(from_customer_id, from_staff_id, from_old_amount, from_new_amount, from_transaction.type)
+
+
             d_linktransaction.delete()
-
-

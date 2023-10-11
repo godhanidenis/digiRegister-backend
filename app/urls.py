@@ -54,6 +54,7 @@ urlpatterns =[
     path('completionreport/',views.CompletionReport, name='completionreport'),
     path('conversationreport/',views.ConversationRateReport, name='conversationratereport'),
     path('statusreport/',views.InvoiceStatusReport, name='invoicestatusreport'),
+    path('cashandbank/',views.CashAndBank, name='cashandbank'),
 
     # path('earningreport/',views.MonthylyEarningReport, name='monthylyearningreport'),
     # path('creationreport/',views.InvoiceCreationReport, name='invoicecreationreport'),
