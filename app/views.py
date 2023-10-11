@@ -2808,6 +2808,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
             else:
                 return Response(transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
+            data['tranasaction_data'] = TransactionSerializer(transaction_instance).data
             
             # new_total_amount = float(transaction_instance.total_amount)
             # print("new_total_amount :::",new_total_amount)
