@@ -471,14 +471,14 @@ def link_transaction(transaction_id, linktransaction_data, transaction_type=None
 
                 if from_type in ('event_sale', 'sale', 'payment_out'):
                     if to_type in ('purchase', 'event_purchase'):
-                        to_transaction.recived_or_paid_amount = (to_transaction.recived_or_paid_amount + old_linkedamount) - new_linkedamount
+                        to_transaction.recived_or_paid_amount = (to_transaction.recived_or_paid_amount - old_linkedamount) + new_linkedamount
                         to_transaction.save()
 
                         to_new_amount = to_transaction.total_amount - to_transaction.recived_or_paid_amount
                         # print("to_new_amount ::: ", to_new_amount)
                         balance_amount(to_customer_id, to_staff_id, to_old_amount, to_new_amount, to_transaction.type)
                     else:
-                        to_transaction.used_amount = (to_transaction.used_amount + old_linkedamount) - new_linkedamount
+                        to_transaction.used_amount = (to_transaction.used_amount - old_linkedamount) + new_linkedamount
                         to_transaction.save()
 
                         to_new_amount = to_transaction.total_amount - to_transaction.used_amount
@@ -487,14 +487,14 @@ def link_transaction(transaction_id, linktransaction_data, transaction_type=None
 
                 elif to_type in ('event_sale', 'sale', 'payment_out'):
                     if from_type in ('purchase', 'event_purchase'):
-                        from_transaction.recived_or_paid_amount = (from_transaction.recived_or_paid_amount + old_linkedamount) - new_linkedamount
+                        from_transaction.recived_or_paid_amount = (from_transaction.recived_or_paid_amount - old_linkedamount) + new_linkedamount
                         from_transaction.save()
 
                         from_new_amount = from_transaction.total_amount - from_transaction.used_amount
                         # print("from_new_amount ::: ", from_new_amount)
                         balance_amount(from_customer_id, from_staff_id, from_old_amount, from_new_amount, from_transaction.type)
                     else:
-                        from_transaction.used_amount = (from_transaction.used_amount + old_linkedamount) - new_linkedamount
+                        from_transaction.used_amount = (from_transaction.used_amount - old_linkedamount) + new_linkedamount
                         from_transaction.save()
 
                         from_new_amount = from_transaction.total_amount - from_transaction.used_amount
@@ -505,14 +505,14 @@ def link_transaction(transaction_id, linktransaction_data, transaction_type=None
 
                 if from_type in ('payment_in' , 'event_purchase' , 'purchase'):
                     if to_type in ('sale', 'event_sale'):
-                        to_transaction.recived_or_paid_amount = (to_transaction.recived_or_paid_amount + old_linkedamount) - new_linkedamount
+                        to_transaction.recived_or_paid_amount = (to_transaction.recived_or_paid_amount - old_linkedamount) + new_linkedamount
                         to_transaction.save()
 
                         to_new_amount = to_transaction.total_amount - to_transaction.recived_or_paid_amount
                         # print("to_new_amount ::: ", to_new_amount)
                         balance_amount(to_customer_id, to_staff_id, to_old_amount, to_new_amount, to_transaction.type)
                     else:
-                        to_transaction.used_amount = (to_transaction.used_amount + old_linkedamount) - new_linkedamount
+                        to_transaction.used_amount = (to_transaction.used_amount - old_linkedamount) + new_linkedamount
                         to_transaction.save()
 
                         to_new_amount = to_transaction.total_amount - to_transaction.used_amount
@@ -521,14 +521,14 @@ def link_transaction(transaction_id, linktransaction_data, transaction_type=None
 
                 elif to_type in ('payment_in' , 'event_purchase' , 'purchase'):
                     if from_type in ('sale', 'event_sale'):
-                        from_transaction.recived_or_paid_amount = (from_transaction.recived_or_paid_amount + old_linkedamount) - new_linkedamount
+                        from_transaction.recived_or_paid_amount = (from_transaction.recived_or_paid_amount - old_linkedamount) + new_linkedamount
                         from_transaction.save()
 
                         from_new_amount = from_transaction.total_amount - from_transaction.used_amount
                         # print("from_new_amount ::: ", from_new_amount)
                         balance_amount(from_customer_id, from_staff_id, from_old_amount, from_new_amount, from_transaction.type)
                     else:
-                        from_transaction.used_amount = (from_transaction.used_amount + old_linkedamount) - new_linkedamount
+                        from_transaction.used_amount = (from_transaction.used_amount - old_linkedamount) + new_linkedamount
                         from_transaction.save()
 
                         from_new_amount = from_transaction.total_amount - from_transaction.used_amount
