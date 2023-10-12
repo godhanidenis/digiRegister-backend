@@ -471,7 +471,7 @@ def link_transaction(transaction_id, linktransaction_data, transaction_type=None
 
                 if from_type in ('event_sale', 'sale', 'payment_out'):
                     if to_type in ('purchase', 'event_purchase'):
-                        to_transaction.recived_or_paid_amount = (to_transaction.recived_or_paid_amount + old_linkedamount) - old_linkedamount
+                        to_transaction.recived_or_paid_amount = (to_transaction.recived_or_paid_amount + old_linkedamount) - new_linkedamount
                         to_transaction.save()
 
                         to_new_amount = to_transaction.total_amount - to_transaction.recived_or_paid_amount
@@ -505,7 +505,7 @@ def link_transaction(transaction_id, linktransaction_data, transaction_type=None
 
                 if from_type in ('payment_in' , 'event_purchase' , 'purchase'):
                     if to_type in ('sale', 'event_sale'):
-                        to_transaction.recived_or_paid_amount = (to_transaction.recived_or_paid_amount + old_linkedamount) - old_linkedamount
+                        to_transaction.recived_or_paid_amount = (to_transaction.recived_or_paid_amount + old_linkedamount) - new_linkedamount
                         to_transaction.save()
 
                         to_new_amount = to_transaction.total_amount - to_transaction.recived_or_paid_amount
