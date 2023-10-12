@@ -481,9 +481,9 @@ def link_transaction(transaction_id, linktransaction_data, transaction_type=None
                         to_transaction.used_amount = (to_transaction.used_amount + old_linkedamount) - new_linkedamount
                         to_transaction.save()
 
-                        to_new_amount = transaction.total_amount - transaction.used_amount
+                        to_new_amount = to_transaction.total_amount - to_transaction.used_amount
                         # print("to_new_amount ::: ", to_new_amount)
-                        balance_amount(to_customer_id, to_staff_id, to_old_amount, to_new_amount, transaction.type)
+                        balance_amount(to_customer_id, to_staff_id, to_old_amount, to_new_amount, to_transaction.type)
 
                 elif to_type in ('event_sale', 'sale', 'payment_out'):
                     if from_type in ('purchase', 'event_purchase'):
@@ -701,9 +701,9 @@ def link_transaction(transaction_id, linktransaction_data, transaction_type=None
                         to_transaction.used_amount = to_transaction.used_amount - d_linktransaction.linked_amount
                         to_transaction.save()
 
-                        to_new_amount = transaction.total_amount - transaction.used_amount
+                        to_new_amount = to_transaction.total_amount - to_transaction.used_amount
                         # print("to_new_amount ::: ", to_new_amount)
-                        balance_amount(to_customer_id, to_staff_id, to_old_amount, to_new_amount, transaction.type)
+                        balance_amount(to_customer_id, to_staff_id, to_old_amount, to_new_amount, to_transaction.type)
 
                 elif to_type in ('event_sale', 'sale', 'payment_out'):
                     if from_type in ('purchase', 'event_purchase'):
