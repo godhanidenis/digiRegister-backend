@@ -710,7 +710,7 @@ def link_transaction(transaction_id, linktransaction_data, transaction_type=None
                         from_transaction.recived_or_paid_amount = from_transaction.recived_or_paid_amount - d_linktransaction.linked_amount
                         from_transaction.save()
 
-                        from_new_amount = from_transaction.total_amount - from_transaction.used_amount
+                        from_new_amount = from_transaction.total_amount - from_transaction.recived_or_paid_amount
                         # print("from_new_amount ::: ", from_new_amount)
                         balance_amount(from_customer_id, from_staff_id, from_old_amount, from_new_amount, from_transaction.type)
                     else:
@@ -744,7 +744,7 @@ def link_transaction(transaction_id, linktransaction_data, transaction_type=None
                         from_transaction.recived_or_paid_amount = from_transaction.recived_or_paid_amount - d_linktransaction.linked_amount
                         from_transaction.save()
 
-                        from_new_amount = from_transaction.total_amount - from_transaction.used_amount
+                        from_new_amount = from_transaction.total_amount - from_transaction.recived_or_paid_amount
                         # print("from_new_amount ::: ", from_new_amount)
                         balance_amount(from_customer_id, from_staff_id, from_old_amount, from_new_amount, from_transaction.type)
                     else:
