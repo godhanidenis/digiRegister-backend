@@ -50,7 +50,7 @@ class UserViewSet(viewsets.ModelViewSet):
     def update(self, request, pk=None, *args, **kwargs):
         user = User.objects.get(pk=pk)
         old_pic = f"digi_profile_pic/{os.path.basename(user.profile_pic)}" if user.profile_pic else None
-        old_signature = f"digi_signature/{os.path.basename(user.signature)}" if user.signature else None
+        old_signature = f"signature/{os.path.basename(user.signature)}" if user.signature else None
 
         ## SET NEW PASSWORD AS PASSWORD ##
         if 'password' in request.data:
@@ -89,7 +89,7 @@ class UserViewSet(viewsets.ModelViewSet):
                                 )
                 
                 file = request.data['profile_pic']
-                file_name = f"digi_profile_pic/{uuid.uuid4().hex}.jpg"
+                file_name = f"profile_pic/{uuid.uuid4().hex}.jpg"
 
                 # ADD NEW PIC IN BUCKET #
                 s3.upload_fileobj(file, bucket_name, file_name)
