@@ -19,7 +19,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
     filterset_fields = {
         'user_id__id':['exact'],
         'name':['icontains']
-    }
+        }
 
     def list(self, request):
         querysets = self.filter_queryset(self.get_queryset())
@@ -36,8 +36,8 @@ class CategoryViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         data = {
             "category_data": CategorySerializer(instance).data,
-            "category_expense": []
-        }
+            "category_expense": []}
+        
         expenses = Expense.objects.filter(category_id=instance.id)
         for expense in expenses:
             transaction = Transaction.objects.get(expense_id__id=expense.id)
@@ -46,8 +46,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
             data["category_expense"].append({
                 "expense_data": expense_data,
-                "transaction": transaction_data
-            })
+                "transaction": transaction_data})
 
         return Response(data)
 
@@ -77,8 +76,8 @@ class ItemViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         data = {
             "item_data": ItemSerializer(instance).data,
-            "item_expense": []
-        }
+            "item_expense": []}
+        
         items = ExpenseItem.objects.filter(item_id=instance.id)
         for item in items:
             transaction = Transaction.objects.get(expense_id__id=item.expense_id.id)
@@ -87,8 +86,7 @@ class ItemViewSet(viewsets.ModelViewSet):
 
             data["item_expense"].append({
                 "expense_data": item_data,
-                "transaction": transaction_data
-            })
+                "transaction": transaction_data})
 
         return Response(data)
 
@@ -158,11 +156,9 @@ class ExpenseViewSet(viewsets.ModelViewSet):
             else:
                 return Response(expenseitemSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response({
-            "expense_data": expenseSerializer.data,
-            "transaction_data": transactionSerializer.data,
-            "items": ExpenseItemSerializer(item_instances, many=True).data
-        })
+        return Response({"expense_data": expenseSerializer.data,
+                         "transaction_data": transactionSerializer.data,
+                         "items": ExpenseItemSerializer(item_instances, many=True).data})
 
     def update(self, request, pk=None, *args, **kwargs):
         expense_data = request.data.get('expense_data', None)
@@ -207,9 +203,8 @@ class ExpenseViewSet(viewsets.ModelViewSet):
                         oi_serializer.save()
                     else:
                         return Response(oi_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        return Response({
-            "expense_data": e_serializer.data
-        })
+                    
+        return Response({"expense_data": e_serializer.data})
 
 
 class ExpenseItemViewSet(viewsets.ModelViewSet):
@@ -225,4 +220,3 @@ class ExpenseItemViewSet(viewsets.ModelViewSet):
         'item_id__price':['exact'],
         'amount':['icontains'],
     }
-
