@@ -45,8 +45,7 @@ class LoginView(APIView):
                     return Response({
                         "access_token":str(token.generate_access_token(email, True)),
                         "refresh_token":str(token.generate_refresh_token(email)),
-                        "user_data":user_data
-                    })
+                        "user_data":user_data})
                 else:
                     return Response("Invalid Credentials!",status=status.HTTP_401_UNAUTHORIZED)
 
@@ -68,7 +67,6 @@ class RefreshTokenView(APIView):
             # logoutUserOnRefreshExpire(username, password)
             raise exceptions.AuthenticationFailed('refresh_token expired')
         except jwt.DecodeError as ex:
-            print(ex)
             # logoutUserOnRefreshExpire(username, password)
             raise exceptions.AuthenticationFailed("refresh_token is Not Valid")
         except IndexError:
@@ -84,24 +82,17 @@ class RefreshTokenView(APIView):
             raise exceptions.AuthenticationFailed('User not found with us!')
         else:
             email = user.email
-        return Response({
-                "access_token":str(token.generate_access_token(email, True))
-            })
+        return Response({"access_token":str(token.generate_access_token(email, True))})
 
 class RegisterView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
         shop_name = request.data.get('shop_name')
-        # print("SHOP NAME :: ",shop_name)
         full_name = request.data.get('full_name')
-        # print("FULL NAME :: ",full_name)
         mobile_no = request.data.get('mobile_no')
-        # print("MOBILE NO :: ",mobile_no)
         email = request.data.get('email')
-        # print("EMAIL :: ",email)
         password = request.data.get('password')
-        # print("PASSWORD :: ",password)
 
         if not shop_name:
             return Response("Please provide your Shop Name !!", status=status.HTTP_400_BAD_REQUEST)
@@ -125,10 +116,7 @@ class RegisterView(APIView):
                     mobile_no=mobile_no,
                     email=email,
                     type_of_user = 'company_owner',
-                    password=password
-                )
+                    password=password)
 
-                return Response({
-                    "message": "User Created Successfully !!!"
-                }, status=status.HTTP_201_CREATED)
+                return Response({"message": "User Created Successfully !!!"}, status=status.HTTP_201_CREATED)
             
