@@ -167,8 +167,7 @@ def balance_amount(customer_id, staff_id, old_amount, new_amount, type):
                     balance.save()
     except Exception as e:
         logger.error(f"Function: Balance Amount - An error occurred: {str(e)}.\n Data:(customer_id:{customer_id}, staff_id:{staff_id}, old_amount:{old_amount}, new_amount:{new_amount}, type:{type})", exc_info=True)
-
-        return Response()
+        return Response({"error": "An error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 def balance_delete_amount(customer_id, staff_id, old_amount, new_amount, type):
@@ -206,8 +205,7 @@ def balance_delete_amount(customer_id, staff_id, old_amount, new_amount, type):
                     balance.save()
     except Exception as e:
         logger.error(f"Function: Balance Delete Amount - An error occurred: {str(e)}.\n Data:(customer_id:{customer_id}, staff_id:{staff_id}, old_amount:{old_amount}, new_amount:{new_amount}, type:{type})", exc_info=True)
-
-        return Response()
+        return Response({"error": "An error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 def quotation_get(quotation_id):
@@ -245,8 +243,7 @@ def quotation_get(quotation_id):
         return data
     except Exception as e:
         logger.error(f"Function: Quotation Get - An error occurred: {str(e)}.\n Data:quotation_id:{quotation_id}", exc_info=True)
-
-        return Response()
+        return Response({"error": "An error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 def convert_time_utc_to_local(timezone, data):
@@ -260,8 +257,7 @@ def convert_time_utc_to_local(timezone, data):
             return final_time
     except Exception as e:
         logger.error(f"Function: Convert Time UTC To Local - An error occurred: {str(e)}.\n Data:(timezone:{timezone}, data:{data})", exc_info=True)
-
-        return Response()
+        return Response({"error": "An error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 def link_transaction(transaction_id, linktransaction_data, transaction_type=None):
@@ -515,5 +511,5 @@ def link_transaction(transaction_id, linktransaction_data, transaction_type=None
                 d_linktransaction.delete()
     except Exception as e:
         logger.error(f"Function: Link Transaction - An error occurred: {str(e)}.\n Data:(transaction_id:{transaction_id}, linktransaction_data:{linktransaction_data}, transaction_type:{transaction_type})", exc_info=True)
-
-        return Response()
+        return Response({"error": "An error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
