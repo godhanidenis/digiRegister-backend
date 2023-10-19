@@ -25,8 +25,21 @@ import uuid
 import os
 import requests
 import base64
+import logging
+import sys
 
 # Create your views here.
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+formatter = logging.Formatter(
+    '%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s'
+)
+
+console_handler = logging.StreamHandler(sys.stdout)
+console_handler.setFormatter(formatter)
+logger.addHandler(console_handler)
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -41,87 +54,98 @@ class UserViewSet(viewsets.ModelViewSet):
     }
 
     def retrieve(self, request, *args, **kwarge):
-        instance = self.get_object()
-        terms = TermsAndConditions.objects.filter(user_id=instance.id)
+        try:
+            instance = self.get_object()
+            terms = TermsAndConditions.objects.filter(user_id=instance.id)
 
-        return Response({'user_data' : UserSerializer(instance).data,
-                         'terms' : TermsAndConditionsSerializer(terms, many=True).data})
+            return Response({'user_data' : UserSerializer(instance).data,
+                            'terms' : TermsAndConditionsSerializer(terms, many=True).data})
+        except Exception as e:
+            logger.error(f"API: User Retrieve - An error occurred: {str(e)}", exc_info=True)
+
+            return Response()
 
     def update(self, request, pk=None, *args, **kwargs):
-        user = User.objects.get(pk=pk)
-        old_pic = f"profile_pic/{os.path.basename(user.profile_pic)}" if user.profile_pic else None
-        old_signature = f"signature/{os.path.basename(user.signature)}" if user.signature else None
+        try:
+            user = User.objects.get(pk=pk)
+            old_pic = f"profile_pic/{os.path.basename(user.profile_pic)}" if user.profile_pic else None
+            old_signature = f"signature/{os.path.basename(user.signature)}" if user.signature else None
 
-        ## SET NEW PASSWORD AS PASSWORD ##
-        if 'password' in request.data:
-            user.set_password(request.data['password'])
-            user.save()
-            request.data.pop('password')
+            ## SET NEW PASSWORD AS PASSWORD ##
+            if 'password' in request.data:
+                user.set_password(request.data['password'])
+                user.save()
+                request.data.pop('password')
 
-        bucket_name = config('wasabisys_bucket_name')
-        region = config('wasabisys_region')
-        s3 = boto3.client('s3',
-                        endpoint_url=config('wasabisys_endpoint_url'),
-                        aws_access_key_id=config('wasabisys_access_key_id'),
-                        aws_secret_access_key=config('wasabisys_secret_access_key'))
+            bucket_name = config('wasabisys_bucket_name')
+            region = config('wasabisys_region')
+            s3 = boto3.client('s3',
+                            endpoint_url=config('wasabisys_endpoint_url'),
+                            aws_access_key_id=config('wasabisys_access_key_id'),
+                            aws_secret_access_key=config('wasabisys_secret_access_key'))
 
-        ## ADD USER PROFILE PIC IN BUCKET ##
-        if 'profile_pic' in request.data:
-            profile_pic = request.data['profile_pic']
+            ## ADD USER PROFILE PIC IN BUCKET ##
+            if 'profile_pic' in request.data:
+                profile_pic = request.data['profile_pic']
 
-            if profile_pic == '':
-                print("profile_pic is Null")
-                # DELETE OLD PIC FORM BUCKET #
-                if old_pic:
-                    s3.delete_object(Bucket = bucket_name, 
-                                     Key=old_pic)
-            else:
-                print("profile_pic is not Null")
-                # DELETE OLD PIC FORM BUCKET #
-                if old_pic:
-                    s3.delete_object(Bucket = bucket_name, 
-                                     Key=old_pic)
+                if profile_pic == '':
+                    print("profile_pic is Null")
+                    # DELETE OLD PIC FORM BUCKET #
+                    if old_pic:
+                        s3.delete_object(Bucket = bucket_name, 
+                                        Key=old_pic)
+                else:
+                    print("profile_pic is not Null")
+                    # DELETE OLD PIC FORM BUCKET #
+                    if old_pic:
+                        s3.delete_object(Bucket = bucket_name, 
+                                        Key=old_pic)
+                    
+                    file = request.data['profile_pic']
+                    file_name = f"profile_pic/{uuid.uuid4().hex}.jpg"
+
+                    # ADD NEW PIC IN BUCKET #
+                    s3.upload_fileobj(file, bucket_name, file_name)
+                    s3_file_url = f"https://s3.{region}.wasabisys.com/{bucket_name}/{file_name}"
+                    request.data['profile_pic'] = s3_file_url
+
+            ## ADD USER SIGNATURE IN BUCKET ##
+            if 'signature' in request.data:
+                signature = request.data['signature']
                 
-                file = request.data['profile_pic']
-                file_name = f"profile_pic/{uuid.uuid4().hex}.jpg"
+                if signature == '':
+                    print("Signature is Null")
+                    # DELETE OLD SIGNATURE FORM BUCKET #
+                    if old_signature:
+                        s3.delete_object(Bucket = bucket_name, 
+                                        Key=old_signature)
+                else:
+                    print("Signature is not Null")
+                    # DELETE OLD SIGNATURE FORM BUCKET #
+                    if old_signature:
+                        s3.delete_object(Bucket = bucket_name, 
+                                        Key=old_signature)
+                    
+                    file = request.data['signature']
+                    file_name = f"signature/{uuid.uuid4().hex}.jpg"
 
-                # ADD NEW PIC IN BUCKET #
-                s3.upload_fileobj(file, bucket_name, file_name)
-                s3_file_url = f"https://s3.{region}.wasabisys.com/{bucket_name}/{file_name}"
-                request.data['profile_pic'] = s3_file_url
+                    # ADD NEW PIC IN BUCKET #
+                    s3.upload_fileobj(file, bucket_name, file_name)
+                    s3_file_url = f"https://s3.{region}.wasabisys.com/{bucket_name}/{file_name}"
+                    request.data['signature'] = s3_file_url
 
-        ## ADD USER SIGNATURE IN BUCKET ##
-        if 'signature' in request.data:
-            signature = request.data['signature']
+            serializer = UserSerializer(user, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
-            if signature == '':
-                print("Signature is Null")
-                # DELETE OLD SIGNATURE FORM BUCKET #
-                if old_signature:
-                    s3.delete_object(Bucket = bucket_name, 
-                                     Key=old_signature)
-            else:
-                print("Signature is not Null")
-                # DELETE OLD SIGNATURE FORM BUCKET #
-                if old_signature:
-                    s3.delete_object(Bucket = bucket_name, 
-                                     Key=old_signature)
-                
-                file = request.data['signature']
-                file_name = f"signature/{uuid.uuid4().hex}.jpg"
-
-                # ADD NEW PIC IN BUCKET #
-                s3.upload_fileobj(file, bucket_name, file_name)
-                s3_file_url = f"https://s3.{region}.wasabisys.com/{bucket_name}/{file_name}"
-                request.data['signature'] = s3_file_url
-
-        serializer = UserSerializer(user, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.data)
         
-        return Response(serializer.data)
+        except Exception as e:
+            logger.error(f"API: User Update - An error occurred: {str(e)}.\nRequest data: {request.data}", exc_info=True)
+
+            return Response()
 
 
 class TermsAndConditionsViewSet(viewsets.ModelViewSet):
@@ -156,16 +180,22 @@ class CustomerViewSet(viewsets.ModelViewSet):
     }
 
     def list(self, request):
-        querysets = self.filter_queryset(self.get_queryset())
-        paginator = MyPagination()  
-        paginated_queryset = paginator.paginate_queryset(querysets, request)
-        data = []
-        for queryset in paginated_queryset:
-            total_amount = Balance.objects.filter(customer_id=queryset.id).aggregate(Sum('amount'))['amount__sum']
-            data.append({'customer': CustomerSerializer(queryset).data,
-                         'total_amount': total_amount })
+        try:
+            querysets = self.filter_queryset(self.get_queryset())
+            paginator = MyPagination()  
+            paginated_queryset = paginator.paginate_queryset(querysets, request)
+            data = []
+            for queryset in paginated_queryset:
+                total_amount = Balance.objects.filter(customer_id=queryset.id).aggregate(Sum('amount'))['amount__sum']
+                data.append({'customer': CustomerSerializer(queryset).data,
+                            'total_amount': total_amount })
+            
+            return paginator.get_paginated_response(data)
         
-        return paginator.get_paginated_response(data)
+        except Exception as e:
+            logger.error(f"API: Customer List - An error occurred: {str(e)}", exc_info=True)
+
+            return Response()
 
 
 class InventoryViewSet(viewsets.ModelViewSet):
@@ -177,6 +207,15 @@ class InventoryViewSet(viewsets.ModelViewSet):
         'type':['exact'],
         'name':['icontains']
     }
+
+    # def dispatch(self, request, *args, **kwargs):
+    #     try:
+    #         return super().dispatch(request, *args, **kwargs)
+    #     except Exception as e:
+    #         # Log the exception using the logger
+    #         logger.error('An error occurred in InventoryViewSet', exc_info=e)
+    #         logger.error(f"API: Inventory View Set - An error occurred: {str(e)}", exc_info=True)
+    #         raise
 
 
 class StaffViewSet(viewsets.ModelViewSet):
@@ -192,91 +231,111 @@ class StaffViewSet(viewsets.ModelViewSet):
     }
 
     def list(self, request):
-        querysets = self.filter_queryset(self.get_queryset())
-        data = []
-        for queryset in querysets:
-            total_amount = Balance.objects.filter(staff_id=queryset.id).aggregate(Sum('amount'))['amount__sum']
+        try:
+            querysets = self.filter_queryset(self.get_queryset())
+            data = []
+            for queryset in querysets:
+                total_amount = Balance.objects.filter(staff_id=queryset.id).aggregate(Sum('amount'))['amount__sum']
 
-            data.append({'staff': StaffSerializer(queryset).data, 
-                         'total_amount': total_amount}) 
-            
-        return Response(data)
+                data.append({'staff': StaffSerializer(queryset).data, 
+                            'total_amount': total_amount}) 
+                
+            return Response(data)
+        except Exception as e:
+            logger.error(f"API: Staff List - An error occurred: {str(e)}", exc_info=True)
+
+            return Response()
 
     def retrieve(self, request, *args, **kwarge):
-        instance = self.get_object()
-        staff_id = instance.id
-        staffskill = StaffSkill.objects.filter(staff_id=staff_id)
-        data = {"staff_data" : StaffSerializer(instance).data,
-                "staffskill_data" : StaffSkillSerializer(staffskill, many=True).data}
+        try:
+            instance = self.get_object()
+            staff_id = instance.id
+            staffskill = StaffSkill.objects.filter(staff_id=staff_id)
+            data = {"staff_data" : StaffSerializer(instance).data,
+                    "staffskill_data" : StaffSkillSerializer(staffskill, many=True).data}
 
-        return Response(data)
+            return Response(data)
+        except Exception as e:
+            logger.error(f"API: Staff Retrieve - An error occurred: {str(e)}", exc_info=True)
+
+            return Response()
 
     def create(self, request, *args, **kwargs):
-        staff = request.data.get('staff_data')
-        skills = request.data.get('skill_data')
+        try:
+            staff = request.data.get('staff_data')
+            skills = request.data.get('skill_data')
 
-        staffSerializer = StaffSerializer(data=staff)
-        if staffSerializer.is_valid():
-            staff_instance = staffSerializer.save() 
-            staff_skill_instances = []
-            staff_skill_serializer = StaffSkillSerializer()
+            staffSerializer = StaffSerializer(data=staff)
+            if staffSerializer.is_valid():
+                staff_instance = staffSerializer.save() 
+                staff_skill_instances = []
+                staff_skill_serializer = StaffSkillSerializer()
 
-            for skill in skills:
-                skill["staff_id"] = staff_instance.id
-                staff_skill_serializer = StaffSkillSerializer(data=skill)
-                if staff_skill_serializer.is_valid():
-                    staff_skill_instance = staff_skill_serializer.save()
-                    staff_skill_instances.append(staff_skill_instance)
-                else:
-                    return Response(staff_skill_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                for skill in skills:
+                    skill["staff_id"] = staff_instance.id
+                    staff_skill_serializer = StaffSkillSerializer(data=skill)
+                    if staff_skill_serializer.is_valid():
+                        staff_skill_instance = staff_skill_serializer.save()
+                        staff_skill_instances.append(staff_skill_instance)
+                    else:
+                        return Response(staff_skill_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            response_data = {'staff': staffSerializer.data,
-                             'skills': StaffSkillSerializer(staff_skill_instances, many=True).data}
-            
-            return Response(response_data, status=status.HTTP_201_CREATED)
-        else:
-            return Response(staffSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                response_data = {'staff': staffSerializer.data,
+                                'skills': StaffSkillSerializer(staff_skill_instances, many=True).data}
+                
+                return Response(response_data, status=status.HTTP_201_CREATED)
+            else:
+                return Response(staffSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.error(f"API: Staff Create - An error occurred: {str(e)}.\nRequest data: {request.data}", exc_info=True)
+
+            return Response()
 
     def update(self, request, pk=None, *args, **kwargs):
-        staff_data = request.data.get('staff_data', None)
-        skills = request.data.get('skills', None)
-        delete_skills = request.data.get('delete_skills', None)
+        try:
+            staff_data = request.data.get('staff_data', None)
+            skills = request.data.get('skills', None)
+            delete_skills = request.data.get('delete_skills', None)
 
-        ## UPDATE STAFF DATA ##
-        staff = Staff.objects.get(pk=pk)
-        s_serializer = StaffSerializer(staff, data=staff_data, partial=True)
-        if s_serializer.is_valid():
-            s_serializer.save()
-        else:
-            return Response(s_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-        ## DELETE SKILL FOR THAT STAFF ##
-        if delete_skills is not None:
-            for delete_skill in delete_skills:
-                d_skill = StaffSkill.objects.get(id=delete_skill)
-                d_skill.delete()
+            ## UPDATE STAFF DATA ##
+            staff = Staff.objects.get(pk=pk)
+            s_serializer = StaffSerializer(staff, data=staff_data, partial=True)
+            if s_serializer.is_valid():
+                s_serializer.save()
+            else:
+                return Response(s_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
+            ## DELETE SKILL FOR THAT STAFF ##
+            if delete_skills is not None:
+                for delete_skill in delete_skills:
+                    d_skill = StaffSkill.objects.get(id=delete_skill)
+                    d_skill.delete()
 
-        ## ADD AND UPDATE SKILL FOR THAT STAFF##
-        if skills is not None:
-            for skill in skills:
-                if skill['id'] == '':
-                    # ADD NEW SKILL FOR STAFF #
-                    skill.pop("id")
-                    ns_serializer = StaffSkillSerializer(data=skill)
-                    if ns_serializer.is_valid():
-                        ns_serializer.save()
+            ## ADD AND UPDATE SKILL FOR THAT STAFF##
+            if skills is not None:
+                for skill in skills:
+                    if skill['id'] == '':
+                        # ADD NEW SKILL FOR STAFF #
+                        skill.pop("id")
+                        ns_serializer = StaffSkillSerializer(data=skill)
+                        if ns_serializer.is_valid():
+                            ns_serializer.save()
+                        else:
+                            return Response(ns_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
                     else:
-                        return Response(ns_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                else:
-                    # UPDATE OLD SIKLL  #
-                    o_skill = StaffSkill.objects.get(id=skill['id'])
-                    os_serializer = StaffSkillSerializer(o_skill, data=skill, partial=True)
-                    if os_serializer.is_valid():
-                        os_serializer.save()
-                    else:
-                        return Response(os_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                        # UPDATE OLD SIKLL  #
+                        o_skill = StaffSkill.objects.get(id=skill['id'])
+                        os_serializer = StaffSkillSerializer(o_skill, data=skill, partial=True)
+                        if os_serializer.is_valid():
+                            os_serializer.save()
+                        else:
+                            return Response(os_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response({"staff_data":s_serializer.data})
+            return Response({"staff_data":s_serializer.data})
+        except Exception as e:
+            logger.error(f"API: Staff Update - An error occurred: {str(e)}.\nRequest data: {request.data}", exc_info=True)
+
+            return Response()
 
 
 class StaffSkillViewSet(viewsets.ModelViewSet):
@@ -331,309 +390,664 @@ class QuotationViewSet(viewsets.ModelViewSet):
         return queryset
 
     def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
+        try:
+            instance = self.get_object()
 
-        return Response(quotation_get(instance.id))
+            return Response(quotation_get(instance.id))
+        except Exception as e:
+            logger.error(f"API: Quotation Retrieve - An error occurred: {str(e)}", exc_info=True)
 
-    def create(self, request, *args, **kwargs): 
-        quotation =request.data['quotation_data']
-        datas = request.data['datas']
-        transaction = request.data['transaction_data']
-        linktransaction_data = request.data.get('linktransaction_data', None)
+            return Response()
 
-        ### FOR ADD QUOTATION DATA ###
-        quotationSerializer = QuotationSerializer(data=quotation)
-        if quotationSerializer.is_valid():
-            quotation_instance = quotationSerializer.save()
-        else:
-            return Response(quotationSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-        final_evnetday_data = []
-        final_eventdetails_data = []
-        final_inventorydetails_data = []
-        final_exposuredetails_data = []
+    def create(self, request, *args, **kwargs):
+        try:
+            quotation =request.data['quotation_data']
+            datas = request.data['datas']
+            transaction = request.data['transaction_data']
+            linktransaction_data = request.data.get('linktransaction_data', None)
 
-        # quotation_data(quotation_instance.id, datas)
-
-        for data in datas:
-            ### FOR ADD EVENT DAY DATA ###
-            eventdate_data = {'event_date': data['event_date'],
-                              'quotation_id':quotation_instance.id}
-            eventdaySerializer = EventDaySerializer(data=eventdate_data)
-            if eventdaySerializer.is_valid():
-                eventday_instance = eventdaySerializer.save()
-                final_evnetday_data.append(eventday_instance)
+            ### FOR ADD QUOTATION DATA ###
+            quotationSerializer = QuotationSerializer(data=quotation)
+            if quotationSerializer.is_valid():
+                quotation_instance = quotationSerializer.save()
             else:
-                return Response(eventdaySerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                return Response(quotationSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
-            ### FOR ADD EVENT DETAILS DATA ###
-            eventdetails_datas = data['event_details']
-            for eventdetails_data in eventdetails_datas:
-                eventdetails_data['eventday_id'] = eventday_instance.id
-                eventdetails_data['quotation_id'] = quotation_instance.id
-
-                eventdetailsSerializer = EventDetailsSerializer(data=eventdetails_data)
-                if eventdetailsSerializer.is_valid():
-                    eventdetails_instance = eventdetailsSerializer.save()
-                    final_eventdetails_data.append(eventdetails_instance)
-                else:
-                    return Response(eventdetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            
-            descriptions = data['descriptions']
-            for description in descriptions:
-                ### FOR INVENTORY DETAILS DATA ###
-                inventorydetails_data = {
-                    'inventory_id':description.pop('inventory_id'),
-                    'price':description.pop('price'),
-                    'qty':description.pop('qty'),
-                    'profit':description.pop('profit'),
-                    'eventday_id':eventday_instance.id}
-                
-                inventorydetailsSerializer = InventoryDetailsSerializer(data=inventorydetails_data)
-                if inventorydetailsSerializer.is_valid():
-                    inventorydetails_instance = inventorydetailsSerializer.save()
-                    final_inventorydetails_data.append(inventorydetails_instance)
-                else:
-                    return Response(inventorydetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                
-                inventory = Inventory.objects.get(pk=inventorydetails_data['inventory_id'])
-                if inventory.type == 'service':
-                    ### FOR EXPOSURE DETAILS DATA ###
-                    exposuredetails = description.get('exposure', None)
-                    if exposuredetails is not None:
-                        for exposuredetail in exposuredetails:
-                            evnetdetials =[]
-                            allocations = exposuredetail['allocation']
-                            for allocation in allocations:
-                                for single_eventdetails in final_eventdetails_data:
-                                    event_id = single_eventdetails.event_id.id
-                                    if event_id == int(allocation):
-                                        evnetdetials.append(single_eventdetails.id)
-
-                            exposuredetails_data = {
-                                'staff_id':exposuredetail['staff_id'],
-                                'price':exposuredetail['price'],
-                                'eventdetails':evnetdetials,
-                                'inventorydetails_id':inventorydetails_instance.id}
-                            
-                            exposuredetailsSerializer = ExposureDetailsSerializer(data=exposuredetails_data)
-                            if exposuredetailsSerializer.is_valid():
-                                exposuredetails_instance = exposuredetailsSerializer.save()
-                                final_exposuredetails_data.append(exposuredetails_instance)
-                            else:
-                                return Response(exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        ### FOR ADD TRANSACTION DATA ###
-        if transaction['is_converted'] == 'true':
-            transaction['type'] = 'event_sale'
-        else:
-            transaction['type'] = 'estimate'
-        transaction['quotation_id'] = quotation_instance.id
-        transaction['customer_id'] = quotation_instance.customer_id.id
-        transactionSerializer = TransactionSerializer(data = transaction)
-        if transactionSerializer.is_valid():
-            transaction_instance = transactionSerializer.save()
-        else:
-            return Response(transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-        if transaction['is_converted'] == 'true':
-            new_amount = transaction_instance.total_amount - transaction_instance.recived_or_paid_amount
-            balance_amount(quotation_instance.customer_id.id, None, 0 , new_amount, transaction_instance.type)
-
-        ### LINK TRNASACTION 
-        if transaction['is_converted'] == 'true' and linktransaction_data is not None:
-            link_transaction(transaction_instance.id, linktransaction_data, transaction_instance.type)
-
-        ### ADD BILL FOR EXOISURE ###
-        if transaction['is_converted'] == 'true':
-            finall_instance = []
-            for i in final_exposuredetails_data:
-                i_transaction_data = {
-                    'user_id':transaction['user_id'],
-                    'type' : "event_purchase",
-                    'staff_id' : i.staff_id.id,
-                    'total_amount' : i.price,
-                    'exposuredetails_id':i.id,
-                    'date': date.today()}
-                i_transactionSerializer = TransactionSerializer(data=i_transaction_data)
-                if i_transactionSerializer.is_valid():
-                    t_instance = i_transactionSerializer.save()
-                    finall_instance.append(t_instance)
-                else:
-                    return Response(i_transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                
-                new_amount = t_instance.total_amount - t_instance.recived_or_paid_amount
-                balance_amount(None, t_instance.staff_id.id, 0 , new_amount, transaction_instance.type)
-
-        return Response(quotation_get(quotation_instance.id))
-
-    def update(self, request, pk=None, *args, **kwargs):
-        quotation_data = request.data.get('quotation_data', None)
-        copy_quotation_data = quotation_data
-        datas = request.data.get('datas', None)
-        copy_datas = datas
-        delete_exposures = request.data.get('delete_exposure', None)
-        delete_inventorys = request.data.get('delete_inventory', None)
-        delete_events = request.data.get('delete_event', None)
-        delete_eventdays = request.data.get('delete_eventday', None)
-        transaction_data = request.data.get('transaction_data', None)
-        linktransaction_data = request.data.get('linktransaction_data', None)
-
-        transaction = Transaction.objects.get(quotation_id = pk)
-        old_amount = transaction.total_amount - transaction.recived_or_paid_amount
-
-        ### NOT CONVERTED TRANSACTION ###
-        if transaction.is_converted == False:
-            convert_status = transaction_data['is_converted']
-            ### FOR UPDATE QUOTATION DATA ###
-            quotation = Quotation.objects.get(pk=pk)
-            q_serializer = QuotationSerializer(quotation, data=quotation_data, partial=True)
-            if q_serializer.is_valid():
-                quotation_instance = q_serializer.save()
-            else:
-                return Response(q_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            
+            final_evnetday_data = []
             final_eventdetails_data = []
             final_inventorydetails_data = []
             final_exposuredetails_data = []
 
-            ### FOR ADD AND UPDATE OTHER DATA ### 
-            if datas is not None:
-                for data in datas:
-                    ### FOR ADD AND UPDATE EVENT DAY ###
-                    eventdate_data = {
-                        'id': data['id'],
-                        'event_date': data['event_date'],
-                        'quotation_id':quotation_instance.id}
+            # quotation_data(quotation_instance.id, datas)
 
-                    if eventdate_data['id'] == '':
-                        # print(":::: NEW DAY ADDED ::::")
-                        eventdate_data.pop('id')
-                        n_eventdaySerializer = EventDaySerializer(data=eventdate_data)
-                        if n_eventdaySerializer.is_valid():
-                            eventday_instance = n_eventdaySerializer.save()
+            for data in datas:
+                ### FOR ADD EVENT DAY DATA ###
+                eventdate_data = {'event_date': data['event_date'],
+                                'quotation_id':quotation_instance.id}
+                eventdaySerializer = EventDaySerializer(data=eventdate_data)
+                if eventdaySerializer.is_valid():
+                    eventday_instance = eventdaySerializer.save()
+                    final_evnetday_data.append(eventday_instance)
+                else:
+                    return Response(eventdaySerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                
+                ### FOR ADD EVENT DETAILS DATA ###
+                eventdetails_datas = data['event_details']
+                for eventdetails_data in eventdetails_datas:
+                    eventdetails_data['eventday_id'] = eventday_instance.id
+                    eventdetails_data['quotation_id'] = quotation_instance.id
+
+                    eventdetailsSerializer = EventDetailsSerializer(data=eventdetails_data)
+                    if eventdetailsSerializer.is_valid():
+                        eventdetails_instance = eventdetailsSerializer.save()
+                        final_eventdetails_data.append(eventdetails_instance)
+                    else:
+                        return Response(eventdetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                
+                descriptions = data['descriptions']
+                for description in descriptions:
+                    ### FOR INVENTORY DETAILS DATA ###
+                    inventorydetails_data = {
+                        'inventory_id':description.pop('inventory_id'),
+                        'price':description.pop('price'),
+                        'qty':description.pop('qty'),
+                        'profit':description.pop('profit'),
+                        'eventday_id':eventday_instance.id}
+                    
+                    inventorydetailsSerializer = InventoryDetailsSerializer(data=inventorydetails_data)
+                    if inventorydetailsSerializer.is_valid():
+                        inventorydetails_instance = inventorydetailsSerializer.save()
+                        final_inventorydetails_data.append(inventorydetails_instance)
+                    else:
+                        return Response(inventorydetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    
+                    inventory = Inventory.objects.get(pk=inventorydetails_data['inventory_id'])
+                    if inventory.type == 'service':
+                        ### FOR EXPOSURE DETAILS DATA ###
+                        exposuredetails = description.get('exposure', None)
+                        if exposuredetails is not None:
+                            for exposuredetail in exposuredetails:
+                                evnetdetials =[]
+                                allocations = exposuredetail['allocation']
+                                for allocation in allocations:
+                                    for single_eventdetails in final_eventdetails_data:
+                                        event_id = single_eventdetails.event_id.id
+                                        if event_id == int(allocation):
+                                            evnetdetials.append(single_eventdetails.id)
+
+                                exposuredetails_data = {
+                                    'staff_id':exposuredetail['staff_id'],
+                                    'price':exposuredetail['price'],
+                                    'eventdetails':evnetdetials,
+                                    'inventorydetails_id':inventorydetails_instance.id}
+                                
+                                exposuredetailsSerializer = ExposureDetailsSerializer(data=exposuredetails_data)
+                                if exposuredetailsSerializer.is_valid():
+                                    exposuredetails_instance = exposuredetailsSerializer.save()
+                                    final_exposuredetails_data.append(exposuredetails_instance)
+                                else:
+                                    return Response(exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            ### FOR ADD TRANSACTION DATA ###
+            if transaction['is_converted'] == 'true':
+                transaction['type'] = 'event_sale'
+            else:
+                transaction['type'] = 'estimate'
+            transaction['quotation_id'] = quotation_instance.id
+            transaction['customer_id'] = quotation_instance.customer_id.id
+            transactionSerializer = TransactionSerializer(data = transaction)
+            if transactionSerializer.is_valid():
+                transaction_instance = transactionSerializer.save()
+            else:
+                return Response(transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
+            if transaction['is_converted'] == 'true':
+                new_amount = transaction_instance.total_amount - transaction_instance.recived_or_paid_amount
+                balance_amount(quotation_instance.customer_id.id, None, 0 , new_amount, transaction_instance.type)
+
+            ### LINK TRNASACTION 
+            if transaction['is_converted'] == 'true' and linktransaction_data is not None:
+                link_transaction(transaction_instance.id, linktransaction_data, transaction_instance.type)
+
+            ### ADD BILL FOR EXOISURE ###
+            if transaction['is_converted'] == 'true':
+                finall_instance = []
+                for i in final_exposuredetails_data:
+                    i_transaction_data = {
+                        'user_id':transaction['user_id'],
+                        'type' : "event_purchase",
+                        'staff_id' : i.staff_id.id,
+                        'total_amount' : i.price,
+                        'exposuredetails_id':i.id,
+                        'date': date.today()}
+                    i_transactionSerializer = TransactionSerializer(data=i_transaction_data)
+                    if i_transactionSerializer.is_valid():
+                        t_instance = i_transactionSerializer.save()
+                        finall_instance.append(t_instance)
+                    else:
+                        return Response(i_transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    
+                    new_amount = t_instance.total_amount - t_instance.recived_or_paid_amount
+                    balance_amount(None, t_instance.staff_id.id, 0 , new_amount, transaction_instance.type)
+
+            return Response(quotation_get(quotation_instance.id))
+        except Exception as e:
+            logger.error(f"API: Quotation Create - An error occurred: {str(e)}.\nRequest data: {request.data}", exc_info=True)
+
+            return Response()
+
+    def update(self, request, pk=None, *args, **kwargs):
+        try:
+            quotation_data = request.data.get('quotation_data', None)
+            copy_quotation_data = quotation_data
+            datas = request.data.get('datas', None)
+            copy_datas = datas
+            delete_exposures = request.data.get('delete_exposure', None)
+            delete_inventorys = request.data.get('delete_inventory', None)
+            delete_events = request.data.get('delete_event', None)
+            delete_eventdays = request.data.get('delete_eventday', None)
+            transaction_data = request.data.get('transaction_data', None)
+            linktransaction_data = request.data.get('linktransaction_data', None)
+
+            transaction = Transaction.objects.get(quotation_id = pk)
+            old_amount = transaction.total_amount - transaction.recived_or_paid_amount
+
+            ### NOT CONVERTED TRANSACTION ###
+            if transaction.is_converted == False:
+                convert_status = transaction_data['is_converted']
+                ### FOR UPDATE QUOTATION DATA ###
+                quotation = Quotation.objects.get(pk=pk)
+                q_serializer = QuotationSerializer(quotation, data=quotation_data, partial=True)
+                if q_serializer.is_valid():
+                    quotation_instance = q_serializer.save()
+                else:
+                    return Response(q_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                
+                final_eventdetails_data = []
+                final_inventorydetails_data = []
+                final_exposuredetails_data = []
+
+                ### FOR ADD AND UPDATE OTHER DATA ### 
+                if datas is not None:
+                    for data in datas:
+                        ### FOR ADD AND UPDATE EVENT DAY ###
+                        eventdate_data = {
+                            'id': data['id'],
+                            'event_date': data['event_date'],
+                            'quotation_id':quotation_instance.id}
+
+                        if eventdate_data['id'] == '':
+                            # print(":::: NEW DAY ADDED ::::")
+                            eventdate_data.pop('id')
+                            n_eventdaySerializer = EventDaySerializer(data=eventdate_data)
+                            if n_eventdaySerializer.is_valid():
+                                eventday_instance = n_eventdaySerializer.save()
+                            else:
+                                return Response(n_eventdaySerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                            
+                            ### FOR ADD EVENT DETAILS DATA ###
+                            eventdetails_datas = data['event_details']
+                            for eventdetails_data in eventdetails_datas:
+                                eventdetails_data['eventday_id'] = eventday_instance.id
+                                eventdetails_data['quotation_id'] = quotation_instance.id
+                                eventdetailsSerializer = EventDetailsSerializer(data=eventdetails_data)
+                                if eventdetailsSerializer.is_valid():
+                                    eventdetails_instance = eventdetailsSerializer.save()
+                                    final_eventdetails_data.append(eventdetails_instance)
+                                else:
+                                    return Response(eventdetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                            
+                            descriptions = data['descriptions']
+                            for description in descriptions:
+                                ### FOR INVENTORY DETAILS DATA ###
+                                inventorydetails_data = {
+                                    'inventory_id':description['inventory_id'],
+                                    'price':description['price'],
+                                    'qty':description['qty'],
+                                    'profit':description['profit'],
+                                    'eventday_id':eventday_instance.id}
+
+                                inventorydetailsSerializer = InventoryDetailsSerializer(data=inventorydetails_data)
+                                if inventorydetailsSerializer.is_valid():
+                                    inventorydetails_instance = inventorydetailsSerializer.save()
+                                    final_inventorydetails_data.append(inventorydetails_instance)
+                                else:
+                                    return Response(inventorydetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                                
+                                inventory = Inventory.objects.get(pk=inventorydetails_data['inventory_id'])
+                                if inventory.type == 'service':
+                                    ### FOR EXPOSURE DETAILS DATA ###
+                                    exposuredetails = description.get('exposure', None)
+                                    if exposuredetails is not None:
+                                        for exposuredetail in exposuredetails:
+                                            evnetdetials =[]
+                                            allocations = exposuredetail['allocation']
+                                            for allocation in allocations:
+                                                for single_eventdetails in final_eventdetails_data:
+                                                    event_id = single_eventdetails.event_id.id
+                                                    if event_id == int(allocation):
+                                                        evnetdetials.append(single_eventdetails.id)
+
+                                            exposuredetails_data = {
+                                                'staff_id':exposuredetail['staff_id'],
+                                                'price':exposuredetail['price'],
+                                                'eventdetails':evnetdetials,
+                                                'inventorydetails_id':inventorydetails_instance.id}
+                                            
+                                            exposuredetailsSerializer = ExposureDetailsSerializer(data=exposuredetails_data)
+                                            if exposuredetailsSerializer.is_valid():
+                                                exposuredetails_instance = exposuredetailsSerializer.save()
+                                                final_exposuredetails_data.append(exposuredetails_instance)
+                                            else:
+                                                return Response(exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)                    
+                                
                         else:
-                            return Response(n_eventdaySerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                            # print(":::: OLD DAY UPDATED ::::")
+                            o_eventday = EventDay.objects.get(pk=eventdate_data['id'])
+                            o_eventdaySerializer = EventDaySerializer(o_eventday, data=eventdate_data, partial=True)
+                            if o_eventdaySerializer.is_valid():
+                                o_eventdaySerializer.save()
+                            else:
+                                return Response(o_eventdaySerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                                    
+                            eventdetails_datas = data['event_details']
+                            for eventdetails_data in eventdetails_datas:
+                                if eventdetails_data['id'] == '':
+                                    # print("::: NEW EVENT DETAILS :::")
+                                    eventdetails_data.pop('id')
+                                    n_eventdetailsSerializer = EventDetailsSerializer(data=eventdetails_data)
+                                    if n_eventdetailsSerializer.is_valid():
+                                        eventdetails_instance = n_eventdetailsSerializer.save()
+                                        final_eventdetails_data.append(eventdetails_instance)
+                                    else:
+                                        return Response(n_eventdetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                                else:
+                                    # print("::: OLD EVENT DETAILS :::")
+                                    o_eventdetail = EventDetails.objects.get(pk=eventdetails_data['id'])
+                                    o_eventdetailsSerializer = EventDetailsSerializer(o_eventdetail, data=eventdetails_data, partial=True)
+                                    if o_eventdetailsSerializer.is_valid():
+                                        eventdetails_instance = o_eventdetailsSerializer.save()
+                                        final_eventdetails_data.append(eventdetails_instance)
+                                    else:
+                                        return Response(o_eventdetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                                    
+                            descriptions = data['descriptions']
+                            for description in descriptions:
+                                inventorydetails_data = {
+                                    'id':description['id'],
+                                    'inventory_id':description['inventory_id'],
+                                    'price':description['price'],
+                                    'qty':description['qty'],
+                                    'profit':description['profit'],
+                                    'eventday_id':description['eventday_id']}
+
+                                if inventorydetails_data['id'] == '':
+                                    # print("::: NEW INVENTORY DETAILS :::")
+                                    inventorydetails_data.pop('id')
+                                    n_inventorydetailsSerializer = InventoryDetailsSerializer(data=inventorydetails_data)
+                                    if n_inventorydetailsSerializer.is_valid():
+                                        inventorydetails_instance = n_inventorydetailsSerializer.save()
+                                        final_inventorydetails_data.append(inventorydetails_instance)
+                                    else:
+                                        return Response(n_inventorydetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                                else:
+                                    # print("::: OLD INVENTORY DETAILS :::")
+                                    o_inventorydetails = InventoryDetails.objects.get(pk=inventorydetails_data['id'])
+                                    o_inventorydetailsSerializer = InventoryDetailsSerializer(o_inventorydetails, data=inventorydetails_data, partial=True)
+                                    if o_inventorydetailsSerializer.is_valid():
+                                        inventorydetails_instance = o_inventorydetailsSerializer.save()
+                                        final_inventorydetails_data.append(inventorydetails_instance)
+                                    else:
+                                        return Response(o_inventorydetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                                    
+                                inventory = Inventory.objects.get(pk=inventorydetails_data['inventory_id'])
+                                if inventory.type == 'service':
+                                    exposuredetails = description.get('exposure', None)
+                                    if exposuredetails is not None:
+                                        for exposuredetail in exposuredetails:
+                                            evnetdetials =[]
+                                            allocations = exposuredetail['allocation']
+                                            for allocation in allocations:
+                                                for single_eventdetails in final_eventdetails_data:
+                                                    event_id = single_eventdetails.event_id.id
+                                                    if event_id == int(allocation):
+                                                        evnetdetials.append(single_eventdetails.id)
+
+                                            exposuredetails_data = {
+                                                'id':exposuredetail['id'],
+                                                'staff_id':exposuredetail['staff_id'],
+                                                'price':exposuredetail['price'],
+                                                'inventorydetails_id':inventorydetails_instance.id,
+                                                'eventdetails':evnetdetials}
+                                            
+                                            if exposuredetails_data['id'] == '':
+                                                # print("::: NEW EXPOSURE DETAILS :::")
+                                                exposuredetails_data.pop('id')
+                                                n_exposuredetailsSerializer = ExposureDetailsSerializer(data=exposuredetails_data)
+                                                if n_exposuredetailsSerializer.is_valid():
+                                                    exposuredetails_instance = n_exposuredetailsSerializer.save()
+                                                    final_exposuredetails_data.append(exposuredetails_instance)
+                                                else:
+                                                    return Response(n_exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                                            else:
+                                                # print("::: NEW OLD DETAILS :::")
+                                                o_exposuredetails = ExposureDetails.objects.get(pk=exposuredetails_data['id'])
+                                                o_exposuredetailsSerializer = ExposureDetailsSerializer(o_exposuredetails, data=exposuredetails_data, partial=True)
+                                                if o_exposuredetailsSerializer.is_valid():
+                                                    exposuredetails_instance = o_exposuredetailsSerializer.save()
+                                                    final_exposuredetails_data.append(exposuredetails_instance)
+                                                else:
+                                                    return Response(o_exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+                ### DELETE EXPOSURES DETAILS ###
+                if delete_exposures is not None:
+                    for delete_exposure in delete_exposures:
+                        d_exposure = ExposureDetails.objects.get(pk=delete_exposure)
+                        d_exposure.delete()
+
+                ### DELETE INVENTORYS DETAILS ###
+                if delete_inventorys is not None:
+                    for delete_inventory in delete_inventorys:
+                        d_inventory = InventoryDetails.objects.get(pk=delete_inventory)
+                        d_inventory.delete()
+
+                ### DELETE EVENTS DETAILS ###
+                if delete_events is not None:
+                    for delete_event in delete_events:
+                        d_event = EventDetails.objects.get(pk=delete_event)
+                        d_event.delete()
+
+                ### DELETE EVENT DAY DETAILS ###
+                if delete_eventdays is not None:
+                    for delete_eventday in delete_eventdays:
+                        d_eventday = EventDay.objects.get(pk=delete_eventday)
+                        d_eventday.delete()
+
+                ## UPDATE TRANSACTON DETAILS ###
+                if transaction_data is not None:
+                    if convert_status == 'true':
+                        transaction_data['is_converted'] = True
+                    else:
+                        transaction_data['is_converted'] = False
+                    transaction_data['type'] = 'estimate'
+                    t_serializer = TransactionSerializer(transaction, data=transaction_data, partial=True)
+                    if t_serializer.is_valid():
+                        t_serializer.save()
+                    else:
+                        return Response(t_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+                ### MAKE A COPY OF TRANSACTION AND QUOTATION ###
+                if convert_status == 'true':
+                    ### QUOTATION COPY ###
+                    copy_quotationSerializer = QuotationSerializer(data=copy_quotation_data)
+                    if copy_quotationSerializer.is_valid():
+                        copy_quotation_instance = copy_quotationSerializer.save()
+                    else:
+                        return Response(copy_quotationSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    
+                    copy_final_eventdetails_data = []
+                    copy_final_inventorydetails_data = []
+                    copy_final_exposuredetails_data = []
+
+                    for copy_data in copy_datas:
+                        ### FOR ADD EVENT DAY DATA ###
+                        copy_eventdate_data = {
+                            'event_date': copy_data['event_date'],
+                            'quotation_id':copy_quotation_instance.id}
+                        copy_eventdaySerializer = EventDaySerializer(data=copy_eventdate_data)
+                        if copy_eventdaySerializer.is_valid():
+                            copy_eventday_instance = copy_eventdaySerializer.save()
+                        else:
+                            return Response(copy_eventdaySerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                         
                         ### FOR ADD EVENT DETAILS DATA ###
-                        eventdetails_datas = data['event_details']
-                        for eventdetails_data in eventdetails_datas:
-                            eventdetails_data['eventday_id'] = eventday_instance.id
-                            eventdetails_data['quotation_id'] = quotation_instance.id
-                            eventdetailsSerializer = EventDetailsSerializer(data=eventdetails_data)
-                            if eventdetailsSerializer.is_valid():
-                                eventdetails_instance = eventdetailsSerializer.save()
-                                final_eventdetails_data.append(eventdetails_instance)
+                        copy_eventdetails_datas = copy_data['event_details']
+                        for copy_eventdetails_data in copy_eventdetails_datas:
+                            copy_eventdetails_data['eventday_id'] = copy_eventday_instance.id
+                            copy_eventdetails_data['quotation_id'] = copy_quotation_instance.id
+                            copy_eventdetailsSerializer = EventDetailsSerializer(data=copy_eventdetails_data)
+                            if copy_eventdetailsSerializer.is_valid():
+                                copy_eventdetails_instance = copy_eventdetailsSerializer.save()
+                                copy_final_eventdetails_data.append(copy_eventdetails_instance)
                             else:
-                                return Response(eventdetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                                return Response(copy_eventdetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                         
-                        descriptions = data['descriptions']
-                        for description in descriptions:
+                        copy_descriptions = copy_data['descriptions']
+                        for copy_description in copy_descriptions:
                             ### FOR INVENTORY DETAILS DATA ###
-                            inventorydetails_data = {
-                                'inventory_id':description['inventory_id'],
-                                'price':description['price'],
-                                'qty':description['qty'],
-                                'profit':description['profit'],
-                                'eventday_id':eventday_instance.id}
-
-                            inventorydetailsSerializer = InventoryDetailsSerializer(data=inventorydetails_data)
-                            if inventorydetailsSerializer.is_valid():
-                                inventorydetails_instance = inventorydetailsSerializer.save()
-                                final_inventorydetails_data.append(inventorydetails_instance)
-                            else:
-                                return Response(inventorydetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                            copy_inventorydetails_data = {
+                                'inventory_id':copy_description['inventory_id'],
+                                'price':copy_description['price'],
+                                'qty':copy_description['qty'],
+                                'profit':copy_description['profit'],
+                                'eventday_id':copy_eventday_instance.id}
                             
-                            inventory = Inventory.objects.get(pk=inventorydetails_data['inventory_id'])
-                            if inventory.type == 'service':
+                            copy_inventorydetailsSerializer = InventoryDetailsSerializer(data=copy_inventorydetails_data)
+                            if copy_inventorydetailsSerializer.is_valid():
+                                copy_inventorydetails_instance = copy_inventorydetailsSerializer.save()
+                                copy_final_inventorydetails_data.append(copy_inventorydetails_instance)
+                            else:
+                                return Response(copy_inventorydetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                            
+                            copy_inventory = Inventory.objects.get(pk=copy_inventorydetails_data['inventory_id'])
+                            if copy_inventory.type == 'service':
+
                                 ### FOR EXPOSURE DETAILS DATA ###
-                                exposuredetails = description.get('exposure', None)
-                                if exposuredetails is not None:
-                                    for exposuredetail in exposuredetails:
-                                        evnetdetials =[]
-                                        allocations = exposuredetail['allocation']
-                                        for allocation in allocations:
-                                            for single_eventdetails in final_eventdetails_data:
-                                                event_id = single_eventdetails.event_id.id
-                                                if event_id == int(allocation):
-                                                    evnetdetials.append(single_eventdetails.id)
+                                copy_exposuredetails = copy_description.get('exposure', None)
+                                if copy_exposuredetails is not None:
+                                    for copy_exposuredetail in copy_exposuredetails:
+                                        copy_evnetdetials =[]
+                                        copy_allocations = copy_exposuredetail['allocation']
+                                        for copy_allocation in copy_allocations:
+                                            for copy_single_eventdetails in copy_final_eventdetails_data:
+                                                copy_event_id = copy_single_eventdetails.event_id.id
+                                                if copy_event_id == int(copy_allocation):
+                                                    copy_evnetdetials.append(copy_single_eventdetails.id)
 
-                                        exposuredetails_data = {
-                                            'staff_id':exposuredetail['staff_id'],
-                                            'price':exposuredetail['price'],
-                                            'eventdetails':evnetdetials,
-                                            'inventorydetails_id':inventorydetails_instance.id}
+                                        copy_exposuredetails_data = {
+                                            'staff_id':copy_exposuredetail['staff_id'],
+                                            'price':copy_exposuredetail['price'],
+                                            'eventdetails':copy_evnetdetials,
+                                            'inventorydetails_id':copy_inventorydetails_instance.id}
                                         
-                                        exposuredetailsSerializer = ExposureDetailsSerializer(data=exposuredetails_data)
-                                        if exposuredetailsSerializer.is_valid():
-                                            exposuredetails_instance = exposuredetailsSerializer.save()
-                                            final_exposuredetails_data.append(exposuredetails_instance)
+                                        copy_exposuredetailsSerializer = ExposureDetailsSerializer(data=copy_exposuredetails_data)
+                                        if copy_exposuredetailsSerializer.is_valid():
+                                            copy_exposuredetails_instance = copy_exposuredetailsSerializer.save()
+                                            copy_final_exposuredetails_data.append(copy_exposuredetails_instance)
                                         else:
-                                            return Response(exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)                    
-                            
-                    else:
-                        # print(":::: OLD DAY UPDATED ::::")
-                        o_eventday = EventDay.objects.get(pk=eventdate_data['id'])
-                        o_eventdaySerializer = EventDaySerializer(o_eventday, data=eventdate_data, partial=True)
-                        if o_eventdaySerializer.is_valid():
-                            o_eventdaySerializer.save()
-                        else:
-                            return Response(o_eventdaySerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                                
-                        eventdetails_datas = data['event_details']
-                        for eventdetails_data in eventdetails_datas:
-                            if eventdetails_data['id'] == '':
-                                # print("::: NEW EVENT DETAILS :::")
-                                eventdetails_data.pop('id')
-                                n_eventdetailsSerializer = EventDetailsSerializer(data=eventdetails_data)
-                                if n_eventdetailsSerializer.is_valid():
-                                    eventdetails_instance = n_eventdetailsSerializer.save()
-                                    final_eventdetails_data.append(eventdetails_instance)
-                                else:
-                                    return Response(n_eventdetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                            else:
-                                # print("::: OLD EVENT DETAILS :::")
-                                o_eventdetail = EventDetails.objects.get(pk=eventdetails_data['id'])
-                                o_eventdetailsSerializer = EventDetailsSerializer(o_eventdetail, data=eventdetails_data, partial=True)
-                                if o_eventdetailsSerializer.is_valid():
-                                    eventdetails_instance = o_eventdetailsSerializer.save()
-                                    final_eventdetails_data.append(eventdetails_instance)
-                                else:
-                                    return Response(o_eventdetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                                
-                        descriptions = data['descriptions']
-                        for description in descriptions:
-                            inventorydetails_data = {
-                                'id':description['id'],
-                                'inventory_id':description['inventory_id'],
-                                'price':description['price'],
-                                'qty':description['qty'],
-                                'profit':description['profit'],
-                                'eventday_id':description['eventday_id']}
+                                            return Response(copy_exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-                            if inventorydetails_data['id'] == '':
-                                # print("::: NEW INVENTORY DETAILS :::")
-                                inventorydetails_data.pop('id')
-                                n_inventorydetailsSerializer = InventoryDetailsSerializer(data=inventorydetails_data)
-                                if n_inventorydetailsSerializer.is_valid():
-                                    inventorydetails_instance = n_inventorydetailsSerializer.save()
-                                    final_inventorydetails_data.append(inventorydetails_instance)
-                                else:
-                                    return Response(n_inventorydetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    ### TRANSACTION COPY ###
+                    # print("ADD TRANSACTION COPY")
+                    transaction_data.pop('id')
+                    transaction_data['is_converted'] = True
+                    transaction_data['type'] = 'event_sale'
+                    transaction_data['quotation_id'] = copy_quotation_instance.id
+                    transaction_data['customer_id'] = copy_quotation_instance.customer_id.id
+                    copy_transactionSerializer = TransactionSerializer(data=transaction_data)
+                    if copy_transactionSerializer.is_valid():
+                        copy_transaction_instance = copy_transactionSerializer.save()
+                    else:
+                        return Response(copy_transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+                    new_amount = copy_transaction_instance.total_amount - copy_transaction_instance.recived_or_paid_amount
+                    balance_amount(copy_transaction_instance.customer_id.id, None, 0 , new_amount, copy_transaction_instance.type)
+
+                    ### LINK TRNASACTION 
+                    linktransaction_data = request.data.get('linktransaction_data', None)
+                    if linktransaction_data is not None:
+                        link_transaction(copy_transaction_instance.id, linktransaction_data, copy_transaction_instance.type)
+
+                    ### ADD BILL FOR EXOISURE ###
+                    finall_instance = []
+                    for i in copy_final_exposuredetails_data:
+                        i_transaction_data = {
+                            'user_id': transaction.user_id.id,
+                            'type' : "event_purchase",
+                            'staff_id' : i.staff_id.id,
+                            'total_amount' : i.price,
+                            'exposuredetails_id':i.id,
+                            'date': date.today()}
+                        
+                        i_transactionSerializer = TransactionSerializer(data=i_transaction_data)
+                        if i_transactionSerializer.is_valid():
+                            t_instance = i_transactionSerializer.save()
+                            finall_instance.append(t_instance)
+                        else:
+                            return Response(i_transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                        
+                        new_amount = t_instance.total_amount - t_instance.recived_or_paid_amount
+                        balance_amount(None, t_instance.staff_id.id, 0 , new_amount, t_instance.type)
+
+            ### CONVERTED TRANSACTION ###
+            else:
+                quotation = Quotation.objects.get(pk=pk)
+                q_serializer = QuotationSerializer(quotation, data=quotation_data, partial=True)
+                if q_serializer.is_valid():
+                    quotation_instance = q_serializer.save()
+                else:
+                    return Response(q_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                
+                final_eventdetails_data = []
+                final_inventorydetails_data = []
+                final_exposuredetails_data = []
+
+                ### FOR ADD AND UPDATE OTHER DATA ### 
+                if datas is not None:
+                    for data in datas:
+
+                        ### FOR ADD AND UPDATE EVENT DAY ###
+                        eventdate_data = {
+                            'id': data['id'],
+                            'event_date': data['event_date'],
+                            'quotation_id':quotation_instance.id}
+
+                        if eventdate_data['id'] == '':
+                            eventdate_data.pop('id')
+                            n_eventdaySerializer = EventDaySerializer(data=eventdate_data)
+                            if n_eventdaySerializer.is_valid():
+                                eventday_instance = n_eventdaySerializer.save()
                             else:
-                                # print("::: OLD INVENTORY DETAILS :::")
-                                o_inventorydetails = InventoryDetails.objects.get(pk=inventorydetails_data['id'])
-                                o_inventorydetailsSerializer = InventoryDetailsSerializer(o_inventorydetails, data=inventorydetails_data, partial=True)
-                                if o_inventorydetailsSerializer.is_valid():
-                                    inventorydetails_instance = o_inventorydetailsSerializer.save()
+                                return Response(n_eventdaySerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                            
+                            ### FOR ADD EVENT DETAILS DATA ###
+                            eventdetails_datas = data['event_details']
+                            for eventdetails_data in eventdetails_datas:
+                                eventdetails_data['eventday_id'] = eventday_instance.id
+                                eventdetails_data['quotation_id'] = quotation_instance.id
+                                eventdetailsSerializer = EventDetailsSerializer(data=eventdetails_data)
+                                if eventdetailsSerializer.is_valid():
+                                    eventdetails_instance = eventdetailsSerializer.save()
+                                    final_eventdetails_data.append(eventdetails_instance)
+                                else:
+                                    return Response(eventdetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                            
+                            descriptions = data['descriptions']
+                            for description in descriptions:
+                                ### FOR INVENTORY DETAILS DATA ###
+                                inventorydetails_data = {
+                                    'inventory_id':description['inventory_id'],
+                                    'price':description['price'],
+                                    'qty':description['qty'],
+                                    'profit':description['profit'],
+                                    'eventday_id':eventday_instance.id}
+                                
+                                inventorydetailsSerializer = InventoryDetailsSerializer(data=inventorydetails_data)
+                                if inventorydetailsSerializer.is_valid():
+                                    inventorydetails_instance = inventorydetailsSerializer.save()
                                     final_inventorydetails_data.append(inventorydetails_instance)
                                 else:
-                                    return Response(o_inventorydetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                                    return Response(inventorydetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                                 
-                            inventory = Inventory.objects.get(pk=inventorydetails_data['inventory_id'])
-                            if inventory.type == 'service':
-                                exposuredetails = description.get('exposure', None)
-                                if exposuredetails is not None:
+                                inventory = Inventory.objects.get(pk=inventorydetails_data['inventory_id'])
+                                if inventory.type == 'service':
+                                    ### FOR EXPOSURE DETAILS DATA ###
+                                    exposuredetails = description.get('exposure', None)
+                                    if exposuredetails is not None:
+                                        for exposuredetail in exposuredetails:
+                                            evnetdetials =[]
+                                            allocations = exposuredetail['allocation']
+                                            for allocation in allocations:
+                                                for single_eventdetails in final_eventdetails_data:
+                                                    event_id = single_eventdetails.event_id.id
+                                                    if event_id == int(allocation):
+                                                        evnetdetials.append(single_eventdetails.id)
+
+                                            exposuredetails_data = {
+                                                'staff_id':exposuredetail['staff_id'],
+                                                'price':exposuredetail['price'],
+                                                'eventdetails':evnetdetials,
+                                                'inventorydetails_id':inventorydetails_instance.id}
+                                            
+                                            exposuredetailsSerializer = ExposureDetailsSerializer(data=exposuredetails_data)
+                                            if exposuredetailsSerializer.is_valid():
+                                                exposuredetails_instance = exposuredetailsSerializer.save()
+                                                final_exposuredetails_data.append(exposuredetails_instance)
+                                            else:
+                                                return Response(exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)                    
+                                
+                        else:
+                            # print(":::: OLD DAY UPDATED ::::")
+                            o_eventday = EventDay.objects.get(pk=eventdate_data['id'])
+                            o_eventdaySerializer = EventDaySerializer(o_eventday, data=eventdate_data, partial=True)
+                            if o_eventdaySerializer.is_valid():
+                                o_eventdaySerializer.save()
+                            else:
+                                return Response(o_eventdaySerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                                    
+                            eventdetails_datas = data['event_details']
+                            for eventdetails_data in eventdetails_datas:
+                                if eventdetails_data['id'] == '':
+                                    # print("::: NEW EVENT DETAILS :::")
+                                    eventdetails_data.pop('id')
+                                    n_eventdetailsSerializer = EventDetailsSerializer(data=eventdetails_data)
+                                    if n_eventdetailsSerializer.is_valid():
+                                        eventdetails_instance = n_eventdetailsSerializer.save()
+                                        final_eventdetails_data.append(eventdetails_instance)
+                                    else:
+                                        return Response(n_eventdetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                                else:
+                                    # print("::: OLD EVENT DETAILS :::")
+                                    o_eventdetail = EventDetails.objects.get(pk=eventdetails_data['id'])
+                                    o_eventdetailsSerializer = EventDetailsSerializer(o_eventdetail, data=eventdetails_data, partial=True)
+                                    if o_eventdetailsSerializer.is_valid():
+                                        eventdetails_instance = o_eventdetailsSerializer.save()
+                                        final_eventdetails_data.append(eventdetails_instance)
+                                    else:
+                                        return Response(o_eventdetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                                    
+                            descriptions = data['descriptions']
+                            for description in descriptions:
+                                inventorydetails_data = {
+                                    'id':description['id'],
+                                    'inventory_id':description['inventory_id'],
+                                    'price':description['price'],
+                                    'qty':description['qty'],
+                                    'profit':description['profit'],
+                                    'eventday_id':description['eventday_id']}
+
+                                if inventorydetails_data['id'] == '':
+                                    # print("::: NEW INVENTORY DETAILS :::")
+                                    inventorydetails_data.pop('id')
+                                    n_inventorydetailsSerializer = InventoryDetailsSerializer(data=inventorydetails_data)
+                                    if n_inventorydetailsSerializer.is_valid():
+                                        inventorydetails_instance = n_inventorydetailsSerializer.save()
+                                        final_inventorydetails_data.append(inventorydetails_instance)
+                                    else:
+                                        return Response(n_inventorydetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                                else:
+                                    # print("::: OLD INVENTORY DETAILS :::")
+                                    o_inventorydetails = InventoryDetails.objects.get(pk=inventorydetails_data['id'])
+                                    o_inventorydetailsSerializer = InventoryDetailsSerializer(o_inventorydetails, data=inventorydetails_data, partial=True)
+                                    if o_inventorydetailsSerializer.is_valid():
+                                        inventorydetails_instance = o_inventorydetailsSerializer.save()
+                                        final_inventorydetails_data.append(inventorydetails_instance)
+                                    else:
+                                        return Response(o_inventorydetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                                    
+                                inventory = Inventory.objects.get(pk=inventorydetails_data['inventory_id'])
+                                if inventory.type == 'service':
+                                    exposuredetails = description['exposure']
                                     for exposuredetail in exposuredetails:
                                         evnetdetials =[]
                                         allocations = exposuredetail['allocation']
@@ -669,436 +1083,95 @@ class QuotationViewSet(viewsets.ModelViewSet):
                                             else:
                                                 return Response(o_exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            ### DELETE EXPOSURES DETAILS ###
-            if delete_exposures is not None:
-                for delete_exposure in delete_exposures:
-                    d_exposure = ExposureDetails.objects.get(pk=delete_exposure)
-                    d_exposure.delete()
+                ### DELETE EXPOSURES DETAILS ###
+                if delete_exposures is not None:
+                    for delete_exposure in delete_exposures:
+                        d_exposure = ExposureDetails.objects.get(pk=delete_exposure)
+                        exposure_bill = Transaction.objects.get(exposuredetails_id=delete_exposure)
 
-            ### DELETE INVENTORYS DETAILS ###
-            if delete_inventorys is not None:
-                for delete_inventory in delete_inventorys:
-                    d_inventory = InventoryDetails.objects.get(pk=delete_inventory)
-                    d_inventory.delete()
+                        balance = Balance.objects.get(staff_id=d_exposure.staff_id.id)
+                        balance.amount = balance.amount + exposure_bill.total_amount
+                        balance.save()
 
-            ### DELETE EVENTS DETAILS ###
-            if delete_events is not None:
-                for delete_event in delete_events:
-                    d_event = EventDetails.objects.get(pk=delete_event)
-                    d_event.delete()
+                        d_exposure.delete()
 
-            ### DELETE EVENT DAY DETAILS ###
-            if delete_eventdays is not None:
-                for delete_eventday in delete_eventdays:
-                    d_eventday = EventDay.objects.get(pk=delete_eventday)
-                    d_eventday.delete()
+                ### DELETE INVENTORYS DETAILS ###
+                if delete_inventorys is not None:
+                    for delete_inventory in delete_inventorys:
+                        d_inventory = InventoryDetails.objects.get(pk=delete_inventory)
+                        d_inventory.delete()
 
-            ## UPDATE TRANSACTON DETAILS ###
-            if transaction_data is not None:
-                if convert_status == 'true':
-                    transaction_data['is_converted'] = True
-                else:
-                    transaction_data['is_converted'] = False
-                transaction_data['type'] = 'estimate'
-                t_serializer = TransactionSerializer(transaction, data=transaction_data, partial=True)
-                if t_serializer.is_valid():
-                    t_serializer.save()
-                else:
-                    return Response(t_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                ### DELETE EVENTS DETAILS ###
+                if delete_events is not None:
+                    for delete_event in delete_events:
+                        d_event = EventDetails.objects.get(pk=delete_event)
+                        d_event.delete()
 
-            ### MAKE A COPY OF TRANSACTION AND QUOTATION ###
-            if convert_status == 'true':
-                ### QUOTATION COPY ###
-                copy_quotationSerializer = QuotationSerializer(data=copy_quotation_data)
-                if copy_quotationSerializer.is_valid():
-                    copy_quotation_instance = copy_quotationSerializer.save()
-                else:
-                    return Response(copy_quotationSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                
-                copy_final_eventdetails_data = []
-                copy_final_inventorydetails_data = []
-                copy_final_exposuredetails_data = []
+                ### DELETE EVENT DAY DETAILS ###
+                if delete_eventdays is not None:
+                    for delete_eventday in delete_eventdays:
+                        d_eventday = EventDay.objects.get(pk=delete_eventday)
+                        d_eventday.delete()
 
-                for copy_data in copy_datas:
-                    ### FOR ADD EVENT DAY DATA ###
-                    copy_eventdate_data = {
-                        'event_date': copy_data['event_date'],
-                        'quotation_id':copy_quotation_instance.id}
-                    copy_eventdaySerializer = EventDaySerializer(data=copy_eventdate_data)
-                    if copy_eventdaySerializer.is_valid():
-                        copy_eventday_instance = copy_eventdaySerializer.save()
+                ## UPDATE TRANSACTON DETAILS ###
+                if transaction_data is not None:
+                    t_serializer = TransactionSerializer(transaction, data=transaction_data, partial=True)
+                    if t_serializer.is_valid():
+                        update_transaction = t_serializer.save()
                     else:
-                        return Response(copy_eventdaySerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                    
-                    ### FOR ADD EVENT DETAILS DATA ###
-                    copy_eventdetails_datas = copy_data['event_details']
-                    for copy_eventdetails_data in copy_eventdetails_datas:
-                        copy_eventdetails_data['eventday_id'] = copy_eventday_instance.id
-                        copy_eventdetails_data['quotation_id'] = copy_quotation_instance.id
-                        copy_eventdetailsSerializer = EventDetailsSerializer(data=copy_eventdetails_data)
-                        if copy_eventdetailsSerializer.is_valid():
-                            copy_eventdetails_instance = copy_eventdetailsSerializer.save()
-                            copy_final_eventdetails_data.append(copy_eventdetails_instance)
-                        else:
-                            return Response(copy_eventdetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                    
-                    copy_descriptions = copy_data['descriptions']
-                    for copy_description in copy_descriptions:
-                        ### FOR INVENTORY DETAILS DATA ###
-                        copy_inventorydetails_data = {
-                            'inventory_id':copy_description['inventory_id'],
-                            'price':copy_description['price'],
-                            'qty':copy_description['qty'],
-                            'profit':copy_description['profit'],
-                            'eventday_id':copy_eventday_instance.id}
-                        
-                        copy_inventorydetailsSerializer = InventoryDetailsSerializer(data=copy_inventorydetails_data)
-                        if copy_inventorydetailsSerializer.is_valid():
-                            copy_inventorydetails_instance = copy_inventorydetailsSerializer.save()
-                            copy_final_inventorydetails_data.append(copy_inventorydetails_instance)
-                        else:
-                            return Response(copy_inventorydetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                        
-                        copy_inventory = Inventory.objects.get(pk=copy_inventorydetails_data['inventory_id'])
-                        if copy_inventory.type == 'service':
-
-                            ### FOR EXPOSURE DETAILS DATA ###
-                            copy_exposuredetails = copy_description.get('exposure', None)
-                            if copy_exposuredetails is not None:
-                                for copy_exposuredetail in copy_exposuredetails:
-                                    copy_evnetdetials =[]
-                                    copy_allocations = copy_exposuredetail['allocation']
-                                    for copy_allocation in copy_allocations:
-                                        for copy_single_eventdetails in copy_final_eventdetails_data:
-                                            copy_event_id = copy_single_eventdetails.event_id.id
-                                            if copy_event_id == int(copy_allocation):
-                                                copy_evnetdetials.append(copy_single_eventdetails.id)
-
-                                    copy_exposuredetails_data = {
-                                        'staff_id':copy_exposuredetail['staff_id'],
-                                        'price':copy_exposuredetail['price'],
-                                        'eventdetails':copy_evnetdetials,
-                                        'inventorydetails_id':copy_inventorydetails_instance.id}
-                                    
-                                    copy_exposuredetailsSerializer = ExposureDetailsSerializer(data=copy_exposuredetails_data)
-                                    if copy_exposuredetailsSerializer.is_valid():
-                                        copy_exposuredetails_instance = copy_exposuredetailsSerializer.save()
-                                        copy_final_exposuredetails_data.append(copy_exposuredetails_instance)
-                                    else:
-                                        return Response(copy_exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-                ### TRANSACTION COPY ###
-                # print("ADD TRANSACTION COPY")
-                transaction_data.pop('id')
-                transaction_data['is_converted'] = True
-                transaction_data['type'] = 'event_sale'
-                transaction_data['quotation_id'] = copy_quotation_instance.id
-                transaction_data['customer_id'] = copy_quotation_instance.customer_id.id
-                copy_transactionSerializer = TransactionSerializer(data=transaction_data)
-                if copy_transactionSerializer.is_valid():
-                    copy_transaction_instance = copy_transactionSerializer.save()
-                else:
-                    return Response(copy_transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-                new_amount = copy_transaction_instance.total_amount - copy_transaction_instance.recived_or_paid_amount
-                balance_amount(copy_transaction_instance.customer_id.id, None, 0 , new_amount, copy_transaction_instance.type)
+                        return Response(t_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                
+                    new_amount = update_transaction.total_amount - update_transaction.recived_or_paid_amount
+                    balance_amount(update_transaction.customer_id.id, None, old_amount , new_amount, update_transaction.type)
 
                 ### LINK TRNASACTION 
-                linktransaction_data = request.data.get('linktransaction_data', None)
                 if linktransaction_data is not None:
-                    link_transaction(copy_transaction_instance.id, linktransaction_data, copy_transaction_instance.type)
+                    link_transaction(transaction_data['id'], linktransaction_data, update_transaction.type)
 
-                ### ADD BILL FOR EXOISURE ###
                 finall_instance = []
-                for i in copy_final_exposuredetails_data:
+                for i in final_exposuredetails_data:
+                    try:
+                        bill = Transaction.objects.get(exposuredetails_id = i.id)
+                        old_amount = bill.total_amount - bill.recived_or_paid_amount
+                    except:
+                        bill = None
+
                     i_transaction_data = {
-                        'user_id': transaction.user_id.id,
-                        'type' : "event_purchase",
-                        'staff_id' : i.staff_id.id,
-                        'total_amount' : i.price,
-                        'exposuredetails_id':i.id,
-                        'date': date.today()}
-                    
-                    i_transactionSerializer = TransactionSerializer(data=i_transaction_data)
-                    if i_transactionSerializer.is_valid():
-                        t_instance = i_transactionSerializer.save()
-                        finall_instance.append(t_instance)
-                    else:
-                        return Response(i_transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                    
-                    new_amount = t_instance.total_amount - t_instance.recived_or_paid_amount
-                    balance_amount(None, t_instance.staff_id.id, 0 , new_amount, t_instance.type)
+                            'user_id': transaction.user_id.id,
+                            'type' : "event_purchase",
+                            'staff_id' : i.staff_id.id,
+                            'total_amount' : i.price,
+                            'exposuredetails_id':i.id,
+                            'date': date.today()}
 
-        ### CONVERTED TRANSACTION ###
-        else:
-            quotation = Quotation.objects.get(pk=pk)
-            q_serializer = QuotationSerializer(quotation, data=quotation_data, partial=True)
-            if q_serializer.is_valid():
-                quotation_instance = q_serializer.save()
-            else:
-                return Response(q_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            
-            final_eventdetails_data = []
-            final_inventorydetails_data = []
-            final_exposuredetails_data = []
-
-            ### FOR ADD AND UPDATE OTHER DATA ### 
-            if datas is not None:
-                for data in datas:
-
-                    ### FOR ADD AND UPDATE EVENT DAY ###
-                    eventdate_data = {
-                        'id': data['id'],
-                        'event_date': data['event_date'],
-                        'quotation_id':quotation_instance.id}
-
-                    if eventdate_data['id'] == '':
-                        eventdate_data.pop('id')
-                        n_eventdaySerializer = EventDaySerializer(data=eventdate_data)
-                        if n_eventdaySerializer.is_valid():
-                            eventday_instance = n_eventdaySerializer.save()
+                    if bill is not None:
+                        # print("OLD BILL")
+                        i_transactionSerializer = TransactionSerializer(bill, data=i_transaction_data, partial=True)
+                        if i_transactionSerializer.is_valid():
+                            t_instance = i_transactionSerializer.save()
+                            finall_instance.append(t_instance)
                         else:
-                            return Response(n_eventdaySerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                            return Response(i_transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                         
-                        ### FOR ADD EVENT DETAILS DATA ###
-                        eventdetails_datas = data['event_details']
-                        for eventdetails_data in eventdetails_datas:
-                            eventdetails_data['eventday_id'] = eventday_instance.id
-                            eventdetails_data['quotation_id'] = quotation_instance.id
-                            eventdetailsSerializer = EventDetailsSerializer(data=eventdetails_data)
-                            if eventdetailsSerializer.is_valid():
-                                eventdetails_instance = eventdetailsSerializer.save()
-                                final_eventdetails_data.append(eventdetails_instance)
-                            else:
-                                return Response(eventdetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                        
-                        descriptions = data['descriptions']
-                        for description in descriptions:
-                            ### FOR INVENTORY DETAILS DATA ###
-                            inventorydetails_data = {
-                                'inventory_id':description['inventory_id'],
-                                'price':description['price'],
-                                'qty':description['qty'],
-                                'profit':description['profit'],
-                                'eventday_id':eventday_instance.id}
-                            
-                            inventorydetailsSerializer = InventoryDetailsSerializer(data=inventorydetails_data)
-                            if inventorydetailsSerializer.is_valid():
-                                inventorydetails_instance = inventorydetailsSerializer.save()
-                                final_inventorydetails_data.append(inventorydetails_instance)
-                            else:
-                                return Response(inventorydetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                            
-                            inventory = Inventory.objects.get(pk=inventorydetails_data['inventory_id'])
-                            if inventory.type == 'service':
-                                ### FOR EXPOSURE DETAILS DATA ###
-                                exposuredetails = description.get('exposure', None)
-                                if exposuredetails is not None:
-                                    for exposuredetail in exposuredetails:
-                                        evnetdetials =[]
-                                        allocations = exposuredetail['allocation']
-                                        for allocation in allocations:
-                                            for single_eventdetails in final_eventdetails_data:
-                                                event_id = single_eventdetails.event_id.id
-                                                if event_id == int(allocation):
-                                                    evnetdetials.append(single_eventdetails.id)
+                        new_amount = t_instance.total_amount - t_instance.recived_or_paid_amount
+                        balance_amount(None, t_instance.staff_id.id, old_amount, new_amount, t_instance.type)
 
-                                        exposuredetails_data = {
-                                            'staff_id':exposuredetail['staff_id'],
-                                            'price':exposuredetail['price'],
-                                            'eventdetails':evnetdetials,
-                                            'inventorydetails_id':inventorydetails_instance.id}
-                                        
-                                        exposuredetailsSerializer = ExposureDetailsSerializer(data=exposuredetails_data)
-                                        if exposuredetailsSerializer.is_valid():
-                                            exposuredetails_instance = exposuredetailsSerializer.save()
-                                            final_exposuredetails_data.append(exposuredetails_instance)
-                                        else:
-                                            return Response(exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)                    
-                            
                     else:
-                        # print(":::: OLD DAY UPDATED ::::")
-                        o_eventday = EventDay.objects.get(pk=eventdate_data['id'])
-                        o_eventdaySerializer = EventDaySerializer(o_eventday, data=eventdate_data, partial=True)
-                        if o_eventdaySerializer.is_valid():
-                            o_eventdaySerializer.save()
+                        # print("NEW BILL")
+                        i_transactionSerializer = TransactionSerializer(data=i_transaction_data)
+                        if i_transactionSerializer.is_valid():
+                            t_instance = i_transactionSerializer.save()
+                            finall_instance.append(t_instance)
                         else:
-                            return Response(o_eventdaySerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                                
-                        eventdetails_datas = data['event_details']
-                        for eventdetails_data in eventdetails_datas:
-                            if eventdetails_data['id'] == '':
-                                # print("::: NEW EVENT DETAILS :::")
-                                eventdetails_data.pop('id')
-                                n_eventdetailsSerializer = EventDetailsSerializer(data=eventdetails_data)
-                                if n_eventdetailsSerializer.is_valid():
-                                    eventdetails_instance = n_eventdetailsSerializer.save()
-                                    final_eventdetails_data.append(eventdetails_instance)
-                                else:
-                                    return Response(n_eventdetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                            else:
-                                # print("::: OLD EVENT DETAILS :::")
-                                o_eventdetail = EventDetails.objects.get(pk=eventdetails_data['id'])
-                                o_eventdetailsSerializer = EventDetailsSerializer(o_eventdetail, data=eventdetails_data, partial=True)
-                                if o_eventdetailsSerializer.is_valid():
-                                    eventdetails_instance = o_eventdetailsSerializer.save()
-                                    final_eventdetails_data.append(eventdetails_instance)
-                                else:
-                                    return Response(o_eventdetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                                
-                        descriptions = data['descriptions']
-                        for description in descriptions:
-                            inventorydetails_data = {
-                                'id':description['id'],
-                                'inventory_id':description['inventory_id'],
-                                'price':description['price'],
-                                'qty':description['qty'],
-                                'profit':description['profit'],
-                                'eventday_id':description['eventday_id']}
+                            return Response(i_transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                        
+                        new_amount = t_instance.total_amount - t_instance.recived_or_paid_amount
+                        balance_amount(None, t_instance.staff_id.id, 0 , new_amount, t_instance.type)
 
-                            if inventorydetails_data['id'] == '':
-                                # print("::: NEW INVENTORY DETAILS :::")
-                                inventorydetails_data.pop('id')
-                                n_inventorydetailsSerializer = InventoryDetailsSerializer(data=inventorydetails_data)
-                                if n_inventorydetailsSerializer.is_valid():
-                                    inventorydetails_instance = n_inventorydetailsSerializer.save()
-                                    final_inventorydetails_data.append(inventorydetails_instance)
-                                else:
-                                    return Response(n_inventorydetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                            else:
-                                # print("::: OLD INVENTORY DETAILS :::")
-                                o_inventorydetails = InventoryDetails.objects.get(pk=inventorydetails_data['id'])
-                                o_inventorydetailsSerializer = InventoryDetailsSerializer(o_inventorydetails, data=inventorydetails_data, partial=True)
-                                if o_inventorydetailsSerializer.is_valid():
-                                    inventorydetails_instance = o_inventorydetailsSerializer.save()
-                                    final_inventorydetails_data.append(inventorydetails_instance)
-                                else:
-                                    return Response(o_inventorydetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                                
-                            inventory = Inventory.objects.get(pk=inventorydetails_data['inventory_id'])
-                            if inventory.type == 'service':
-                                exposuredetails = description['exposure']
-                                for exposuredetail in exposuredetails:
-                                    evnetdetials =[]
-                                    allocations = exposuredetail['allocation']
-                                    for allocation in allocations:
-                                        for single_eventdetails in final_eventdetails_data:
-                                            event_id = single_eventdetails.event_id.id
-                                            if event_id == int(allocation):
-                                                evnetdetials.append(single_eventdetails.id)
-
-                                    exposuredetails_data = {
-                                        'id':exposuredetail['id'],
-                                        'staff_id':exposuredetail['staff_id'],
-                                        'price':exposuredetail['price'],
-                                        'inventorydetails_id':inventorydetails_instance.id,
-                                        'eventdetails':evnetdetials}
-                                    
-                                    if exposuredetails_data['id'] == '':
-                                        # print("::: NEW EXPOSURE DETAILS :::")
-                                        exposuredetails_data.pop('id')
-                                        n_exposuredetailsSerializer = ExposureDetailsSerializer(data=exposuredetails_data)
-                                        if n_exposuredetailsSerializer.is_valid():
-                                            exposuredetails_instance = n_exposuredetailsSerializer.save()
-                                            final_exposuredetails_data.append(exposuredetails_instance)
-                                        else:
-                                            return Response(n_exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                                    else:
-                                        # print("::: NEW OLD DETAILS :::")
-                                        o_exposuredetails = ExposureDetails.objects.get(pk=exposuredetails_data['id'])
-                                        o_exposuredetailsSerializer = ExposureDetailsSerializer(o_exposuredetails, data=exposuredetails_data, partial=True)
-                                        if o_exposuredetailsSerializer.is_valid():
-                                            exposuredetails_instance = o_exposuredetailsSerializer.save()
-                                            final_exposuredetails_data.append(exposuredetails_instance)
-                                        else:
-                                            return Response(o_exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-            ### DELETE EXPOSURES DETAILS ###
-            if delete_exposures is not None:
-                for delete_exposure in delete_exposures:
-                    d_exposure = ExposureDetails.objects.get(pk=delete_exposure)
-                    exposure_bill = Transaction.objects.get(exposuredetails_id=delete_exposure)
-
-                    balance = Balance.objects.get(staff_id=d_exposure.staff_id.id)
-                    balance.amount = balance.amount + exposure_bill.total_amount
-                    balance.save()
-
-                    d_exposure.delete()
-
-            ### DELETE INVENTORYS DETAILS ###
-            if delete_inventorys is not None:
-                for delete_inventory in delete_inventorys:
-                    d_inventory = InventoryDetails.objects.get(pk=delete_inventory)
-                    d_inventory.delete()
-
-            ### DELETE EVENTS DETAILS ###
-            if delete_events is not None:
-                for delete_event in delete_events:
-                    d_event = EventDetails.objects.get(pk=delete_event)
-                    d_event.delete()
-
-            ### DELETE EVENT DAY DETAILS ###
-            if delete_eventdays is not None:
-                for delete_eventday in delete_eventdays:
-                    d_eventday = EventDay.objects.get(pk=delete_eventday)
-                    d_eventday.delete()
-
-            ## UPDATE TRANSACTON DETAILS ###
-            if transaction_data is not None:
-                t_serializer = TransactionSerializer(transaction, data=transaction_data, partial=True)
-                if t_serializer.is_valid():
-                    update_transaction = t_serializer.save()
-                else:
-                    return Response(t_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            
-                new_amount = update_transaction.total_amount - update_transaction.recived_or_paid_amount
-                balance_amount(update_transaction.customer_id.id, None, old_amount , new_amount, update_transaction.type)
-
-            ### LINK TRNASACTION 
-            if linktransaction_data is not None:
-                link_transaction(transaction_data['id'], linktransaction_data, update_transaction.type)
-
-            finall_instance = []
-            for i in final_exposuredetails_data:
-                try:
-                    bill = Transaction.objects.get(exposuredetails_id = i.id)
-                    old_amount = bill.total_amount - bill.recived_or_paid_amount
-                except:
-                    bill = None
-
-                i_transaction_data = {
-                        'user_id': transaction.user_id.id,
-                        'type' : "event_purchase",
-                        'staff_id' : i.staff_id.id,
-                        'total_amount' : i.price,
-                        'exposuredetails_id':i.id,
-                        'date': date.today()}
-
-                if bill is not None:
-                    # print("OLD BILL")
-                    i_transactionSerializer = TransactionSerializer(bill, data=i_transaction_data, partial=True)
-                    if i_transactionSerializer.is_valid():
-                        t_instance = i_transactionSerializer.save()
-                        finall_instance.append(t_instance)
-                    else:
-                        return Response(i_transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                    
-                    new_amount = t_instance.total_amount - t_instance.recived_or_paid_amount
-                    balance_amount(None, t_instance.staff_id.id, old_amount, new_amount, t_instance.type)
-
-                else:
-                    # print("NEW BILL")
-                    i_transactionSerializer = TransactionSerializer(data=i_transaction_data)
-                    if i_transactionSerializer.is_valid():
-                        t_instance = i_transactionSerializer.save()
-                        finall_instance.append(t_instance)
-                    else:
-                        return Response(i_transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                    
-                    new_amount = t_instance.total_amount - t_instance.recived_or_paid_amount
-                    balance_amount(None, t_instance.staff_id.id, 0 , new_amount, t_instance.type)
-
-        return Response({"quotation_data":QuotationSerializer(quotation_instance).data,})
+            return Response({"quotation_data":QuotationSerializer(quotation_instance).data,})
+        except Exception as e:
+            logger.error(f"API: Quotation Update - An error occurred: {str(e)}.\nRequest data: {request.data}", exc_info=True)
+            return Response()
 
 
 class EventDayViewSet(viewsets.ModelViewSet):
@@ -1126,42 +1199,47 @@ class InventoryDescriptionViewSet(viewsets.ModelViewSet):
     serializer_class = InventoryDescriptionSerializer
 
     def create(self, request, *args, **kwargs):
-        inventory_datas = request.data['inventory_data']
-        transaction_data = request.data['transaction_data']
-        linktransaction_data = request.data.get('linktransaction_data', None)
+        try:
+            inventory_datas = request.data['inventory_data']
+            transaction_data = request.data['transaction_data']
+            linktransaction_data = request.data.get('linktransaction_data', None)
 
-        all_instance = []
-        inventorydescription_ids = []
+            all_instance = []
+            inventorydescription_ids = []
 
-        for inventory_data in inventory_datas:
-            inventorySerializer = InventoryDescriptionSerializer(data=inventory_data)
-            if inventorySerializer.is_valid():
-                inventory_instance = inventorySerializer.save()
-                all_instance.append(inventory_instance)
+            for inventory_data in inventory_datas:
+                inventorySerializer = InventoryDescriptionSerializer(data=inventory_data)
+                if inventorySerializer.is_valid():
+                    inventory_instance = inventorySerializer.save()
+                    all_instance.append(inventory_instance)
+                else:
+                    return Response(inventorySerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                
+                inventorydescription_ids.append(inventory_instance.id)
+
+            transaction_data['inventorydescription'] = inventorydescription_ids
+            transactionSerializer = TransactionSerializer(data = transaction_data)
+            if transactionSerializer.is_valid():
+                transaction_instance = transactionSerializer.save()
             else:
-                return Response(inventorySerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                return Response(transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
-            inventorydescription_ids.append(inventory_instance.id)
+            customer_id = transaction_instance.customer_id.id if transaction_instance.customer_id is not None else None
+            staff_id = transaction_instance.staff_id.id if transaction_instance.staff_id is not None else None
+            
+            new_amount = transaction_instance.total_amount - transaction_instance.recived_or_paid_amount
+            print("New Amount ::: ", new_amount)
+            balance_amount(customer_id, staff_id, 0, new_amount, transaction_instance.type)
+            
+            if linktransaction_data is not None:
+                link_transaction(transaction_instance.id, linktransaction_data, transaction_instance.type)
 
-        transaction_data['inventorydescription'] = inventorydescription_ids
-        transactionSerializer = TransactionSerializer(data = transaction_data)
-        if transactionSerializer.is_valid():
-            transaction_instance = transactionSerializer.save()
-        else:
-            return Response(transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-        customer_id = transaction_instance.customer_id.id if transaction_instance.customer_id is not None else None
-        staff_id = transaction_instance.staff_id.id if transaction_instance.staff_id is not None else None
-        
-        new_amount = transaction_instance.total_amount - transaction_instance.recived_or_paid_amount
-        print("New Amount ::: ", new_amount)
-        balance_amount(customer_id, staff_id, 0, new_amount, transaction_instance.type)
-        
-        if linktransaction_data is not None:
-            link_transaction(transaction_instance.id, linktransaction_data, transaction_instance.type)
+            return Response({"inventorydescription": InventoryDescriptionSerializer(all_instance, many=True).data,
+                            "transaction": TransactionSerializer(transaction_instance).data})
+        except Exception as e:
+            logger.error(f"API: Inventory Description Create - An error occurred: {str(e)}.\nRequest data: {request.data}", exc_info=True)
 
-        return Response({"inventorydescription": InventoryDescriptionSerializer(all_instance, many=True).data,
-                         "transaction": TransactionSerializer(transaction_instance).data})
+            return Response()
 
 
 class TransactionViewSet(viewsets.ModelViewSet):
@@ -1196,111 +1274,238 @@ class TransactionViewSet(viewsets.ModelViewSet):
         return queryset
 
     def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
-        data = {}
-        data['transaction_data'] = TransactionSerializer(instance).data
+        try:
+            instance = self.get_object()
+            data = {}
+            data['transaction_data'] = TransactionSerializer(instance).data
 
-        inventory_descriptions = instance.inventorydescription.all()
-        if len(inventory_descriptions) != 0:
-            data['inventory_data'] = InventoryDescriptionSerializer(inventory_descriptions, many=True).data
+            inventory_descriptions = instance.inventorydescription.all()
+            if len(inventory_descriptions) != 0:
+                data['inventory_data'] = InventoryDescriptionSerializer(inventory_descriptions, many=True).data
 
-        linktransaction = LinkTransaction.objects.filter(from_transaction_id=instance.id)
-        if len(linktransaction) != 0:
-            data['linktransaction_data'] = LinkTransactionSerializer(linktransaction, many=True).data
+            linktransaction = LinkTransaction.objects.filter(from_transaction_id=instance.id)
+            if len(linktransaction) != 0:
+                data['linktransaction_data'] = LinkTransactionSerializer(linktransaction, many=True).data
 
-        exposuredetails_id = instance.exposuredetails_id
-        if exposuredetails_id is not None:
-            exposuredetail = ExposureDetails.objects.get(pk=exposuredetails_id.id)
-            inventorydetails_id = exposuredetail.inventorydetails_id
-            inventorydetails = InventoryDetails.objects.get(pk=inventorydetails_id.id)
-            eventdetails = exposuredetail.eventdetails.all()
+            exposuredetails_id = instance.exposuredetails_id
+            if exposuredetails_id is not None:
+                exposuredetail = ExposureDetails.objects.get(pk=exposuredetails_id.id)
+                inventorydetails_id = exposuredetail.inventorydetails_id
+                inventorydetails = InventoryDetails.objects.get(pk=inventorydetails_id.id)
+                eventdetails = exposuredetail.eventdetails.all()
 
-            data['exposuredetails'] = ExposureDetailsSerializer(exposuredetail).data
-            data['inventorydetails'] = InventoryDetailsSerializer(inventorydetails).data
-            data['eventdetails'] = EventDetailsSerializer(eventdetails, many=True).data
+                data['exposuredetails'] = ExposureDetailsSerializer(exposuredetail).data
+                data['inventorydetails'] = InventoryDetailsSerializer(inventorydetails).data
+                data['eventdetails'] = EventDetailsSerializer(eventdetails, many=True).data
 
-        return Response(data)
+            return Response(data)
+        except Exception as e:
+            logger.error(f"API: Transaction Retrieve - An error occurred: {str(e)}", exc_info=True)
+
+            return Response()
 
     def create(self, request, *args, **kwargs):
-        transaction_data = request.data['transaction_data']
-        linktransaction_data = request.data.get('linktransaction_data', None)
-
-        data = {}
-
-        transactionSerializer = TransactionSerializer(data=transaction_data)
-        if transactionSerializer.is_valid():
-            transaction_instance = transactionSerializer.save()
-        else:
-            return Response(transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        data['transaction_data'] = TransactionSerializer(transaction_instance).data
-
-        customer_id = transaction_data.get('customer_id', None)
-        staff_id = transaction_data.get('staff_id', None)
-
-        new_amount = transaction_instance.total_amount - transaction_instance.used_amount
-        balance_amount(customer_id, staff_id, 0, new_amount, transaction_instance.type)
-
-        if linktransaction_data is not None:
-            link_transaction(transaction_instance.id, linktransaction_data, transaction_instance.type)
-
-        return Response(data)
-
-    def update(self, request, pk=None, *args, **kwargs):
-        key = request.data.get('key')
-        transaction = Transaction.objects.get(pk=pk)
-
-        if transaction.type in ('payment_in', 'payment_out'):
-            old_amount = transaction.total_amount - transaction.used_amount
-        else:
-            old_amount = transaction.total_amount - transaction.recived_or_paid_amount
-
-        data={}
-
-        if key == 'inventorydescription_update':
-            inventory_datas = request.data.get('inventory_data', None)
-            copy_inventory_datas = inventory_datas
-            transaction_data = request.data.get('transaction_data')
-            delete_inventorys = request.data.get('delete_inventory', None)
+        try:
+            transaction_data = request.data['transaction_data']
             linktransaction_data = request.data.get('linktransaction_data', None)
 
-            all_inventory = []
-            inventorydescription_ids = []
+            data = {}
 
-            ### NOT CONVERTED TRANSACTION ###
-            if transaction.is_converted == False:
-                convert_status = transaction_data.get('is_converted', None)
+            transactionSerializer = TransactionSerializer(data=transaction_data)
+            if transactionSerializer.is_valid():
+                transaction_instance = transactionSerializer.save()
+            else:
+                return Response(transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-                if delete_inventorys is not None:
-                    for delete_inventory in delete_inventorys:
-                        d_inventory = InventoryDescription.objects.get(pk=delete_inventory)
-                        d_inventory.delete()
-                
-                for inventory_data in inventory_datas:
-                    if inventory_data['id'] == '':
-                        inventory_data.pop('id')
-                        n_inventory = InventoryDescriptionSerializer(data=inventory_data)
-                        if n_inventory.is_valid():
-                            new_inventory = n_inventory.save()
-                            inventorydescription_ids.append(new_inventory.id)
-                            all_inventory.append(new_inventory)
+            data['transaction_data'] = TransactionSerializer(transaction_instance).data
+
+            customer_id = transaction_data.get('customer_id', None)
+            staff_id = transaction_data.get('staff_id', None)
+
+            new_amount = transaction_instance.total_amount - transaction_instance.used_amount
+            balance_amount(customer_id, staff_id, 0, new_amount, transaction_instance.type)
+
+            if linktransaction_data is not None:
+                link_transaction(transaction_instance.id, linktransaction_data, transaction_instance.type)
+
+            return Response(data)
+        except Exception as e:
+            logger.error(f"API: Transaction Create - An error occurred: {str(e)}.\nRequest data: {request.data}", exc_info=True)
+
+            return Response()
+
+    def update(self, request, pk=None, *args, **kwargs):
+        try:
+            key = request.data.get('key')
+            transaction = Transaction.objects.get(pk=pk)
+
+            if transaction.type in ('payment_in', 'payment_out'):
+                old_amount = transaction.total_amount - transaction.used_amount
+            else:
+                old_amount = transaction.total_amount - transaction.recived_or_paid_amount
+
+            data={}
+
+            if key == 'inventorydescription_update':
+                inventory_datas = request.data.get('inventory_data', None)
+                copy_inventory_datas = inventory_datas
+                transaction_data = request.data.get('transaction_data')
+                delete_inventorys = request.data.get('delete_inventory', None)
+                linktransaction_data = request.data.get('linktransaction_data', None)
+
+                all_inventory = []
+                inventorydescription_ids = []
+
+                ### NOT CONVERTED TRANSACTION ###
+                if transaction.is_converted == False:
+                    convert_status = transaction_data.get('is_converted', None)
+
+                    if delete_inventorys is not None:
+                        for delete_inventory in delete_inventorys:
+                            d_inventory = InventoryDescription.objects.get(pk=delete_inventory)
+                            d_inventory.delete()
+                    
+                    for inventory_data in inventory_datas:
+                        if inventory_data['id'] == '':
+                            inventory_data.pop('id')
+                            n_inventory = InventoryDescriptionSerializer(data=inventory_data)
+                            if n_inventory.is_valid():
+                                new_inventory = n_inventory.save()
+                                inventorydescription_ids.append(new_inventory.id)
+                                all_inventory.append(new_inventory)
+                            else:
+                                return Response(n_inventory.errors, status=status.HTTP_400_BAD_REQUEST)
                         else:
-                            return Response(n_inventory.errors, status=status.HTTP_400_BAD_REQUEST)
+                            inventory = InventoryDescription.objects.get(id=inventory_data['id'])
+                            o_inventory = InventoryDescriptionSerializer(inventory, data=inventory_data, partial=True)
+                            if o_inventory.is_valid():
+                                old_inventory = o_inventory.save()
+                                inventorydescription_ids.append(old_inventory.id)
+                                all_inventory.append(old_inventory)
+                            else:
+                                return Response(o_inventory.errors, status=status.HTTP_400_BAD_REQUEST)
+                            
+                    if convert_status == 'true':
+                        transaction_data['is_converted'] = True
                     else:
-                        inventory = InventoryDescription.objects.get(id=inventory_data['id'])
-                        o_inventory = InventoryDescriptionSerializer(inventory, data=inventory_data, partial=True)
-                        if o_inventory.is_valid():
-                            old_inventory = o_inventory.save()
-                            inventorydescription_ids.append(old_inventory.id)
-                            all_inventory.append(old_inventory)
-                        else:
-                            return Response(o_inventory.errors, status=status.HTTP_400_BAD_REQUEST)
-                        
-                if convert_status == 'true':
-                    transaction_data['is_converted'] = True
+                        transaction_data['is_converted'] = False
+                    transaction_data['inventorydescription'] = inventorydescription_ids 
+                    transactionSerializer = TransactionSerializer(transaction, data=transaction_data, partial=True)
+                    if transactionSerializer.is_valid():
+                        transaction_instance = transactionSerializer.save()
+                    else:
+                        return Response(transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    
+                    customer_id = transaction_instance.customer_id.id if transaction_instance.customer_id is not None else None
+                    staff_id = transaction_instance.staff_id.id if transaction_instance.staff_id is not None else None
+                    
+                    new_amount = transaction_instance.total_amount - transaction_instance.recived_or_paid_amount
+                    balance_amount(customer_id, staff_id, old_amount, new_amount, transaction_instance.type)
+
+                    if convert_status is not None:
+                        if convert_status == 'true':
+                            copy_all_instance = []
+                            copy_inventorydescription_ids = []
+
+                            for copy_inventory_data in copy_inventory_datas:
+                                copy_inventorySerializer = InventoryDescriptionSerializer(data=copy_inventory_data)
+                                if copy_inventorySerializer.is_valid():
+                                    copy_inventory_instance = copy_inventorySerializer.save()
+                                    copy_all_instance.append(copy_inventory_instance)
+                                else:
+                                    return Response(copy_inventorySerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+                                copy_inventorydescription_ids.append(copy_inventory_instance.id)
+
+                            if transaction_data['type'] == 'purchase_order':
+                                transaction_data['type'] = 'purchase'
+                            if transaction_data['type'] == 'sale_order':
+                                transaction_data['type'] = 'sale'
+                            transaction_data['is_converted'] = True
+                            transaction_data['inventorydescription'] = copy_inventorydescription_ids
+                            copy_transactionSerializer = TransactionSerializer(data = transaction_data)
+                            if copy_transactionSerializer.is_valid():
+                                copy_trnasaction_instance = copy_transactionSerializer.save()
+                            else:
+                                return Response(copy_transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                            
+                            customer_id = copy_trnasaction_instance.customer_id.id if copy_trnasaction_instance.customer_id is not None else None
+                            staff_id = copy_trnasaction_instance.staff_id.id if copy_trnasaction_instance.staff_id is not None else None
+                            
+                            new_amount = copy_trnasaction_instance.total_amount - copy_trnasaction_instance.recived_or_paid_amount
+                            balance_amount(copy_trnasaction_instance.customer_id.id, None, 0 , new_amount, copy_trnasaction_instance.type)
+
                 else:
-                    transaction_data['is_converted'] = False
-                transaction_data['inventorydescription'] = inventorydescription_ids 
+                    if delete_inventorys is not None:
+                        for delete_inventory in delete_inventorys:
+                            d_inventory = InventoryDescription.objects.get(pk=delete_inventory)
+                            d_inventory.delete()
+                    
+                    for inventory_data in inventory_datas:
+                        if inventory_data['id'] == '':
+                            inventory_data.pop('id')
+                            n_inventory = InventoryDescriptionSerializer(data=inventory_data)
+                            if n_inventory.is_valid():
+                                new_inventory = n_inventory.save()
+                                inventorydescription_ids.append(new_inventory.id)
+                                all_inventory.append(new_inventory)
+                            else:
+                                return Response(n_inventory.errors, status=status.HTTP_400_BAD_REQUEST)
+                        else:
+                            inventory = InventoryDescription.objects.get(id=inventory_data['id'])
+                            o_inventory = InventoryDescriptionSerializer(inventory, data=inventory_data, partial=True)
+                            if o_inventory.is_valid():
+                                old_inventory = o_inventory.save()
+                                inventorydescription_ids.append(old_inventory.id)
+                                all_inventory.append(old_inventory)
+                            else:
+                                return Response(o_inventory.errors, status=status.HTTP_400_BAD_REQUEST)
+
+                    transaction_data['inventorydescription'] = inventorydescription_ids 
+                    transaction_data['is_converted'] = True
+                    transactionSerializer = TransactionSerializer(transaction, data=transaction_data, partial=True)
+                    if transactionSerializer.is_valid():
+                        transaction_instance = transactionSerializer.save()
+                    else:
+                        return Response(transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    
+                    customer_id = transaction_instance.customer_id.id if transaction_instance.customer_id is not None else None
+                    staff_id = transaction_instance.staff_id.id if transaction_instance.staff_id is not None else None
+                    
+                    new_amount = transaction_instance.total_amount - transaction_instance.recived_or_paid_amount
+                    balance_amount(transaction_instance.customer_id.id, None, old_amount, new_amount, transaction_instance.type)
+
+                if linktransaction_data is not None:
+                    link_transaction(pk, linktransaction_data, transaction_instance.type)
+
+                data['tranasaction_data'] = TransactionSerializer(transaction_instance).data
+                data['inventorydescription_data'] = InventoryDescriptionSerializer(all_inventory, many=True).data
+
+            if key == 'transaction_update':
+                transaction_data = request.data.get('transaction_data')
+                linktransaction_data = request.data.get('linktransaction_data', None)
+
+                transactionSerializer = TransactionSerializer(transaction, data=transaction_data, partial=True)
+                if transactionSerializer.is_valid():
+                    transaction_instance = transactionSerializer.save()
+                else:
+                    return Response(transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                
+                data['tranasaction_data'] = TransactionSerializer(transaction_instance).data
+
+                customer_id = transaction_instance.customer_id.id if transaction_instance.customer_id is not None else None
+                staff_id = transaction_instance.staff_id.id if transaction_instance.staff_id is not None else None
+
+                new_amount = transaction_instance.total_amount - transaction_instance.used_amount
+                balance_amount(customer_id, staff_id, old_amount, new_amount, transaction_instance.type)
+
+                if linktransaction_data is not None:
+                    link_transaction(pk, linktransaction_data, transaction.type)
+                    ### WE ADD TRANSACTION TYPE BECAUSE OF IF TO TRANSACTION AND UPDATE TRASACTION IS SAME THEN WE DON'T NEED TO EDIT USED AMOUNT
+    
+            if key == 'exposure_bill_update':
+                transaction_data = request.data.get('transaction_data')
+
                 transactionSerializer = TransactionSerializer(transaction, data=transaction_data, partial=True)
                 if transactionSerializer.is_valid():
                     transaction_instance = transactionSerializer.save()
@@ -1313,511 +1518,396 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 new_amount = transaction_instance.total_amount - transaction_instance.recived_or_paid_amount
                 balance_amount(customer_id, staff_id, old_amount, new_amount, transaction_instance.type)
 
-                if convert_status is not None:
-                    if convert_status == 'true':
-                        copy_all_instance = []
-                        copy_inventorydescription_ids = []
-
-                        for copy_inventory_data in copy_inventory_datas:
-                            copy_inventorySerializer = InventoryDescriptionSerializer(data=copy_inventory_data)
-                            if copy_inventorySerializer.is_valid():
-                                copy_inventory_instance = copy_inventorySerializer.save()
-                                copy_all_instance.append(copy_inventory_instance)
-                            else:
-                                return Response(copy_inventorySerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-                            copy_inventorydescription_ids.append(copy_inventory_instance.id)
-
-                        if transaction_data['type'] == 'purchase_order':
-                            transaction_data['type'] = 'purchase'
-                        if transaction_data['type'] == 'sale_order':
-                            transaction_data['type'] = 'sale'
-                        transaction_data['is_converted'] = True
-                        transaction_data['inventorydescription'] = copy_inventorydescription_ids
-                        copy_transactionSerializer = TransactionSerializer(data = transaction_data)
-                        if copy_transactionSerializer.is_valid():
-                            copy_trnasaction_instance = copy_transactionSerializer.save()
-                        else:
-                            return Response(copy_transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                        
-                        customer_id = copy_trnasaction_instance.customer_id.id if copy_trnasaction_instance.customer_id is not None else None
-                        staff_id = copy_trnasaction_instance.staff_id.id if copy_trnasaction_instance.staff_id is not None else None
-                        
-                        new_amount = copy_trnasaction_instance.total_amount - copy_trnasaction_instance.recived_or_paid_amount
-                        balance_amount(copy_trnasaction_instance.customer_id.id, None, 0 , new_amount, copy_trnasaction_instance.type)
-
-            else:
-                if delete_inventorys is not None:
-                    for delete_inventory in delete_inventorys:
-                        d_inventory = InventoryDescription.objects.get(pk=delete_inventory)
-                        d_inventory.delete()
-                
-                for inventory_data in inventory_datas:
-                    if inventory_data['id'] == '':
-                        inventory_data.pop('id')
-                        n_inventory = InventoryDescriptionSerializer(data=inventory_data)
-                        if n_inventory.is_valid():
-                            new_inventory = n_inventory.save()
-                            inventorydescription_ids.append(new_inventory.id)
-                            all_inventory.append(new_inventory)
-                        else:
-                            return Response(n_inventory.errors, status=status.HTTP_400_BAD_REQUEST)
-                    else:
-                        inventory = InventoryDescription.objects.get(id=inventory_data['id'])
-                        o_inventory = InventoryDescriptionSerializer(inventory, data=inventory_data, partial=True)
-                        if o_inventory.is_valid():
-                            old_inventory = o_inventory.save()
-                            inventorydescription_ids.append(old_inventory.id)
-                            all_inventory.append(old_inventory)
-                        else:
-                            return Response(o_inventory.errors, status=status.HTTP_400_BAD_REQUEST)
-
-                transaction_data['inventorydescription'] = inventorydescription_ids 
-                transaction_data['is_converted'] = True
-                transactionSerializer = TransactionSerializer(transaction, data=transaction_data, partial=True)
-                if transactionSerializer.is_valid():
-                    transaction_instance = transactionSerializer.save()
-                else:
-                    return Response(transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                
-                customer_id = transaction_instance.customer_id.id if transaction_instance.customer_id is not None else None
-                staff_id = transaction_instance.staff_id.id if transaction_instance.staff_id is not None else None
-                
-                new_amount = transaction_instance.total_amount - transaction_instance.recived_or_paid_amount
-                balance_amount(transaction_instance.customer_id.id, None, old_amount, new_amount, transaction_instance.type)
-
-            if linktransaction_data is not None:
-                link_transaction(pk, linktransaction_data, transaction_instance.type)
-
-            data['tranasaction_data'] = TransactionSerializer(transaction_instance).data
-            data['inventorydescription_data'] = InventoryDescriptionSerializer(all_inventory, many=True).data
-
-        if key == 'transaction_update':
-            transaction_data = request.data.get('transaction_data')
-            linktransaction_data = request.data.get('linktransaction_data', None)
-
-            transactionSerializer = TransactionSerializer(transaction, data=transaction_data, partial=True)
-            if transactionSerializer.is_valid():
-                transaction_instance = transactionSerializer.save()
-            else:
-                return Response(transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                data['tranasaction_data'] = TransactionSerializer(transaction_instance).data
             
-            data['tranasaction_data'] = TransactionSerializer(transaction_instance).data
+            return Response(data)
+        except Exception as e:
+            logger.error(f"API: Transaction Update - An error occurred: {str(e)}.\nRequest data: {request.data}", exc_info=True)
 
-            customer_id = transaction_instance.customer_id.id if transaction_instance.customer_id is not None else None
-            staff_id = transaction_instance.staff_id.id if transaction_instance.staff_id is not None else None
-
-            new_amount = transaction_instance.total_amount - transaction_instance.used_amount
-            balance_amount(customer_id, staff_id, old_amount, new_amount, transaction_instance.type)
-
-            if linktransaction_data is not None:
-                link_transaction(pk, linktransaction_data, transaction.type)
-                ### WE ADD TRANSACTION TYPE BECAUSE OF IF TO TRANSACTION AND UPDATE TRASACTION IS SAME THEN WE DON'T NEED TO EDIT USED AMOUNT
- 
-        if key == 'exposure_bill_update':
-            transaction_data = request.data.get('transaction_data')
-
-            transactionSerializer = TransactionSerializer(transaction, data=transaction_data, partial=True)
-            if transactionSerializer.is_valid():
-                transaction_instance = transactionSerializer.save()
-            else:
-                return Response(transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            
-            customer_id = transaction_instance.customer_id.id if transaction_instance.customer_id is not None else None
-            staff_id = transaction_instance.staff_id.id if transaction_instance.staff_id is not None else None
-            
-            new_amount = transaction_instance.total_amount - transaction_instance.recived_or_paid_amount
-            balance_amount(customer_id, staff_id, old_amount, new_amount, transaction_instance.type)
-
-            data['tranasaction_data'] = TransactionSerializer(transaction_instance).data
-        
-        return Response(data)
+            return Response()
 
     def destroy(self, request, pk=None, *args, **kwargs):
-        transaction_object = Transaction.objects.get(pk=pk)
+        try:
+            transaction_object = Transaction.objects.get(pk=pk)
 
-        customer_id = transaction_object.customer_id.id if transaction_object.customer_id is not None else None
-        staff_id = transaction_object.staff_id.id if transaction_object.staff_id is not None else None
+            customer_id = transaction_object.customer_id.id if transaction_object.customer_id is not None else None
+            staff_id = transaction_object.staff_id.id if transaction_object.staff_id is not None else None
 
-        if transaction_object.type == 'estimate':
-            quotation_id = transaction_object.quotation_id
-            quotation = Quotation.objects.get(pk=quotation_id.id)
-            quotation.delete()
-            
-        if transaction_object.type == 'payment_in':
-            linktrasactions = LinkTransaction.objects.filter(from_transaction_id=pk)
-            for link in linktrasactions:
-                to_transaction_id = link.to_transaction_id
-                new_amount = link.linked_amount
-                to_transaction = Transaction.objects.get(pk=to_transaction_id.id)
+            if transaction_object.type == 'estimate':
+                quotation_id = transaction_object.quotation_id
+                quotation = Quotation.objects.get(pk=quotation_id.id)
+                quotation.delete()
+                
+            if transaction_object.type == 'payment_in':
+                linktrasactions = LinkTransaction.objects.filter(from_transaction_id=pk)
+                for link in linktrasactions:
+                    to_transaction_id = link.to_transaction_id
+                    new_amount = link.linked_amount
+                    to_transaction = Transaction.objects.get(pk=to_transaction_id.id)
 
-                if to_transaction.type in ('payment_in', 'payment_out'):
-                    to_transaction.used_amount = to_transaction.used_amount - link.linked_amount
-                else:
-                    to_transaction.recived_or_paid_amount = to_transaction.recived_or_paid_amount - link.linked_amount
-                to_transaction.save()
+                    if to_transaction.type in ('payment_in', 'payment_out'):
+                        to_transaction.used_amount = to_transaction.used_amount - link.linked_amount
+                    else:
+                        to_transaction.recived_or_paid_amount = to_transaction.recived_or_paid_amount - link.linked_amount
+                    to_transaction.save()
 
-                balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
+                    balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
 
-            to_linktrasactions = LinkTransaction.objects.filter(to_transaction_id=pk)
-            print("ALL LINKED TRANSACTION :: ", linktrasactions)
-            for to_link in to_linktrasactions:
-                from_transaction_id = to_link.from_transaction_id
-                new_amount = to_link.linked_amount
-                from_trasaction = Transaction.objects.get(pk=from_transaction_id.id)
+                to_linktrasactions = LinkTransaction.objects.filter(to_transaction_id=pk)
+                print("ALL LINKED TRANSACTION :: ", linktrasactions)
+                for to_link in to_linktrasactions:
+                    from_transaction_id = to_link.from_transaction_id
+                    new_amount = to_link.linked_amount
+                    from_trasaction = Transaction.objects.get(pk=from_transaction_id.id)
 
-                if from_trasaction.type in ('payment_in', 'payment_out'):
-                    from_trasaction.used_amount = from_trasaction.used_amount - to_link.linked_amount
-                else:
-                    from_trasaction.recived_or_paid_amount = from_trasaction.recived_or_paid_amount - to_link.linked_amount
-                from_trasaction.save()
+                    if from_trasaction.type in ('payment_in', 'payment_out'):
+                        from_trasaction.used_amount = from_trasaction.used_amount - to_link.linked_amount
+                    else:
+                        from_trasaction.recived_or_paid_amount = from_trasaction.recived_or_paid_amount - to_link.linked_amount
+                    from_trasaction.save()
 
+                    print("New Amount ::: ", new_amount)
+                    balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
+
+                new_amount = transaction_object.total_amount - transaction_object.used_amount
                 print("New Amount ::: ", new_amount)
                 balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
 
-            new_amount = transaction_object.total_amount - transaction_object.used_amount
-            print("New Amount ::: ", new_amount)
-            balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
+                # if customer_id is not None:
+                #     try:
+                #         balance = Balance.objects.get(customer_id=customer_id)
+                #     except:
+                #         balance = None
+                #     # print("BALANCE :: ",balance)
+                #     if balance is not None:
+                #         balance.amount = balance.amount + transaction_object.total_amount
+                #         balance.save()
 
-            # if customer_id is not None:
-            #     try:
-            #         balance = Balance.objects.get(customer_id=customer_id)
-            #     except:
-            #         balance = None
-            #     # print("BALANCE :: ",balance)
-            #     if balance is not None:
-            #         balance.amount = balance.amount + transaction_object.total_amount
-            #         balance.save()
+                # if staff_id is not None:
+                #         try:
+                #             balance = Balance.objects.get(staff_id=staff_id)
+                #         except:
+                #             balance = None
+                #         # print("BALANCE :: ",balance)
+                #         if balance is not None:
+                #             balance.amount = balance.amount + transaction_object.total_amount
+                #             balance.save()
 
-            # if staff_id is not None:
-            #         try:
-            #             balance = Balance.objects.get(staff_id=staff_id)
-            #         except:
-            #             balance = None
-            #         # print("BALANCE :: ",balance)
-            #         if balance is not None:
-            #             balance.amount = balance.amount + transaction_object.total_amount
-            #             balance.save()
+            if transaction_object.type == 'payment_out':
+                linktrasactions = LinkTransaction.objects.filter(from_transaction_id=pk)
+                for link in linktrasactions:
+                    to_transaction_id = link.to_transaction_id
+                    new_amount = link.linked_amount          
+                    to_transaction = Transaction.objects.get(pk=to_transaction_id.id)
 
-        if transaction_object.type == 'payment_out':
-            linktrasactions = LinkTransaction.objects.filter(from_transaction_id=pk)
-            for link in linktrasactions:
-                to_transaction_id = link.to_transaction_id
-                new_amount = link.linked_amount          
-                to_transaction = Transaction.objects.get(pk=to_transaction_id.id)
+                    if to_transaction.type in ('payment_in', 'payment_out'):
+                        to_transaction.used_amount = to_transaction.used_amount - link.linked_amount
+                    else:
+                        to_transaction.recived_or_paid_amount = to_transaction.recived_or_paid_amount - link.linked_amount
+                    to_transaction.save()
 
-                if to_transaction.type in ('payment_in', 'payment_out'):
-                    to_transaction.used_amount = to_transaction.used_amount - link.linked_amount
-                else:
-                    to_transaction.recived_or_paid_amount = to_transaction.recived_or_paid_amount - link.linked_amount
-                to_transaction.save()
+                    balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
 
+                to_linktrasactions = LinkTransaction.objects.filter(to_transaction_id=pk)
+                for to_link in to_linktrasactions:
+                    from_transaction_id = to_link.from_transaction_id
+                    new_amount = to_link.linked_amount
+                    from_trasaction = Transaction.objects.get(pk=from_transaction_id.id)
+
+                    if from_trasaction.type in ('payment_in', 'payment_out'):
+                        from_trasaction.used_amount = from_trasaction.used_amount - to_link.linked_amount
+                    else:
+                        from_trasaction.recived_or_paid_amount = from_trasaction.recived_or_paid_amount - to_link.linked_amount
+                    
+                    from_trasaction.save()
+
+                    balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
+
+                new_amount = transaction_object.total_amount - transaction_object.used_amount
                 balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
 
-            to_linktrasactions = LinkTransaction.objects.filter(to_transaction_id=pk)
-            for to_link in to_linktrasactions:
-                from_transaction_id = to_link.from_transaction_id
-                new_amount = to_link.linked_amount
-                from_trasaction = Transaction.objects.get(pk=from_transaction_id.id)
-
-                if from_trasaction.type in ('payment_in', 'payment_out'):
-                    from_trasaction.used_amount = from_trasaction.used_amount - to_link.linked_amount
-                else:
-                    from_trasaction.recived_or_paid_amount = from_trasaction.recived_or_paid_amount - to_link.linked_amount
+            if transaction_object.type == 'sale_order':
+                pass
                 
-                from_trasaction.save()
+            if transaction_object.type == 'sale':
+                linktrasactions = LinkTransaction.objects.filter(to_transaction_id=pk)
+                for link in linktrasactions:
+                    from_transaction_id = link.from_transaction_id
+                    new_amount = link.linked_amount
+                    from_transaction = Transaction.objects.get(pk=from_transaction_id.id)
 
+                    if from_transaction.type in ('payment_in', 'payment_out'):
+                        from_transaction.used_amount = from_transaction.used_amount - link.linked_amount
+                    else:
+                        from_transaction.recived_or_paid_amount = from_transaction.recived_or_paid_amount - link.linked_amount
+                    
+                    from_transaction.save()
+                    balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
+
+                from_linktrasactions = LinkTransaction.objects.filter(from_transaction_id=pk)
+                for from_link in from_linktrasactions:
+                    to_transaction_id = from_link.to_transaction_id
+                    new_amount = from_link.linked_amount
+                    to_trasaction = Transaction.objects.get(pk=to_transaction_id.id)
+
+                    if to_trasaction.type in ('payment_in', 'payment_out'):
+                        to_trasaction.used_amount = to_trasaction.used_amount - from_link.linked_amount
+                    else:
+                        to_trasaction.recived_or_paid_amount = to_trasaction.recived_or_paid_amount - from_link.linked_amount
+                    
+                    to_trasaction.save()
+                    balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
+
+                new_amount = transaction_object.total_amount - transaction_object.recived_or_paid_amount
                 balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
 
-            new_amount = transaction_object.total_amount - transaction_object.used_amount
-            balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
+            if transaction_object.type == 'event_sale':
+                linktrasactions = LinkTransaction.objects.filter(to_transaction_id=pk)
+                for link in linktrasactions:
+                    from_transaction_id = link.from_transaction_id
+                    new_amount = link.linked_amount
+                    from_transaction = Transaction.objects.get(pk=from_transaction_id.id)
 
-        if transaction_object.type == 'sale_order':
-            pass
-            
-        if transaction_object.type == 'sale':
-            linktrasactions = LinkTransaction.objects.filter(to_transaction_id=pk)
-            for link in linktrasactions:
-                from_transaction_id = link.from_transaction_id
-                new_amount = link.linked_amount
-                from_transaction = Transaction.objects.get(pk=from_transaction_id.id)
+                    if from_transaction.type in ('payment_in', 'payment_out'):
+                        from_transaction.used_amount = from_transaction.used_amount - link.linked_amount
+                    else:
+                        from_transaction.recived_or_paid_amount = from_transaction.recived_or_paid_amount - link.linked_amount
+                    
+                    from_transaction.save()
+                    balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
 
-                if from_transaction.type in ('payment_in', 'payment_out'):
-                    from_transaction.used_amount = from_transaction.used_amount - link.linked_amount
-                else:
-                    from_transaction.recived_or_paid_amount = from_transaction.recived_or_paid_amount - link.linked_amount
-                
-                from_transaction.save()
+                from_linktrasactions = LinkTransaction.objects.filter(from_transaction_id=pk)
+                for from_link in from_linktrasactions:
+                    to_transaction_id = from_link.to_transaction_id
+                    new_amount = from_link.linked_amount
+                    to_trasaction = Transaction.objects.get(pk=to_transaction_id.id)
+
+                    if to_trasaction.type in ('payment_in', 'payment_out'):
+                        to_trasaction.used_amount = to_trasaction.used_amount - from_link.linked_amount
+                    else:
+                        to_trasaction.recived_or_paid_amount = to_trasaction.recived_or_paid_amount - from_link.linked_amount
+                    
+                    to_trasaction.save()
+                    balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
+                    
+                new_amount = transaction_object.total_amount - transaction_object.recived_or_paid_amount
                 balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
 
-            from_linktrasactions = LinkTransaction.objects.filter(from_transaction_id=pk)
-            for from_link in from_linktrasactions:
-                to_transaction_id = from_link.to_transaction_id
-                new_amount = from_link.linked_amount
-                to_trasaction = Transaction.objects.get(pk=to_transaction_id.id)
+                quotation_id = transaction_object.quotation_id
+                quotation = Quotation.objects.get(pk=quotation_id.id)
 
-                if to_trasaction.type in ('payment_in', 'payment_out'):
-                    to_trasaction.used_amount = to_trasaction.used_amount - from_link.linked_amount
-                else:
-                    to_trasaction.recived_or_paid_amount = to_trasaction.recived_or_paid_amount - from_link.linked_amount
+                eventdays = EventDay.objects.filter(quotation_id=quotation_id.id)
+                for eventday in eventdays:
+                    inventorydetails = InventoryDetails.objects.filter(eventday_id=eventday.id)
+                    for inventorydetail in inventorydetails:
+                        exposuredetails = ExposureDetails.objects.filter(inventorydetails_id=inventorydetail.id)
+
+                        for exposuredetail in exposuredetails:
+                            transaction = Transaction.objects.get(exposuredetails_id=exposuredetail.id)
+                            balance = Balance.objects.get(staff_id=transaction.staff_id.id)
+                            balance.amount = balance.amount + float(transaction.total_amount)
+                            balance.save()
+                    eventday.delete()
+                quotation.delete()
+
+            if transaction_object.type == 'purchase_order':
+                pass
                 
-                to_trasaction.save()
+            if transaction_object.type == 'purchase':
+                linktrasactions = LinkTransaction.objects.filter(to_transaction_id=pk)
+                for link in linktrasactions:
+                    from_transaction_id = link.from_transaction_id
+                    new_amount = link.linked_amount
+                    from_transaction = Transaction.objects.get(pk=from_transaction_id.id)
+
+                    if from_transaction.type in ('payment_in', 'payment_out'):
+                        from_transaction.used_amount = from_transaction.used_amount - link.linked_amount
+                    else:
+                        from_transaction.recived_or_paid_amount = from_transaction.recived_or_paid_amount - link.linked_amount
+                    
+                    from_transaction.save()
+                    balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
+                
+                from_linktrasactions = LinkTransaction.objects.filter(from_transaction_id=pk)
+                for from_link in from_linktrasactions:
+                    to_transaction_id = from_link.to_transaction_id
+                    new_amount = from_link.linked_amount
+                    to_trasaction = Transaction.objects.get(pk=to_transaction_id.id)
+
+                    if to_trasaction.type in ('payment_in', 'payment_out'):
+                        to_trasaction.used_amount = to_trasaction.used_amount - from_link.linked_amount
+                    else:
+                        to_trasaction.recived_or_paid_amount = to_trasaction.recived_or_paid_amount - from_link.linked_amount
+                    
+                    to_trasaction.save()
+                    balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
+                
+                new_amount = transaction_object.total_amount - transaction_object.recived_or_paid_amount
                 balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
 
-            new_amount = transaction_object.total_amount - transaction_object.recived_or_paid_amount
-            balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
+            if transaction_object.type == 'event_purchase':
+                linktrasactions = LinkTransaction.objects.filter(to_transaction_id=pk)
+                for link in linktrasactions:
+                    from_transaction_id = link.from_transaction_id
+                    new_amount = link.linked_amount
+                    from_transaction = Transaction.objects.get(pk=from_transaction_id.id)
 
-        if transaction_object.type == 'event_sale':
-            linktrasactions = LinkTransaction.objects.filter(to_transaction_id=pk)
-            for link in linktrasactions:
-                from_transaction_id = link.from_transaction_id
-                new_amount = link.linked_amount
-                from_transaction = Transaction.objects.get(pk=from_transaction_id.id)
+                    if from_transaction.type in ('payment_in', 'payment_out'):
+                        from_transaction.used_amount = from_transaction.used_amount - link.linked_amount
+                    else:
+                        from_transaction.recived_or_paid_amount = from_transaction.recived_or_paid_amount - link.linked_amount
+                    
+                    from_transaction.save()
+                    balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
 
-                if from_transaction.type in ('payment_in', 'payment_out'):
-                    from_transaction.used_amount = from_transaction.used_amount - link.linked_amount
-                else:
-                    from_transaction.recived_or_paid_amount = from_transaction.recived_or_paid_amount - link.linked_amount
-                
-                from_transaction.save()
+                from_linktrasactions = LinkTransaction.objects.filter(from_transaction_id=pk)
+                for from_link in from_linktrasactions:
+                    to_transaction_id = from_link.to_transaction_id
+                    new_amount = from_link.linked_amount
+                    to_trasaction = Transaction.objects.get(pk=to_transaction_id.id)
+
+                    if to_trasaction.type in ('payment_in', 'payment_out'):
+                        to_trasaction.used_amount = to_trasaction.used_amount - from_link.linked_amount
+                    else:
+                        to_trasaction.recived_or_paid_amount = to_trasaction.recived_or_paid_amount - from_link.linked_amount
+                    
+                    to_trasaction.save()
+                    balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
+
+                new_amount = transaction_object.total_amount - transaction_object.recived_or_paid_amount
                 balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
 
-            from_linktrasactions = LinkTransaction.objects.filter(from_transaction_id=pk)
-            for from_link in from_linktrasactions:
-                to_transaction_id = from_link.to_transaction_id
-                new_amount = from_link.linked_amount
-                to_trasaction = Transaction.objects.get(pk=to_transaction_id.id)
+            transaction_object.delete()
 
-                if to_trasaction.type in ('payment_in', 'payment_out'):
-                    to_trasaction.used_amount = to_trasaction.used_amount - from_link.linked_amount
-                else:
-                    to_trasaction.recived_or_paid_amount = to_trasaction.recived_or_paid_amount - from_link.linked_amount
-                
-                to_trasaction.save()
-                balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
-                
-            new_amount = transaction_object.total_amount - transaction_object.recived_or_paid_amount
-            balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Exception as e:
+            logger.error(f"API: Transaction Link - An error occurred: {str(e)}", exc_info=True)
 
-            quotation_id = transaction_object.quotation_id
-            quotation = Quotation.objects.get(pk=quotation_id.id)
-
-            eventdays = EventDay.objects.filter(quotation_id=quotation_id.id)
-            for eventday in eventdays:
-                inventorydetails = InventoryDetails.objects.filter(eventday_id=eventday.id)
-                for inventorydetail in inventorydetails:
-                    exposuredetails = ExposureDetails.objects.filter(inventorydetails_id=inventorydetail.id)
-
-                    for exposuredetail in exposuredetails:
-                        transaction = Transaction.objects.get(exposuredetails_id=exposuredetail.id)
-                        balance = Balance.objects.get(staff_id=transaction.staff_id.id)
-                        balance.amount = balance.amount + float(transaction.total_amount)
-                        balance.save()
-                eventday.delete()
-            quotation.delete()
-
-        if transaction_object.type == 'purchase_order':
-            pass
-            
-        if transaction_object.type == 'purchase':
-            linktrasactions = LinkTransaction.objects.filter(to_transaction_id=pk)
-            for link in linktrasactions:
-                from_transaction_id = link.from_transaction_id
-                new_amount = link.linked_amount
-                from_transaction = Transaction.objects.get(pk=from_transaction_id.id)
-
-                if from_transaction.type in ('payment_in', 'payment_out'):
-                    from_transaction.used_amount = from_transaction.used_amount - link.linked_amount
-                else:
-                    from_transaction.recived_or_paid_amount = from_transaction.recived_or_paid_amount - link.linked_amount
-                
-                from_transaction.save()
-                balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
-            
-            from_linktrasactions = LinkTransaction.objects.filter(from_transaction_id=pk)
-            for from_link in from_linktrasactions:
-                to_transaction_id = from_link.to_transaction_id
-                new_amount = from_link.linked_amount
-                to_trasaction = Transaction.objects.get(pk=to_transaction_id.id)
-
-                if to_trasaction.type in ('payment_in', 'payment_out'):
-                    to_trasaction.used_amount = to_trasaction.used_amount - from_link.linked_amount
-                else:
-                    to_trasaction.recived_or_paid_amount = to_trasaction.recived_or_paid_amount - from_link.linked_amount
-                
-                to_trasaction.save()
-                balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
-            
-            new_amount = transaction_object.total_amount - transaction_object.recived_or_paid_amount
-            balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
-
-        if transaction_object.type == 'event_purchase':
-            linktrasactions = LinkTransaction.objects.filter(to_transaction_id=pk)
-            for link in linktrasactions:
-                from_transaction_id = link.from_transaction_id
-                new_amount = link.linked_amount
-                from_transaction = Transaction.objects.get(pk=from_transaction_id.id)
-
-                if from_transaction.type in ('payment_in', 'payment_out'):
-                    from_transaction.used_amount = from_transaction.used_amount - link.linked_amount
-                else:
-                    from_transaction.recived_or_paid_amount = from_transaction.recived_or_paid_amount - link.linked_amount
-                
-                from_transaction.save()
-                balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
-
-            from_linktrasactions = LinkTransaction.objects.filter(from_transaction_id=pk)
-            for from_link in from_linktrasactions:
-                to_transaction_id = from_link.to_transaction_id
-                new_amount = from_link.linked_amount
-                to_trasaction = Transaction.objects.get(pk=to_transaction_id.id)
-
-                if to_trasaction.type in ('payment_in', 'payment_out'):
-                    to_trasaction.used_amount = to_trasaction.used_amount - from_link.linked_amount
-                else:
-                    to_trasaction.recived_or_paid_amount = to_trasaction.recived_or_paid_amount - from_link.linked_amount
-                
-                to_trasaction.save()
-                balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
-
-            new_amount = transaction_object.total_amount - transaction_object.recived_or_paid_amount
-            balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
-
-        transaction_object.delete()
-
-        return Response(status=status.HTTP_204_NO_CONTENT)
+            return Response()
 
 
 ### API USED FOR GET TRASACTION AND LINK TRANSACTION ###
 @api_view(['POST'])
 def TransactionLink(request):
     if request.method == 'POST':
-        data = {}
-        customer_id = request.data.get('customer_id', None)
-        staff_id = request.data.get('staff_id', None)
-        transaction_type = request.data.get('transaction_type', None)
-        transaction_id = request.data.get('transaction_id', None)
+        try:
+            data = {}
+            customer_id = request.data.get('customer_id', None)
+            staff_id = request.data.get('staff_id', None)
+            transaction_type = request.data.get('transaction_type', None)
+            transaction_id = request.data.get('transaction_id', None)
 
-        if customer_id is not None:
-            if transaction_type is not None:
-                transaction = Transaction.objects.filter(Q(customer_id=customer_id), Q(type__in=transaction_type))
-            else:
-                transaction = Transaction.objects.filter(customer_id=customer_id)
+            if customer_id is not None:
+                if transaction_type is not None:
+                    transaction = Transaction.objects.filter(Q(customer_id=customer_id), Q(type__in=transaction_type))
+                else:
+                    transaction = Transaction.objects.filter(customer_id=customer_id)
 
-        if staff_id is not None:
-            if transaction_type is not None:
-                transaction = Transaction.objects.filter(Q(staff_id=staff_id), Q(type__in=transaction_type))
-            else:
-                transaction = Transaction.objects.filter(staff_id=staff_id)
-        data['transaction_data'] = TransactionSerializer(transaction, many=True).data
+            if staff_id is not None:
+                if transaction_type is not None:
+                    transaction = Transaction.objects.filter(Q(staff_id=staff_id), Q(type__in=transaction_type))
+                else:
+                    transaction = Transaction.objects.filter(staff_id=staff_id)
+            data['transaction_data'] = TransactionSerializer(transaction, many=True).data
 
-        if transaction_id is not None:
-            linktransaction = LinkTransaction.objects.filter(Q(from_transaction_id=transaction_id) 
-                                                            | Q(to_transaction_id=transaction_id))
-            data['linktransaction'] = LinkTransactionSerializer(linktransaction, many=True).data
+            if transaction_id is not None:
+                linktransaction = LinkTransaction.objects.filter(Q(from_transaction_id=transaction_id) 
+                                                                | Q(to_transaction_id=transaction_id))
+                data['linktransaction'] = LinkTransactionSerializer(linktransaction, many=True).data
 
-        return Response(data)
+            return Response(data)
+        
+        except Exception as e:
+            logger.error(f"API: Transaction Link - An error occurred: {str(e)}", exc_info=True)
+
+            return Response()
+    
+    return Response({"error": "Invalid request"}, status=400)
 
 
 ### API FOR STAFF AVAILABLE STATUS ###
 @api_view(['GET', 'POST'])
 def StaffStatus(request):
+    logger.info("StaffStatus view function called.")
     if request.method == 'GET':
-        user_id = request.query_params.get("user_id")
+        try:
+            user_id = request.query_params.get("user_id")
 
-        current_utc_datetime = datetime.datetime.utcnow()
-        itc_timezone = pytz.timezone('Asia/Kolkata')
-        current_itc_datetime = current_utc_datetime.astimezone(itc_timezone)
-        current_itc_date = current_itc_datetime.date()
+            current_utc_datetime = datetime.datetime.utcnow()
+            itc_timezone = pytz.timezone('Asia/Kolkata')
+            current_itc_datetime = current_utc_datetime.astimezone(itc_timezone)
+            current_itc_date = current_itc_datetime.date()
 
-        staffs = Staff.objects.filter(user_id=user_id)
-        data = []
-        for staff in staffs:
-            detail ={'staff_detail': {},
-                     'event_data': []}
-            
-            staffskill = StaffSkill.objects.filter(staff_id=staff.id)
-            detail['staff_detail'] = {"staff_data" : StaffSerializer(staff).data,
-                                      "staffskill_data" : StaffSkillSerializer(staffskill, many=True).data}
+            staffs = Staff.objects.filter(user_id=user_id)
+            data = []
+            for staff in staffs:
+                detail ={'staff_detail': {},
+                        'event_data': []}
+                
+                staffskill = StaffSkill.objects.filter(staff_id=staff.id)
+                detail['staff_detail'] = {"staff_data" : StaffSerializer(staff).data,
+                                        "staffskill_data" : StaffSkillSerializer(staffskill, many=True).data}
 
-            exposuredetails = ExposureDetails.objects.filter(staff_id=staff.id)
-            for exposuredetail in exposuredetails:
-                event_details = exposuredetail.eventdetails.all()
-            
-                for event_detail in event_details:
-                    details ={}
-                    eventday = EventDay.objects.get(pk=event_detail.eventday_id.id)
-                    if eventday.event_date >= current_itc_date:
-                        # print("EVENT DATE IS GREATER THAN CURRENT DATE")
-                        details = {'event_date': eventday.event_date.strftime('%Y-%m-%d'),
-                                   'event_venue': event_detail.event_venue,
-                                   'start_time': event_detail.start_time.strftime('%H:%M:%S'),
-                                   'end_time': event_detail.end_time.strftime('%H:%M:%S')}
-                        
-                        detail['event_data'].append(details)
-            data.append(detail)
+                exposuredetails = ExposureDetails.objects.filter(staff_id=staff.id)
+                for exposuredetail in exposuredetails:
+                    event_details = exposuredetail.eventdetails.all()
+                
+                    for event_detail in event_details:
+                        details ={}
+                        eventday = EventDay.objects.get(pk=event_detail.eventday_id.id)
+                        if eventday.event_date >= current_itc_date:
+                            # print("EVENT DATE IS GREATER THAN CURRENT DATE")
+                            details = {'event_date': eventday.event_date.strftime('%Y-%m-%d'),
+                                    'event_venue': event_detail.event_venue,
+                                    'start_time': event_detail.start_time.strftime('%H:%M:%S'),
+                                    'end_time': event_detail.end_time.strftime('%H:%M:%S')}
+                            
+                            detail['event_data'].append(details)
+                data.append(detail)
 
-        return Response(data)
+            return Response(data)
+        except Exception as e:
+            logger.error(f"API: Staff Status - An error occurred: {str(e)}", exc_info=True)
+
+            return Response()
+    
+    return Response({"error": "Invalid request"}, status=400)
 
 
 ### API FOR TODAY'S EVENT DETAILS ###
 @api_view(['POST'])
 def EventDetail(request):
     if request.method == 'POST':
-        today = request.data.get('today', None)
-        user_id = request.data.get('user_id', None)
+        try:
+            today = request.data.get('today', None)
+            user_id = request.data.get('user_id', None)
 
-        eventdays = EventDay.objects.filter(event_date=today)
-        print("EventDays :: ", eventdays)
-        data = []
+            eventdays = EventDay.objects.filter(event_date=today)
+            print("EventDays :: ", eventdays)
+            data = []
 
-        for eventday in eventdays:
-            print("EventDay :: ", eventday)
-            print("eventday.quotation_id :: ", eventday.quotation_id.id)
-            transaction = Transaction.objects.get(quotation_id=eventday.quotation_id.id)
-            print("Transaction :: ", transaction)
-            if transaction.type == 'event_sale' and transaction.user_id.id == user_id:
-                eventdetails = EventDetails.objects.filter(eventday_id=eventday.id)
-                for eventdetail in eventdetails:
-                    event_detail_data = {
-                        'eventdetail_id': eventdetail.event_id.id,
-                        'event_name': eventdetail.event_id.event_name,
-                        'event_venue': eventdetail.event_venue,
-                        'start_time': eventdetail.start_time,
-                        'end_time': eventdetail.end_time}
+            for eventday in eventdays:
+                print("EventDay :: ", eventday)
+                print("eventday.quotation_id :: ", eventday.quotation_id.id)
+                transaction = Transaction.objects.get(quotation_id=eventday.quotation_id.id)
+                print("Transaction :: ", transaction)
+                if transaction.type == 'event_sale' and transaction.user_id.id == user_id:
+                    eventdetails = EventDetails.objects.filter(eventday_id=eventday.id)
+                    for eventdetail in eventdetails:
+                        event_detail_data = {
+                            'eventdetail_id': eventdetail.event_id.id,
+                            'event_name': eventdetail.event_id.event_name,
+                            'event_venue': eventdetail.event_venue,
+                            'start_time': eventdetail.start_time,
+                            'end_time': eventdetail.end_time}
 
-                    exposuredetails = ExposureDetails.objects.filter(eventdetails__id=eventdetail.id)
-                    if len(exposuredetails) == 0:
-                        exposuredetail_data = {
-                                'staff_name': '',
-                                'staff_mobile_no': '',
-                                'event_detail': [event_detail_data]}
-                        
-                        customer_name = eventday.quotation_id.customer_id.full_name
-                        customer_mobile_no = eventday.quotation_id.customer_id.mobile_no
-
-                        # Find the customer data in the existing list or create a new entry
-                        customer_entry = next((entry for entry in data if entry['customer_name'] == customer_name and entry['customer_mobile_no'] == customer_mobile_no), None)
-
-                        if customer_entry:
-                            staff_entry = next((staff for staff in customer_entry['exposuredetails_data'] if staff['staff_name'] == exposuredetail_data['staff_name'] and staff['staff_mobile_no'] == exposuredetail_data['staff_mobile_no']), None)
-
-                            if staff_entry:
-                                staff_entry['event_detail'].append(event_detail_data)
-                            else:
-                                customer_entry['exposuredetails_data'].append(exposuredetail_data)
-                        else:
-                            data.append({
-                                'customer_name': customer_name,
-                                'customer_mobile_no': customer_mobile_no,
-                                'exposuredetails_data': [exposuredetail_data]})
-                    else:
-                        for exposuredetail in exposuredetails:
+                        exposuredetails = ExposureDetails.objects.filter(eventdetails__id=eventdetail.id)
+                        if len(exposuredetails) == 0:
                             exposuredetail_data = {
-                                'staff_name': exposuredetail.staff_id.full_name,
-                                'staff_mobile_no': exposuredetail.staff_id.mobile_no,
-                                'event_detail': [event_detail_data]}
-
+                                    'staff_name': '',
+                                    'staff_mobile_no': '',
+                                    'event_detail': [event_detail_data]}
+                            
                             customer_name = eventday.quotation_id.customer_id.full_name
                             customer_mobile_no = eventday.quotation_id.customer_id.mobile_no
 
@@ -1836,8 +1926,40 @@ def EventDetail(request):
                                     'customer_name': customer_name,
                                     'customer_mobile_no': customer_mobile_no,
                                     'exposuredetails_data': [exposuredetail_data]})
+                        else:
+                            for exposuredetail in exposuredetails:
+                                exposuredetail_data = {
+                                    'staff_name': exposuredetail.staff_id.full_name,
+                                    'staff_mobile_no': exposuredetail.staff_id.mobile_no,
+                                    'event_detail': [event_detail_data]}
 
-        return Response(data)
+                                customer_name = eventday.quotation_id.customer_id.full_name
+                                customer_mobile_no = eventday.quotation_id.customer_id.mobile_no
+
+                                # Find the customer data in the existing list or create a new entry
+                                customer_entry = next((entry for entry in data if entry['customer_name'] == customer_name and entry['customer_mobile_no'] == customer_mobile_no), None)
+
+                                if customer_entry:
+                                    staff_entry = next((staff for staff in customer_entry['exposuredetails_data'] if staff['staff_name'] == exposuredetail_data['staff_name'] and staff['staff_mobile_no'] == exposuredetail_data['staff_mobile_no']), None)
+
+                                    if staff_entry:
+                                        staff_entry['event_detail'].append(event_detail_data)
+                                    else:
+                                        customer_entry['exposuredetails_data'].append(exposuredetail_data)
+                                else:
+                                    data.append({
+                                        'customer_name': customer_name,
+                                        'customer_mobile_no': customer_mobile_no,
+                                        'exposuredetails_data': [exposuredetail_data]})
+
+            return Response(data)
+        
+        except Exception as e:
+            logger.error(f"API: Event Detail - An error occurred: {str(e)}", exc_info=True)
+
+            return Response()
+    
+    return Response({"error": "Invalid request"}, status=400)
 
 
 class LinkTransactionViewSet(viewsets.ModelViewSet):
@@ -2233,234 +2355,317 @@ class InvoiceExport(viewsets.ReadOnlyModelViewSet):
 @api_view(['POST'])
 def ConvertBucketURL(request):
     if request.method == 'POST':
-        s3_bucket_url = request.data.get('s3_bucket_url', None)
-        if s3_bucket_url is not None:
-            response = requests.get(s3_bucket_url)
-            image_data = response.content
-            base64_image = base64.b64encode(image_data).decode()
-            data_url = f"data:image/jpeg;base64,{base64_image}"
-        
-        return Response(data_url)
+        try:
+            s3_bucket_url = request.data.get('s3_bucket_url', None)
+            if s3_bucket_url is not None:
+                response = requests.get(s3_bucket_url)
+                image_data = response.content
+                base64_image = base64.b64encode(image_data).decode()
+                data_url = f"data:image/jpeg;base64,{base64_image}"
+            
+            return Response(data_url)
+        except Exception as e:
+            logger.error(f"API: Convert Bucket URL - An error occurred: {str(e)}", exc_info=True)
 
+            return Response()
+    
+    return Response({"error": "Invalid request"}, status=400)
+
+# import os, sys
+# import logging
+
+# logger = logging.getLogger(__name__)
+# logger.setLevel(logging.DEBUG)
+
+# f = logging.Formatter('%(asctime)s - %(levelname)s - %(name)s - %(message)s - %(lineno)d')
+
+# fh = logging.FileHandler('test.log')
+# fh.setFormatter(f)
+
+# logger.addHandler(fh)
+
+# logger.info('Test logging')
 
 ### TOTAL SALE
 @api_view(['POST'])
 def TotalSale(request):
     if request.method == 'POST':
-        user_id = request.data.get('user_id', None)
-        start_date = request.data.get('start_date', None)
-        end_date = request.data.get('end_date', None)
+        try:
+            user_id = request.data.get('user_id', None)
+            start_date = request.data.get('start_date', None)
+            end_date = request.data.get('end_date', None)
 
-        if start_date is None and end_date is None:
-            total_amount = Transaction.objects.filter(user_id=user_id, type__in=['sale', 'event_sale']).aggregate(Sum('total_amount'))['total_amount__sum']
-        else:
-            total_amount = Transaction.objects.filter(user_id=user_id, created_on__range=[start_date, end_date], type__in=['sale', 'event_sale']).aggregate(Sum('total_amount'))['total_amount__sum']
+            if start_date is None and end_date is None:
+                total_amount = Transaction.objects.filter(user_id=user_id, type__in=['sale', 'event_sale']).aggregate(Sum('total_amount'))['total_amount__sum']
+            else:
+                total_amount = Transaction.objects.filter(user_id=user_id, created_on__range=[start_date, end_date], type__in=['sale', 'event_sale']).aggregate(Sum('total_amount'))['total_amount__sum']
+                # print('total_amount ::: ',total_amount)
+            # logger.info('Successfully')
 
-        return Response(total_amount)
+            return Response(total_amount)
+    
+        except Exception as e:
+            # exc_type, exc_obj, exc_tb = sys.exc_info()
+            # fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            # print(exc_type, fname, exc_tb.tb_lineno)
+            # logger.error(f'{exc_type}{fname},{exc_tb.tb_lineno}')
+            # logger.error('Error occurred:', exc_info=False)
+            logger.error(f"API: Total Sale - An error occurred: {str(e)}", exc_info=True)
+            return Response()
+        
+    return Response({"error": "Invalid request"}, status=400)
 
 
 ### TOTAL EXPENSES
 @api_view(['POST'])
 def TotalExpense(request):
     if request.method == 'POST':
-        user_id = request.data.get('user_id', None)
-        start_date = request.data.get('start_date', None)
-        end_date = request.data.get('end_date', None)
+        try:
+            user_id = request.data.get('user_id', None)
+            start_date = request.data.get('start_date', None)
+            end_date = request.data.get('end_date', None)
 
-        if start_date is None and end_date is None:
-            total_amount = Transaction.objects.filter(user_id=user_id, type__in=['expense']).aggregate(Sum('total_amount'))['total_amount__sum']
-        else:
-            total_amount = Transaction.objects.filter(user_id=user_id, created_on__range=[start_date, end_date], type__in=['expense']).aggregate(Sum('total_amount'))['total_amount__sum']
+            if start_date is None and end_date is None:
+                total_amount = Transaction.objects.filter(user_id=user_id, type__in=['expense']).aggregate(Sum('total_amount'))['total_amount__sum']
+            else:
+                total_amount = Transaction.objects.filter(user_id=user_id, created_on__range=[start_date, end_date], type__in=['expense']).aggregate(Sum('total_amount'))['total_amount__sum']
 
-        return Response(total_amount)
+            return Response(total_amount)
+        
+        except Exception as e:
+            logger.error(f"API: Total Expense - An error occurred: {str(e)}", exc_info=True)
+            return Response()
+        
+    return Response({"error": "Invalid request"}, status=400)
 
 
 ### TOTAL RECIVED AMOUNT
 @api_view(['POST'])
 def TotalAmount(request):
     if request.method == 'POST':
-        user_id = request.data.get('user_id', None)
+        try:
+            user_id = request.data.get('user_id', None)
 
-        total_recived = 0
-        total_paied = 0
+            total_recived = 0
+            total_paied = 0
 
-        customers = Customer.objects.filter(user_id=user_id)
-        for customer in customers:
-            total_recived_amount = Transaction.objects.filter(customer_id=customer.id, type__in=['sale','event_sale','payment_out']).aggregate(Sum('total_amount'))['total_amount__sum']
-            total_recived_amount = total_recived_amount if total_recived_amount is not None else 0
+            customers = Customer.objects.filter(user_id=user_id)
+            for customer in customers:
+                total_recived_amount = Transaction.objects.filter(customer_id=customer.id, type__in=['sale','event_sale','payment_out']).aggregate(Sum('total_amount'))['total_amount__sum']
+                total_recived_amount = total_recived_amount if total_recived_amount is not None else 0
 
-            total_pay_amount = Transaction.objects.filter(customer_id=customer.id, type__in=['purchase','event_purchase','payment_in']).aggregate(Sum('total_amount'))['total_amount__sum']
-            total_pay_amount = total_pay_amount if total_pay_amount is not None else 0
+                total_pay_amount = Transaction.objects.filter(customer_id=customer.id, type__in=['purchase','event_purchase','payment_in']).aggregate(Sum('total_amount'))['total_amount__sum']
+                total_pay_amount = total_pay_amount if total_pay_amount is not None else 0
 
-            total = total_recived_amount - total_pay_amount
+                total = total_recived_amount - total_pay_amount
 
-            if total > 0:
-                total_recived = total_recived + total
-            elif total < 0:
-                total_paied = total_paied + (-total)
+                if total > 0:
+                    total_recived = total_recived + total
+                elif total < 0:
+                    total_paied = total_paied + (-total)
 
-        data = {'total_recived' : total_recived,
-                'total_paied' : total_paied}
+            data = {'total_recived' : total_recived,
+                    'total_paied' : total_paied}
 
-        return Response(data)
+            return Response(data)
+        
+        except Exception as e:
+            logger.error(f"API: Total Amount - An error occurred: {str(e)}", exc_info=True)
+            return Response()
+        
+    return Response({"error": "Invalid request"}, status=400)      
 
 
 ### TOTAL PURCHASE
 @api_view(['POST'])
 def TotalPurchase(request):
     if request.method == 'POST':
-        user_id = request.data.get('user_id', None)
-        start_date = request.data.get('start_date', None)
-        end_date = request.data.get('end_date', None)
+        try:
+            user_id = request.data.get('user_id', None)
+            start_date = request.data.get('start_date', None)
+            end_date = request.data.get('end_date', None)
 
-        if start_date is None and end_date is None:
-            total_amount = Transaction.objects.filter(user_id=user_id, type__in=['purchase','event_purchase']).aggregate(Sum('total_amount'))['total_amount__sum']
-        else:
-            total_amount = Transaction.objects.filter(user_id=user_id, created_on__range=[start_date, end_date], type__in=['purchase','event_purchase']).aggregate(Sum('total_amount'))['total_amount__sum']
+            if start_date is None and end_date is None:
+                total_amount = Transaction.objects.filter(user_id=user_id, type__in=['purchase','event_purchase']).aggregate(Sum('total_amount'))['total_amount__sum']
+            else:
+                total_amount = Transaction.objects.filter(user_id=user_id, created_on__range=[start_date, end_date], type__in=['purchase','event_purchase']).aggregate(Sum('total_amount'))['total_amount__sum']
 
-        return Response(total_amount)
+            return Response(total_amount)
+        
+        except Exception as e:
+            logger.error(f"API: Total Purchase - An error occurred: {str(e)}", exc_info=True)
+            return Response()
+        
+    return Response({"error": "Invalid request"}, status=400)
 
 
 ### ConversationReport
 @api_view(['POST'])
 def ConversationRateReport(request):
     if request.method == 'POST':
-        user = request.data.get('user_id')
-        start_date = request.data.get('start_date', None)
-        end_date = request.data.get('end_date', None)
+        try:
+            user = request.data.get('user_id')
+            start_date = request.data.get('start_date', None)
+            end_date = request.data.get('end_date', None)
 
-        report = {}
+            report = {}
 
-        total = Transaction.objects.filter(user_id = user, type='estimate').count()
-        report['total'] = total
+            total = Transaction.objects.filter(user_id = user, type='estimate').count()
+            report['total'] = total
 
-        if start_date is None and end_date is None:
-            not_converted = Transaction.objects.filter(user_id = user, type='estimate', is_converted=False).count()
-            report['not_converted'] = not_converted
+            if start_date is None and end_date is None:
+                not_converted = Transaction.objects.filter(user_id = user, type='estimate', is_converted=False).count()
+                report['not_converted'] = not_converted
 
-            converted = Transaction.objects.filter(user_id = user, type='estimate', is_converted=True).count()
-            report['converted'] = converted
-        else:
-            not_converted = Transaction.objects.filter(user_id = user, type='estimate', is_converted=False, created_on__range=[start_date, end_date]).count()
-            report['not_converted'] = not_converted
+                converted = Transaction.objects.filter(user_id = user, type='estimate', is_converted=True).count()
+                report['converted'] = converted
+            else:
+                not_converted = Transaction.objects.filter(user_id = user, type='estimate', is_converted=False, created_on__range=[start_date, end_date]).count()
+                report['not_converted'] = not_converted
 
-            converted = Transaction.objects.filter(user_id = user, type='estimate', is_converted=True, created_on__range=[start_date, end_date]).count()
-            report['converted'] = converted
+                converted = Transaction.objects.filter(user_id = user, type='estimate', is_converted=True, created_on__range=[start_date, end_date]).count()
+                report['converted'] = converted
 
-        return Response(report)
+            return Response(report)
+        
+        except Exception as e:
+            logger.error(f"API: Conversation Rate Report - An error occurred: {str(e)}", exc_info=True)
+            return Response()
+        
+    return Response({"error": "Invalid request"}, status=400)
 
 
 ### Invoice Status
 @api_view(['POST'])
 def InvoiceStatusReport(request):
     if request.method == 'POST':
-        user = request.data.get('user_id')
-        start_date = request.data.get('start_date', None)
-        end_date = request.data.get('end_date', None)
+        try:
+            user = request.data.get('user_id')
+            start_date = request.data.get('start_date', None)
+            end_date = request.data.get('end_date', None)
 
-        report = {}
-        report['completed'] = 0
-        report['pending'] = 0
+            report = {}
+            report['completed'] = 0
+            report['pending'] = 0
 
-        if start_date is None and end_date is None:
-            transactions = Transaction.objects.filter(user_id=user, type__in=['event_sale','sale','event_purchase','purchase'])
-        else:
-            transactions = Transaction.objects.filter(user_id=user, type__in=['event_sale','sale','event_purchase','purchase'], created_on__range=[start_date, end_date])
-
-        for transaction in transactions:
-            if transaction.total_amount == (transaction.recived_or_paid_amount + transaction.settled_amount):
-                report['completed'] += 1
+            if start_date is None and end_date is None:
+                transactions = Transaction.objects.filter(user_id=user, type__in=['event_sale','sale','event_purchase','purchase'])
             else:
-                report['pending'] += 1
+                transactions = Transaction.objects.filter(user_id=user, type__in=['event_sale','sale','event_purchase','purchase'], created_on__range=[start_date, end_date])
 
-        return Response(report)
+            for transaction in transactions:
+                if transaction.total_amount == (transaction.recived_or_paid_amount + transaction.settled_amount):
+                    report['completed'] += 1
+                else:
+                    report['pending'] += 1
+
+            return Response(report)
+        
+        except Exception as e:
+            logger.error(f"API: Invoice Status Report - An error occurred: {str(e)}", exc_info=True)
+            return Response()
+        
+    return Response({"error": "Invalid request"}, status=400)
 
 
 ### Invoice Panding for Completion
 @api_view(['POST'])
 def CompletionReport(request):
     if request.method == 'POST':
-        user = request.data.get('user_id')
-        start_date = request.data.get('start_date', None)
-        end_date = request.data.get('end_date', None)
+        try:
+            user = request.data.get('user_id')
+            start_date = request.data.get('start_date', None)
+            end_date = request.data.get('end_date', None)
+            
+            data = []
+
+            if start_date is None and end_date is None:
+                transactions = Transaction.objects.filter(user_id=user, type='event_sale')
+            else:
+                transactions = Transaction.objects.filter(user_id=user, created_on__range=[start_date, end_date], type__in=['event_sale', 'estimate'])
+
+            for transaction in transactions:
+                quotation = Quotation.objects.get(pk=transaction.quotation_id.id)
+                eventdays = EventDay.objects.filter(quotation_id=quotation.id)
+
+                for eventday in eventdays:
+                    inventorydetails = InventoryDetails.objects.filter(eventday_id=eventday.id)
+
+                    for inventorydetail in inventorydetails:
+                        exposuredetails = ExposureDetails.objects.filter(inventorydetails_id=inventorydetail.id)
+                        if len(exposuredetails) == 0:
+                            data.append(transaction)
+                            break
+
+            return Response(TransactionSerializer(data, many=True).data)
         
-        data = []
-
-        if start_date is None and end_date is None:
-            transactions = Transaction.objects.filter(user_id=user, type='event_sale')
-        else:
-            transactions = Transaction.objects.filter(user_id=user, created_on__range=[start_date, end_date], type__in=['event_sale', 'estimate'])
-
-        for transaction in transactions:
-            quotation = Quotation.objects.get(pk=transaction.quotation_id.id)
-            eventdays = EventDay.objects.filter(quotation_id=quotation.id)
-
-            for eventday in eventdays:
-                inventorydetails = InventoryDetails.objects.filter(eventday_id=eventday.id)
-
-                for inventorydetail in inventorydetails:
-                    exposuredetails = ExposureDetails.objects.filter(inventorydetails_id=inventorydetail.id)
-                    if len(exposuredetails) == 0:
-                        data.append(transaction)
-                        break
-
-        return Response(TransactionSerializer(data, many=True).data)
+        except Exception as e:
+            logger.error(f"API: Completion Report - An error occurred: {str(e)}", exc_info=True)
+            return Response()
+        
+    return Response({"error": "Invalid request"}, status=400)
 
 
 ### Cash & Bank 
 @api_view(['POST'])
 def CashAndBank(request):
     if request.method == 'POST':
-        user = request.data.get('user_id')
+        try:
+            user = request.data.get('user_id')
+
+            cash_payment_in = Transaction.objects.filter(user_id=user, payment_type='cash', type__in=['payment_in']).aggregate(Sum('total_amount'))['total_amount__sum']
+            cash_payment_in = cash_payment_in if cash_payment_in is not None else 0
+            cash_payment_out = Transaction.objects.filter(user_id=user, payment_type='cash', type__in=['payment_out']).aggregate(Sum('total_amount'))['total_amount__sum']
+            cash_payment_out = cash_payment_out if cash_payment_out is not None else 0
+            cash_sale = Transaction.objects.filter(user_id=user, payment_type='cash', type__in=['sale','event_sale']).aggregate(Sum('advance_amount'))['advance_amount__sum']
+            cash_sale = cash_sale if cash_sale is not None else 0
+            cash_purchase = Transaction.objects.filter(user_id=user, payment_type='cash', type__in=['purchase','event_purchase']).aggregate(Sum('advance_amount'))['advance_amount__sum']
+            cash_purchase = cash_purchase if cash_purchase is not None else 0
 
 
-        cash_payment_in = Transaction.objects.filter(user_id=user, payment_type='cash', type__in=['payment_in']).aggregate(Sum('total_amount'))['total_amount__sum']
-        cash_payment_in = cash_payment_in if cash_payment_in is not None else 0
-        cash_payment_out = Transaction.objects.filter(user_id=user, payment_type='cash', type__in=['payment_out']).aggregate(Sum('total_amount'))['total_amount__sum']
-        cash_payment_out = cash_payment_out if cash_payment_out is not None else 0
-        cash_sale = Transaction.objects.filter(user_id=user, payment_type='cash', type__in=['sale','event_sale']).aggregate(Sum('advance_amount'))['advance_amount__sum']
-        cash_sale = cash_sale if cash_sale is not None else 0
-        cash_purchase = Transaction.objects.filter(user_id=user, payment_type='cash', type__in=['purchase','event_purchase']).aggregate(Sum('advance_amount'))['advance_amount__sum']
-        cash_purchase = cash_purchase if cash_purchase is not None else 0
+            cheque_payment_in = Transaction.objects.filter(user_id=user, payment_type='cheque', type__in=['payment_in']).aggregate(Sum('total_amount'))['total_amount__sum']
+            cheque_payment_in = cheque_payment_in if cheque_payment_in is not None else 0
+            cheque_payment_out = Transaction.objects.filter(user_id=user, payment_type='cheque', type__in=['payment_out']).aggregate(Sum('total_amount'))['total_amount__sum']
+            cheque_payment_out = cheque_payment_out if cheque_payment_out is not None else 0
+            cheque_sale = Transaction.objects.filter(user_id=user, payment_type='cheque', type__in=['sale','event_sale']).aggregate(Sum('advance_amount'))['advance_amount__sum']
+            cheque_sale = cheque_sale if cheque_sale is not None else 0
+            cheque_purchase = Transaction.objects.filter(user_id=user, payment_type='cheque', type__in=['purchase','event_purchase']).aggregate(Sum('advance_amount'))['advance_amount__sum']
+            cheque_purchase = cheque_purchase if cheque_purchase is not None else 0
 
 
-        cheque_payment_in = Transaction.objects.filter(user_id=user, payment_type='cheque', type__in=['payment_in']).aggregate(Sum('total_amount'))['total_amount__sum']
-        cheque_payment_in = cheque_payment_in if cheque_payment_in is not None else 0
-        cheque_payment_out = Transaction.objects.filter(user_id=user, payment_type='cheque', type__in=['payment_out']).aggregate(Sum('total_amount'))['total_amount__sum']
-        cheque_payment_out = cheque_payment_out if cheque_payment_out is not None else 0
-        cheque_sale = Transaction.objects.filter(user_id=user, payment_type='cheque', type__in=['sale','event_sale']).aggregate(Sum('advance_amount'))['advance_amount__sum']
-        cheque_sale = cheque_sale if cheque_sale is not None else 0
-        cheque_purchase = Transaction.objects.filter(user_id=user, payment_type='cheque', type__in=['purchase','event_purchase']).aggregate(Sum('advance_amount'))['advance_amount__sum']
-        cheque_purchase = cheque_purchase if cheque_purchase is not None else 0
+            net_banking_payment_in = Transaction.objects.filter(user_id=user, payment_type='net_banking', type__in=['payment_in']).aggregate(Sum('total_amount'))['total_amount__sum']
+            net_banking_payment_in = net_banking_payment_in if net_banking_payment_in is not None else 0
+            net_banking_payment_out = Transaction.objects.filter(user_id=user, payment_type='net_banking', type__in=['payment_out']).aggregate(Sum('total_amount'))['total_amount__sum']
+            net_banking_payment_out = net_banking_payment_out if net_banking_payment_out is not None else 0
+            net_banking_sale = Transaction.objects.filter(user_id=user, payment_type='net_banking', type__in=['sale','event_sale']).aggregate(Sum('advance_amount'))['advance_amount__sum']
+            net_banking_sale = net_banking_sale if net_banking_sale is not None else 0
+            net_banking_purchase = Transaction.objects.filter(user_id=user, payment_type='net_banking', type__in=['purchase','event_purchase']).aggregate(Sum('advance_amount'))['advance_amount__sum']
+            net_banking_purchase = net_banking_purchase if net_banking_purchase is not None else 0
 
 
-        net_banking_payment_in = Transaction.objects.filter(user_id=user, payment_type='net_banking', type__in=['payment_in']).aggregate(Sum('total_amount'))['total_amount__sum']
-        net_banking_payment_in = net_banking_payment_in if net_banking_payment_in is not None else 0
-        net_banking_payment_out = Transaction.objects.filter(user_id=user, payment_type='net_banking', type__in=['payment_out']).aggregate(Sum('total_amount'))['total_amount__sum']
-        net_banking_payment_out = net_banking_payment_out if net_banking_payment_out is not None else 0
-        net_banking_sale = Transaction.objects.filter(user_id=user, payment_type='net_banking', type__in=['sale','event_sale']).aggregate(Sum('advance_amount'))['advance_amount__sum']
-        net_banking_sale = net_banking_sale if net_banking_sale is not None else 0
-        net_banking_purchase = Transaction.objects.filter(user_id=user, payment_type='net_banking', type__in=['purchase','event_purchase']).aggregate(Sum('advance_amount'))['advance_amount__sum']
-        net_banking_purchase = net_banking_purchase if net_banking_purchase is not None else 0
+            upi_payment_in = Transaction.objects.filter(user_id=user, payment_type='upi', type__in=['payment_in']).aggregate(Sum('total_amount'))['total_amount__sum']
+            upi_payment_in = upi_payment_in if upi_payment_in is not None else 0
+            upi_payment_out = Transaction.objects.filter(user_id=user, payment_type='upi', type__in=['payment_out']).aggregate(Sum('total_amount'))['total_amount__sum']
+            upi_payment_out = upi_payment_out if upi_payment_out is not None else 0
+            upi_sale = Transaction.objects.filter(user_id=user, payment_type='upi', type__in=['sale','event_sale']).aggregate(Sum('advance_amount'))['advance_amount__sum']
+            upi_sale = upi_sale if upi_sale is not None else 0
+            upi_purchase = Transaction.objects.filter(user_id=user, payment_type='upi', type__in=['purchase','event_purchase']).aggregate(Sum('advance_amount'))['advance_amount__sum']
+            upi_purchase = upi_purchase if upi_purchase is not None else 0
 
 
-        upi_payment_in = Transaction.objects.filter(user_id=user, payment_type='upi', type__in=['payment_in']).aggregate(Sum('total_amount'))['total_amount__sum']
-        upi_payment_in = upi_payment_in if upi_payment_in is not None else 0
-        upi_payment_out = Transaction.objects.filter(user_id=user, payment_type='upi', type__in=['payment_out']).aggregate(Sum('total_amount'))['total_amount__sum']
-        upi_payment_out = upi_payment_out if upi_payment_out is not None else 0
-        upi_sale = Transaction.objects.filter(user_id=user, payment_type='upi', type__in=['sale','event_sale']).aggregate(Sum('advance_amount'))['advance_amount__sum']
-        upi_sale = upi_sale if upi_sale is not None else 0
-        upi_purchase = Transaction.objects.filter(user_id=user, payment_type='upi', type__in=['purchase','event_purchase']).aggregate(Sum('advance_amount'))['advance_amount__sum']
-        upi_purchase = upi_purchase if upi_purchase is not None else 0
+            data = {'total_cash' : (cash_payment_in + cash_sale) - (cash_payment_out + cash_purchase),
+                    'total_cheque' : {'received' : (cheque_payment_in + cheque_sale),
+                                    'paid' : (cheque_payment_out + cheque_purchase)},
+                    'total_net_banking' : (net_banking_payment_in + net_banking_sale) - (net_banking_payment_out + net_banking_purchase),
+                    'total_upi' : (upi_payment_in + upi_sale) - (upi_payment_out + upi_purchase)}
 
-
-        data = {'total_cash' : (cash_payment_in + cash_sale) - (cash_payment_out + cash_purchase),
-                'total_cheque' : {'received' : (cheque_payment_in + cheque_sale),
-                                 'paid' : (cheque_payment_out + cheque_purchase)},
-                'total_net_banking' : (net_banking_payment_in + net_banking_sale) - (net_banking_payment_out + net_banking_purchase),
-                'total_upi' : (upi_payment_in + upi_sale) - (upi_payment_out + upi_purchase)}
-
-        return Response(data)
+            return Response(data)
+        
+        except Exception as e:
+            logger.error(f"API: Cash And Bank - An error occurred: {str(e)}", exc_info=True)
+            return Response()
+        
+    return Response({"error": "Invalid request"}, status=400)
 
 
 

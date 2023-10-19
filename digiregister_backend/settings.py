@@ -164,3 +164,20 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 REFRESH_TOKEN_SECRET = config('SECRET_KEY')
 REFRESH_TOKEN_EXPIRE_TIME_SECONDS=int(config("REFRESH_TOKEN_EXPIRE_TIME_SECONDS"))
 ACCESS_TOKEN_EXPIRE_TIME_SECONDS=int(config("ACCESS_TOKEN_EXPIRE_TIME_SECONDS"))
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'drf.log',
+        },
+    },
+    'root': {
+        'handlers': ['file'],
+        'level': 'DEBUG',
+    },
+}
