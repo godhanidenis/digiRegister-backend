@@ -172,8 +172,9 @@ LOGGING = {
     'handlers': {
         'file': {
             'level': 'DEBUG',
-            'class': 'logging.FileHandler',
+            'class': 'logging.handlers.RotatingFileHandler',
             'filename': 'drf.log',
+            'maxBytes': 300 * 1024 * 1024,
         },
     },
     'root': {

@@ -62,8 +62,7 @@ class UserViewSet(viewsets.ModelViewSet):
                             'terms' : TermsAndConditionsSerializer(terms, many=True).data})
         except Exception as e:
             logger.error(f"API: User Retrieve - An error occurred: {str(e)}", exc_info=True)
-
-            return Response()
+            return Response({"error": "An error occurred while retrieving the object."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def update(self, request, pk=None, *args, **kwargs):
         try:
@@ -144,8 +143,7 @@ class UserViewSet(viewsets.ModelViewSet):
         
         except Exception as e:
             logger.error(f"API: User Update - An error occurred: {str(e)}.\nRequest data: {request.data}", exc_info=True)
-
-            return Response()
+            return Response({"error": "An error occurred while updating the object."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class TermsAndConditionsViewSet(viewsets.ModelViewSet):
@@ -155,6 +153,15 @@ class TermsAndConditionsViewSet(viewsets.ModelViewSet):
     filterset_fields ={
         'user_id__id':['exact'],
     }
+
+    # def retrieve(self, request, pk=None):
+    #     logger.info(f"Retrieving object with ID {pk}.")
+    #     try:
+    #         return super().retrieve(request, pk)
+    #     except Exception as e:
+    #         # logger.error(f"Error retrieving object with ID {pk}: {str(e)}")
+    #         logger.error(f"API: Terms And Conditions Retrieve - An error occurred: {str(e)}.\nPK : {pk}", exc_info=True)
+    #         return Response({"error": "An error occurred while retrieving the object."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class StudioDetailsViewSet(viewsets.ModelViewSet):
@@ -194,8 +201,7 @@ class CustomerViewSet(viewsets.ModelViewSet):
         
         except Exception as e:
             logger.error(f"API: Customer List - An error occurred: {str(e)}", exc_info=True)
-
-            return Response()
+            return Response({"error": "An error occurred while listing the object."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class InventoryViewSet(viewsets.ModelViewSet):
@@ -243,8 +249,7 @@ class StaffViewSet(viewsets.ModelViewSet):
             return Response(data)
         except Exception as e:
             logger.error(f"API: Staff List - An error occurred: {str(e)}", exc_info=True)
-
-            return Response()
+            return Response({"error": "An error occurred while listing the object."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def retrieve(self, request, *args, **kwarge):
         try:
@@ -257,8 +262,7 @@ class StaffViewSet(viewsets.ModelViewSet):
             return Response(data)
         except Exception as e:
             logger.error(f"API: Staff Retrieve - An error occurred: {str(e)}", exc_info=True)
-
-            return Response()
+            return Response({"error": "An error occurred while retrieving the object."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def create(self, request, *args, **kwargs):
         try:
@@ -288,8 +292,7 @@ class StaffViewSet(viewsets.ModelViewSet):
                 return Response(staffSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             logger.error(f"API: Staff Create - An error occurred: {str(e)}.\nRequest data: {request.data}", exc_info=True)
-
-            return Response()
+            return Response({"error": "An error occurred while creating the object."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def update(self, request, pk=None, *args, **kwargs):
         try:
@@ -334,8 +337,7 @@ class StaffViewSet(viewsets.ModelViewSet):
             return Response({"staff_data":s_serializer.data})
         except Exception as e:
             logger.error(f"API: Staff Update - An error occurred: {str(e)}.\nRequest data: {request.data}", exc_info=True)
-
-            return Response()
+            return Response({"error": "An error occurred while updating the object."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class StaffSkillViewSet(viewsets.ModelViewSet):
@@ -396,8 +398,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
             return Response(quotation_get(instance.id))
         except Exception as e:
             logger.error(f"API: Quotation Retrieve - An error occurred: {str(e)}", exc_info=True)
-
-            return Response()
+            return Response({"error": "An error occurred while retrieving the object."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def create(self, request, *args, **kwargs):
         try:
@@ -533,8 +534,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
             return Response(quotation_get(quotation_instance.id))
         except Exception as e:
             logger.error(f"API: Quotation Create - An error occurred: {str(e)}.\nRequest data: {request.data}", exc_info=True)
-
-            return Response()
+            return Response({"error": "An error occurred while creating the object."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def update(self, request, pk=None, *args, **kwargs):
         try:
@@ -1171,7 +1171,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
             return Response({"quotation_data":QuotationSerializer(quotation_instance).data,})
         except Exception as e:
             logger.error(f"API: Quotation Update - An error occurred: {str(e)}.\nRequest data: {request.data}", exc_info=True)
-            return Response()
+            return Response({"error": "An error occurred while updating the object."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class EventDayViewSet(viewsets.ModelViewSet):
@@ -1238,8 +1238,7 @@ class InventoryDescriptionViewSet(viewsets.ModelViewSet):
                             "transaction": TransactionSerializer(transaction_instance).data})
         except Exception as e:
             logger.error(f"API: Inventory Description Create - An error occurred: {str(e)}.\nRequest data: {request.data}", exc_info=True)
-
-            return Response()
+            return Response({"error": "An error occurred while creating the object."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class TransactionViewSet(viewsets.ModelViewSet):
@@ -1301,8 +1300,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
             return Response(data)
         except Exception as e:
             logger.error(f"API: Transaction Retrieve - An error occurred: {str(e)}", exc_info=True)
-
-            return Response()
+            return Response({"error": "An error occurred while retrieving the object."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def create(self, request, *args, **kwargs):
         try:
@@ -1331,8 +1329,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
             return Response(data)
         except Exception as e:
             logger.error(f"API: Transaction Create - An error occurred: {str(e)}.\nRequest data: {request.data}", exc_info=True)
-
-            return Response()
+            return Response({"error": "An error occurred while creating the object."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def update(self, request, pk=None, *args, **kwargs):
         try:
@@ -1523,8 +1520,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
             return Response(data)
         except Exception as e:
             logger.error(f"API: Transaction Update - An error occurred: {str(e)}.\nRequest data: {request.data}", exc_info=True)
-
-            return Response()
+            return Response({"error": "An error occurred while updating the object."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def destroy(self, request, pk=None, *args, **kwargs):
         try:
@@ -1782,8 +1778,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
             return Response(status=status.HTTP_204_NO_CONTENT)
         except Exception as e:
             logger.error(f"API: Transaction Link - An error occurred: {str(e)}", exc_info=True)
-
-            return Response()
+            return Response({"error": "An error occurred while deleting the object."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 ### API USED FOR GET TRASACTION AND LINK TRANSACTION ###
@@ -1819,8 +1814,7 @@ def TransactionLink(request):
         
         except Exception as e:
             logger.error(f"API: Transaction Link - An error occurred: {str(e)}", exc_info=True)
-
-            return Response()
+            return Response({"error": "An error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     return Response({"error": "Invalid request"}, status=400)
 
@@ -1868,8 +1862,7 @@ def StaffStatus(request):
             return Response(data)
         except Exception as e:
             logger.error(f"API: Staff Status - An error occurred: {str(e)}", exc_info=True)
-
-            return Response()
+            return Response({"error": "An error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     return Response({"error": "Invalid request"}, status=400)
 
@@ -1956,8 +1949,7 @@ def EventDetail(request):
         
         except Exception as e:
             logger.error(f"API: Event Detail - An error occurred: {str(e)}", exc_info=True)
-
-            return Response()
+            return Response({"error": "An error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     return Response({"error": "Invalid request"}, status=400)
 
@@ -2006,22 +1998,26 @@ class AmountReportViewSet(viewsets.ModelViewSet):
         return queryset
 
     def list(self, request):
-        querysets = self.filter_queryset(self.get_queryset())
-        paid_amount = 0
-        total = 0
-        for queryset in querysets:
-            total_amount = Transaction.objects.filter(quotation_id=queryset.id).aggregate(Sum('amount'))['amount__sum']
-            total_amount = total_amount if total_amount is not None else 0
-            s_transaction = Transaction.objects.filter(quotation_id=queryset.id)
-            payable_amount = queryset.final_amount - queryset.discount
+        try:
+            querysets = self.filter_queryset(self.get_queryset())
+            paid_amount = 0
+            total = 0
+            for queryset in querysets:
+                total_amount = Transaction.objects.filter(quotation_id=queryset.id).aggregate(Sum('amount'))['amount__sum']
+                total_amount = total_amount if total_amount is not None else 0
+                s_transaction = Transaction.objects.filter(quotation_id=queryset.id)
+                payable_amount = queryset.final_amount - queryset.discount
+                
+                paid_amount += total_amount
+                total += payable_amount
             
-            paid_amount += total_amount
-            total += payable_amount
-        
-        data = {"paid_amount":paid_amount,
-                "total":total}
-        
-        return Response(data)
+            data = {"paid_amount":paid_amount,
+                    "total":total}
+            
+            return Response(data)
+        except Exception as e:
+            logger.error(f"API: Event Detail - An error occurred: {str(e)}", exc_info=True)
+            return Response({"error": "An error occurred while listing the object."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 ### EXPORT CUSTOMER DETAILS TO EXCEL ###
@@ -2366,8 +2362,7 @@ def ConvertBucketURL(request):
             return Response(data_url)
         except Exception as e:
             logger.error(f"API: Convert Bucket URL - An error occurred: {str(e)}", exc_info=True)
-
-            return Response()
+            return Response({"error": "An error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     return Response({"error": "Invalid request"}, status=400)
 
@@ -2411,7 +2406,7 @@ def TotalSale(request):
             # logger.error(f'{exc_type}{fname},{exc_tb.tb_lineno}')
             # logger.error('Error occurred:', exc_info=False)
             logger.error(f"API: Total Sale - An error occurred: {str(e)}", exc_info=True)
-            return Response()
+            return Response({"error": "An error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
     return Response({"error": "Invalid request"}, status=400)
 
@@ -2434,7 +2429,7 @@ def TotalExpense(request):
         
         except Exception as e:
             logger.error(f"API: Total Expense - An error occurred: {str(e)}", exc_info=True)
-            return Response()
+            return Response({"error": "An error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
     return Response({"error": "Invalid request"}, status=400)
 
@@ -2471,7 +2466,7 @@ def TotalAmount(request):
         
         except Exception as e:
             logger.error(f"API: Total Amount - An error occurred: {str(e)}", exc_info=True)
-            return Response()
+            return Response({"error": "An error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
     return Response({"error": "Invalid request"}, status=400)      
 
@@ -2494,7 +2489,7 @@ def TotalPurchase(request):
         
         except Exception as e:
             logger.error(f"API: Total Purchase - An error occurred: {str(e)}", exc_info=True)
-            return Response()
+            return Response({"error": "An error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
     return Response({"error": "Invalid request"}, status=400)
 
@@ -2530,7 +2525,7 @@ def ConversationRateReport(request):
         
         except Exception as e:
             logger.error(f"API: Conversation Rate Report - An error occurred: {str(e)}", exc_info=True)
-            return Response()
+            return Response({"error": "An error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
     return Response({"error": "Invalid request"}, status=400)
 
@@ -2563,7 +2558,7 @@ def InvoiceStatusReport(request):
         
         except Exception as e:
             logger.error(f"API: Invoice Status Report - An error occurred: {str(e)}", exc_info=True)
-            return Response()
+            return Response({"error": "An error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
     return Response({"error": "Invalid request"}, status=400)
 
@@ -2601,7 +2596,7 @@ def CompletionReport(request):
         
         except Exception as e:
             logger.error(f"API: Completion Report - An error occurred: {str(e)}", exc_info=True)
-            return Response()
+            return Response({"error": "An error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
     return Response({"error": "Invalid request"}, status=400)
 
@@ -2663,7 +2658,7 @@ def CashAndBank(request):
         
         except Exception as e:
             logger.error(f"API: Cash And Bank - An error occurred: {str(e)}", exc_info=True)
-            return Response()
+            return Response({"error": "An error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
     return Response({"error": "Invalid request"}, status=400)
 
