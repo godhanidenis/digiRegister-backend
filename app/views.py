@@ -2571,7 +2571,7 @@ def CompletionReport(request):
             user = request.data.get('user_id')
             start_date = request.data.get('start_date', None)
             end_date = request.data.get('end_date', None)
-            
+
             data = []
 
             if start_date is None and end_date is None:
@@ -2583,21 +2583,27 @@ def CompletionReport(request):
                 quotation = Quotation.objects.get(pk=transaction.quotation_id.id)
                 eventdays = EventDay.objects.filter(quotation_id=quotation.id)
 
+                add_transaction = True
+
                 for eventday in eventdays:
                     inventorydetails = InventoryDetails.objects.filter(eventday_id=eventday.id)
 
                     for inventorydetail in inventorydetails:
                         exposuredetails = ExposureDetails.objects.filter(inventorydetails_id=inventorydetail.id)
+
                         if len(exposuredetails) == 0:
-                            data.append(transaction)
+                            add_transaction = False
                             break
 
+                if not add_transaction:
+                    data.append(transaction)
+
             return Response(TransactionSerializer(data, many=True).data)
-        
+
         except Exception as e:
             logger.error(f"API: Completion Report - An error occurred: {str(e)}", exc_info=True)
             return Response({"error": "An error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+
     return Response({"error": "Invalid request"}, status=400)
 
 
