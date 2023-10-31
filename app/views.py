@@ -45,6 +45,7 @@ logger.addHandler(console_handler)
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all().order_by('-id').distinct()
     serializer_class = UserSerializer
+    pagination_class = MyPagination
     filter_backends = [DjangoFilterBackend]
     filterset_fields ={
         'full_name':['icontains'],
