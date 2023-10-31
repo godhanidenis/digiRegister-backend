@@ -52,6 +52,7 @@ class UserViewSet(viewsets.ModelViewSet):
         'mobile_no':['icontains'],
         'email':['icontains'],
         'address':['icontains'],
+        'shop_name':['icontains'],
         'type_of_user':['in']
     }
 
