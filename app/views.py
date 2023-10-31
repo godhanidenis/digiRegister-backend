@@ -50,7 +50,8 @@ class UserViewSet(viewsets.ModelViewSet):
         'full_name':['icontains'],
         'mobile_no':['icontains'],
         'email':['icontains'],
-        'address':['icontains']
+        'address':['icontains'],
+        'type_of_user':['in']
     }
 
     def retrieve(self, request, *args, **kwarge):
