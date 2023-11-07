@@ -182,6 +182,7 @@ class CustomerViewSet(viewsets.ModelViewSet):
     pagination_class = MyPagination
     filter_backends = [DjangoFilterBackend]
     filterset_fields = {
+        'id':['exact'],
         'user_id__id':['exact'],
         'full_name':['icontains'],
         'mobile_no':['icontains'],
