@@ -237,7 +237,8 @@ class Transaction(models.Model):
     expense_id = models.ForeignKey(Expense, null=True, blank=True, on_delete=models.CASCADE)
     customer_id = models.ForeignKey(Customer, null=True, blank=True, on_delete=models.CASCADE)
     staff_id =models.ForeignKey(Staff, null=True, blank=True, on_delete=models.CASCADE)
-    exposuredetails_id = models.ForeignKey(ExposureDetails, null=True, blank=True, on_delete=models.CASCADE)
+    exposuredetails_id = models.ForeignKey(ExposureDetails, null=True, blank=True,related_name='single_exposuredetails', on_delete=models.CASCADE)
+    exposuredetails_ids = models.ManyToManyField(ExposureDetails, blank=True, related_name='exposuredetails_ids')
     inventorydescription = models.ManyToManyField(InventoryDescription, blank=True)
     description = models.CharField(max_length=1000, null=True, blank=True)
     date = models.DateField(null=True, blank=True)
@@ -254,7 +255,7 @@ class Transaction(models.Model):
     round_off = models.FloatField(max_length=10, default=0.0)
     status = models.CharField(null=True, blank=True)
     is_converted = models.BooleanField(default=False)
-
+    parent_transaction = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='child_transactions')
 
 class LinkTransaction(models.Model):
     from_transaction_id = models.ForeignKey(Transaction, related_name='from_transaction', null=True, blank=True, on_delete=models.CASCADE)

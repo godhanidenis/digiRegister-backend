@@ -515,15 +515,20 @@ class QuotationViewSet(viewsets.ModelViewSet):
                 link_transaction(transaction_instance.id, linktransaction_data, transaction_instance.type)
 
             ### ADD BILL FOR EXOISURE ###
+
+            updated_exposuredetails_data = remove_exposure(final_exposuredetails_data)
+            # print("updated_exposuredetails_data :: ",updated_exposuredetails_data)
+
             if transaction['is_converted'] == 'true':
                 finall_instance = []
-                for i in final_exposuredetails_data:
+                for i in updated_exposuredetails_data:
                     i_transaction_data = {
-                        'user_id':transaction['user_id'],
+                        'user_id' : transaction['user_id'],
                         'type' : "event_purchase",
-                        'staff_id' : i.staff_id.id,
-                        'total_amount' : i.price,
-                        'exposuredetails_id':i.id,
+                        'staff_id' : i['staff_id'],
+                        'total_amount' : i["price_sum"],
+                        'exposuredetails_ids' : i["exposuredetails_ids"],
+                        'parent_transaction' : transaction_instance.id,
                         'date': date.today()}
                     i_transactionSerializer = TransactionSerializer(data=i_transaction_data)
                     if i_transactionSerializer.is_valid():
@@ -533,7 +538,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                         return Response(i_transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                     
                     new_amount = t_instance.total_amount - t_instance.recived_or_paid_amount
-                    balance_amount(None, t_instance.staff_id.id, 0 , new_amount, transaction_instance.type)
+                    balance_amount(None, t_instance.staff_id.id, 0 , new_amount, t_instance.type)
 
             return Response(quotation_get(quotation_instance.id))
         except Exception as e:
@@ -883,14 +888,19 @@ class QuotationViewSet(viewsets.ModelViewSet):
                         link_transaction(copy_transaction_instance.id, linktransaction_data, copy_transaction_instance.type)
 
                     ### ADD BILL FOR EXOISURE ###
+
+                    updated_exposuredetails_data = remove_exposure(final_exposuredetails_data)
+                    print("updated_exposuredetails_data :: ",updated_exposuredetails_data)
+
                     finall_instance = []
-                    for i in copy_final_exposuredetails_data:
+                    for i in updated_exposuredetails_data:
                         i_transaction_data = {
-                            'user_id': transaction.user_id.id,
+                            'user_id' : transaction.user_id.id,
                             'type' : "event_purchase",
-                            'staff_id' : i.staff_id.id,
-                            'total_amount' : i.price,
-                            'exposuredetails_id':i.id,
+                            'staff_id' : i['staff_id'],
+                            'total_amount' : i["price_sum"],
+                            'exposuredetails_ids' : i["exposuredetails_ids"],
+                            'transaction_instance' : copy_transaction_instance.id, 
                             'date': date.today()}
                         
                         i_transactionSerializer = TransactionSerializer(data=i_transaction_data)
@@ -1091,10 +1101,10 @@ class QuotationViewSet(viewsets.ModelViewSet):
                 if delete_exposures is not None:
                     for delete_exposure in delete_exposures:
                         d_exposure = ExposureDetails.objects.get(pk=delete_exposure)
-                        exposure_bill = Transaction.objects.get(exposuredetails_id=delete_exposure)
+                        # exposure_bill = Transaction.objects.get(exposuredetails_id=delete_exposure)
 
                         balance = Balance.objects.get(staff_id=d_exposure.staff_id.id)
-                        balance.amount = balance.amount + exposure_bill.total_amount
+                        # balance.amount = balance.amount + exposure_bill.total_amount
                         balance.save()
 
                         d_exposure.delete()
@@ -1132,20 +1142,25 @@ class QuotationViewSet(viewsets.ModelViewSet):
                 if linktransaction_data is not None:
                     link_transaction(transaction_data['id'], linktransaction_data, update_transaction.type)
 
+                updated_exposuredetails_data = remove_exposure(final_exposuredetails_data)
+                print("updated_exposuredetails_data :: ",updated_exposuredetails_data)
+
                 finall_instance = []
-                for i in final_exposuredetails_data:
+                for i in updated_exposuredetails_data:
                     try:
-                        bill = Transaction.objects.get(exposuredetails_id = i.id)
+                        # bill = Transaction.objects.get(exposuredetails_id = i.id)
+                        bill = Transaction.objects.get(parent_transaction = update_transaction.id , staff_id__id = i['staff_id'])
                         old_amount = bill.total_amount - bill.recived_or_paid_amount
                     except:
                         bill = None
 
                     i_transaction_data = {
-                            'user_id': transaction.user_id.id,
+                            'user_id' : transaction.user_id.id,
                             'type' : "event_purchase",
-                            'staff_id' : i.staff_id.id,
-                            'total_amount' : i.price,
-                            'exposuredetails_id':i.id,
+                            'staff_id' : i['staff_id'],
+                            'total_amount' : i["price_sum"],
+                            'exposuredetails_ids': i["exposuredetails_ids"],
+                            'parent_transaction' : update_transaction.id,
                             'date': date.today()}
 
                     if bill is not None:
@@ -1290,16 +1305,21 @@ class TransactionViewSet(viewsets.ModelViewSet):
             if len(linktransaction) != 0:
                 data['linktransaction_data'] = LinkTransactionSerializer(linktransaction, many=True).data
 
-            exposuredetails_id = instance.exposuredetails_id
-            if exposuredetails_id is not None:
-                exposuredetail = ExposureDetails.objects.get(pk=exposuredetails_id.id)
-                inventorydetails_id = exposuredetail.inventorydetails_id
-                inventorydetails = InventoryDetails.objects.get(pk=inventorydetails_id.id)
-                eventdetails = exposuredetail.eventdetails.all()
+            exposuredetails = instance.exposuredetails_ids.all()
+            if exposuredetails is not None:
+                data['exposuredetails'] = ExposureDetailsSerializer(exposuredetails, many=True).data    
 
-                data['exposuredetails'] = ExposureDetailsSerializer(exposuredetail).data
-                data['inventorydetails'] = InventoryDetailsSerializer(inventorydetails).data
-                data['eventdetails'] = EventDetailsSerializer(eventdetails, many=True).data
+                details = []
+                for exposure in exposuredetails:
+                    inventory_data = InventoryDetailsSerializer(exposure.inventorydetails_id).data if exposure.inventorydetails_id else None
+                    event_data = EventDetailsSerializer(exposure.eventdetails.all(), many=True).data if exposure.eventdetails.all() else []
+
+                    details.append({
+                        "inventorydetails": inventory_data,
+                        "eventdetails": event_data,
+                    })
+
+            data['details'] = details
 
             return Response(data)
         except Exception as e:

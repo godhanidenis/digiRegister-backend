@@ -513,3 +513,31 @@ def link_transaction(transaction_id, linktransaction_data, transaction_type=None
         logger.error(f"Function: Link Transaction - An error occurred: {str(e)}.\n Data:(transaction_id:{transaction_id}, linktransaction_data:{linktransaction_data}, transaction_type:{transaction_type})", exc_info=True)
         return Response({"error": "An error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
+
+def remove_exposure(exposure_details):
+    final_exposuredetails_data = ExposureDetailsSerializer(exposure_details, many=True).data
+    print("final_exposuredetails_data :: ",final_exposuredetails_data)
+
+    staff_data = {}
+
+    for item in final_exposuredetails_data:
+        staff_id = item['staff_id']
+        price = item['price']
+        exposuredetails_id = item['id']
+
+        if staff_id not in staff_data:
+            staff_data[staff_id] = {
+                'staff_id': staff_id,
+                'price_sum': price,
+                'exposuredetails_ids': [exposuredetails_id],
+            }
+        else:
+            staff_data[staff_id]['price_sum'] += price
+            staff_data[staff_id]['exposuredetails_ids'].append(exposuredetails_id)
+
+    result = list(staff_data.values())
+    print("RESULT :: ",result)
+    
+    print("staff_data :: ",staff_data)
+
+    return result
