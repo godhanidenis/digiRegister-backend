@@ -473,19 +473,21 @@ class QuotationViewSet(viewsets.ModelViewSet):
                         if exposuredetails is not None:
                             for exposuredetail in exposuredetails:
                                 evnetdetials =[]
+                                print("evnetdetialssss :: ", evnetdetials)
                                 allocations = exposuredetail['allocation']
+                                print("allocations :: ", allocations)
                                 for allocation in allocations:
                                     for single_eventdetails in final_eventdetails_data:
                                         event_id = single_eventdetails.event_id.id
                                         if event_id == int(allocation):
                                             evnetdetials.append(single_eventdetails.id)
-
+                                print("evnetdetials :: ", evnetdetials)
                                 exposuredetails_data = {
                                     'staff_id':exposuredetail['staff_id'],
                                     'price':exposuredetail['price'],
                                     'eventdetails':evnetdetials,
                                     'inventorydetails_id':inventorydetails_instance.id}
-                                
+                                print("exposuredetails_data :: ", exposuredetails_data)
                                 exposuredetailsSerializer = ExposureDetailsSerializer(data=exposuredetails_data)
                                 if exposuredetailsSerializer.is_valid():
                                     exposuredetails_instance = exposuredetailsSerializer.save()
@@ -1306,20 +1308,21 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 data['linktransaction_data'] = LinkTransactionSerializer(linktransaction, many=True).data
 
             exposuredetails = instance.exposuredetails_ids.all()
-            if exposuredetails is not None:
-                data['exposuredetails'] = ExposureDetailsSerializer(exposuredetails, many=True).data    
+            data['exposuredetails'] = ExposureDetailsSerializer(exposuredetails, many=True).data    
 
-                details = []
-                for exposure in exposuredetails:
-                    inventory_data = InventoryDetailsSerializer(exposure.inventorydetails_id).data if exposure.inventorydetails_id else None
-                    event_data = EventDetailsSerializer(exposure.eventdetails.all(), many=True).data if exposure.eventdetails.all() else []
-
-                    details.append({
-                        "inventorydetails": inventory_data,
-                        "eventdetails": event_data,
-                    })
-
+            details = []
+            for exposure in exposuredetails:
+                print("exposure ::",exposure, "\n" "exposure.inventorydetails_id ::",exposure.inventorydetails_id, "\n" "exposure.eventdetails ::",exposure.eventdetails.all(), "\n\n")
+                inventory_data = InventoryDetailsSerializer(exposure.inventorydetails_id).data 
+                event_data = EventDetailsSerializer(exposure.eventdetails.all(), many=True).data 
+                # print("event_data :: ",event_data)
+                details.append({
+                    "inventorydetails": inventory_data,
+                    "eventdetails": event_data,
+                })
+                event_data = inventory_data = None
             data['details'] = details
+            
 
             return Response(data)
         except Exception as e:
@@ -1723,7 +1726,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                         exposuredetails = ExposureDetails.objects.filter(inventorydetails_id=inventorydetail.id)
 
                         for exposuredetail in exposuredetails:
-                            transaction = Transaction.objects.get(exposuredetails_id=exposuredetail.id)
+                            transaction = Transaction.objects.get(staff_id=exposuredetail.staff_id.id, parent_transaction=transaction_object.id)
                             balance = Balance.objects.get(staff_id=transaction.staff_id.id)
                             balance.amount = balance.amount + float(transaction.total_amount)
                             balance.save()

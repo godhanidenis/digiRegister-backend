@@ -516,7 +516,7 @@ def link_transaction(transaction_id, linktransaction_data, transaction_type=None
 
 def remove_exposure(exposure_details):
     final_exposuredetails_data = ExposureDetailsSerializer(exposure_details, many=True).data
-    print("final_exposuredetails_data :: ",final_exposuredetails_data)
+    # print("final_exposuredetails_data :: ",final_exposuredetails_data)
 
     staff_data = {}
 
@@ -537,7 +537,5 @@ def remove_exposure(exposure_details):
 
     result = list(staff_data.values())
     print("RESULT :: ",result)
-    
-    print("staff_data :: ",staff_data)
 
     return result
