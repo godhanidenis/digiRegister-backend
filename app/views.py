@@ -1316,14 +1316,15 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
             exposuredetails = instance.exposuredetails_ids.all()
             if exposuredetails is not None:
-                data['exposuredetails'] = ExposureDetailsSerializer(exposuredetails, many=True).data
                 details = []
                 for exposure in exposuredetails:
+                    exposuredetails = ExposureDetailsSerializer(exposure).data
                     inventory_data = InventoryDetailsSerializer(exposure.inventorydetails_id).data
                     eventday = EventDay.objects.get(pk = inventory_data["eventday_id"])
                     eventday_data = EventDaySerializer(eventday).data
                     event_data = EventDetailsSerializer(exposure.eventdetails.all(), many=True).data
                     details.append({
+                        "exposuredetails":exposuredetails,
                         "inventorydetails": inventory_data,
                         "eventdetails": event_data,
                         "eventday_data" : eventday_data
@@ -1671,6 +1672,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
 
             if transaction_object.type == 'event_sale':
+                print("event_sale")
                 linktrasactions = LinkTransaction.objects.filter(to_transaction_id=pk)
                 for link in linktrasactions:
                     from_transaction_id = link.from_transaction_id
@@ -1699,8 +1701,8 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     to_trasaction.save()
                     balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
                     
-                # new_amount = transaction_object.total_amount - transaction_object.recived_or_paid_amount
-                # balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
+                new_amount = transaction_object.total_amount - transaction_object.recived_or_paid_amount
+                balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
 
                 quotation_id = transaction_object.quotation_id
                 quotation = Quotation.objects.get(pk=quotation_id.id)
@@ -1710,21 +1712,26 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     inventorydetails = InventoryDetails.objects.filter(eventday_id=eventday.id)
                     for inventorydetail in inventorydetails:
                         exposuredetails = ExposureDetails.objects.filter(inventorydetails_id=inventorydetail.id)
-                        # for exposuredetail in exposuredetails:
-                        #     print("exposuredetails :: ", exposuredetail)
-                        #     print("exposuredetail.staff_id.id :: ", exposuredetail.staff_id.id)
-                        #     transaction = Transaction.objects.get(staff_id=exposuredetail.staff_id.id, parent_transaction=transaction_object.id)
-
-
                         for exposuredetail in exposuredetails:
-                            transaction = Transaction.objects.get(staff_id=exposuredetail.staff_id.id, parent_transaction=transaction_object.id)
-                            new_amount = transaction.total_amount - transaction.recived_or_paid_amount
-                            # balance_delete_amount(None, transaction.staff_id.id, 0 , new_amount, transaction.type)
-                            balance = Balance.objects.get(staff_id=transaction.staff_id.id)
-                            balance.amount = balance.amount + float(transaction.total_amount)
-                            balance.save()
-                            transaction.delete()
+                            exposuredetail.delete()
                     eventday.delete()
+                
+                # print("transaction_object.id :: ",transaction_object.id)
+
+                exposure_transactions = Transaction.objects.filter(type='event_purchase', parent_transaction=transaction_object.id)
+                # print("exposure_transactions :: ",exposure_transactions)
+                for transaction in exposure_transactions:
+                    # print("transaction :: ", transaction)
+                    # print("transaction.total_amount :: ", transaction.total_amount)
+                    # print("transaction.recived_or_paid_amount :: ", transaction.recived_or_paid_amount)
+                    # print("transaction.staff_id.id :: ", transaction.staff_id.id)
+
+
+                    new_amount = transaction.total_amount - transaction.recived_or_paid_amount
+                    balance_delete_amount(None, transaction.staff_id.id, 0 , new_amount, transaction.type)
+                    get_transaction = Transaction.objects.get(pk = transaction.id)
+                    get_transaction.delete()
+                
                 quotation.delete()
 
             if transaction_object.type == 'purchase_order':
