@@ -1316,10 +1316,10 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     eventday_data = EventDaySerializer(eventday).data
                     event_data = EventDetailsSerializer(exposure.eventdetails.all(), many=True).data
                     details.append({
-                        "eventday_data" : eventday_data,
-                        "data" : {
-                            "inventorydetails": inventory_data,
-                            "eventdetails": event_data}})
+                        "inventorydetails": inventory_data,
+                        "eventdetails": event_data,
+                        "eventday_data" : eventday_data
+                    })
                 data['details'] = details
 
             return Response(data)
