@@ -1316,10 +1316,10 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     eventday_data = EventDaySerializer(eventday).data
                     event_data = EventDetailsSerializer(exposure.eventdetails.all(), many=True).data
                     details.append({
-                        "inventorydetails": inventory_data,
-                        "eventdetails": event_data,
-                        "eventday_data" : eventday_data
-                    })
+                        "eventday_data" : eventday_data,
+                        "data" : {
+                            "inventorydetails": inventory_data,
+                            "eventdetails": event_data}})
                 data['details'] = details
 
             return Response(data)
@@ -1711,7 +1711,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                         for exposuredetail in exposuredetails:
                             transaction = Transaction.objects.get(staff_id=exposuredetail.staff_id.id, parent_transaction=transaction_object.id)
                             new_amount = transaction.total_amount - transaction.recived_or_paid_amount
-                            balance_delete_amount(None, transaction.staff_id.id, 0 , new_amount, transaction.type)
+                            # balance_delete_amount(None, transaction.staff_id.id, 0 , new_amount, transaction.type)
                             balance = Balance.objects.get(staff_id=transaction.staff_id.id)
                             balance.amount = balance.amount + float(transaction.total_amount)
                             balance.save()
