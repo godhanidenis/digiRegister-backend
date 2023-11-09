@@ -473,21 +473,18 @@ class QuotationViewSet(viewsets.ModelViewSet):
                         if exposuredetails is not None:
                             for exposuredetail in exposuredetails:
                                 evnetdetials =[]
-                                print("evnetdetialssss :: ", evnetdetials)
                                 allocations = exposuredetail['allocation']
-                                print("allocations :: ", allocations)
-                                for allocation in allocations:
-                                    for single_eventdetails in final_eventdetails_data:
+                                for i in range(len(final_eventdetails_data)):
+                                    single_eventdetails = final_eventdetails_data.pop(0)
+                                    for allocation in allocations:
                                         event_id = single_eventdetails.event_id.id
                                         if event_id == int(allocation):
                                             evnetdetials.append(single_eventdetails.id)
-                                print("evnetdetials :: ", evnetdetials)
                                 exposuredetails_data = {
                                     'staff_id':exposuredetail['staff_id'],
                                     'price':exposuredetail['price'],
                                     'eventdetails':evnetdetials,
                                     'inventorydetails_id':inventorydetails_instance.id}
-                                print("exposuredetails_data :: ", exposuredetails_data)
                                 exposuredetailsSerializer = ExposureDetailsSerializer(data=exposuredetails_data)
                                 if exposuredetailsSerializer.is_valid():
                                     exposuredetails_instance = exposuredetailsSerializer.save()
@@ -633,8 +630,9 @@ class QuotationViewSet(viewsets.ModelViewSet):
                                         for exposuredetail in exposuredetails:
                                             evnetdetials =[]
                                             allocations = exposuredetail['allocation']
-                                            for allocation in allocations:
-                                                for single_eventdetails in final_eventdetails_data:
+                                            for i in range(len(final_eventdetails_data)):
+                                                single_eventdetails = final_eventdetails_data.pop(0)
+                                                for allocation in allocations:
                                                     event_id = single_eventdetails.event_id.id
                                                     if event_id == int(allocation):
                                                         evnetdetials.append(single_eventdetails.id)
@@ -718,8 +716,9 @@ class QuotationViewSet(viewsets.ModelViewSet):
                                         for exposuredetail in exposuredetails:
                                             evnetdetials =[]
                                             allocations = exposuredetail['allocation']
-                                            for allocation in allocations:
-                                                for single_eventdetails in final_eventdetails_data:
+                                            for i in range(len(final_eventdetails_data)):
+                                                single_eventdetails = final_eventdetails_data.pop(0)
+                                                for allocation in allocations:
                                                     event_id = single_eventdetails.event_id.id
                                                     if event_id == int(allocation):
                                                         evnetdetials.append(single_eventdetails.id)
@@ -849,8 +848,9 @@ class QuotationViewSet(viewsets.ModelViewSet):
                                     for copy_exposuredetail in copy_exposuredetails:
                                         copy_evnetdetials =[]
                                         copy_allocations = copy_exposuredetail['allocation']
-                                        for copy_allocation in copy_allocations:
-                                            for copy_single_eventdetails in copy_final_eventdetails_data:
+                                        for i in range(len(copy_final_eventdetails_data)):
+                                            copy_single_eventdetails = copy_final_eventdetails_data.pop(0)
+                                            for copy_allocation in copy_allocations:
                                                 copy_event_id = copy_single_eventdetails.event_id.id
                                                 if copy_event_id == int(copy_allocation):
                                                     copy_evnetdetials.append(copy_single_eventdetails.id)
@@ -1249,7 +1249,6 @@ class InventoryDescriptionViewSet(viewsets.ModelViewSet):
             staff_id = transaction_instance.staff_id.id if transaction_instance.staff_id is not None else None
             
             new_amount = transaction_instance.total_amount - transaction_instance.recived_or_paid_amount
-            print("New Amount ::: ", new_amount)
             balance_amount(customer_id, staff_id, 0, new_amount, transaction_instance.type)
             
             if linktransaction_data is not None:
@@ -1308,21 +1307,20 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 data['linktransaction_data'] = LinkTransactionSerializer(linktransaction, many=True).data
 
             exposuredetails = instance.exposuredetails_ids.all()
-            data['exposuredetails'] = ExposureDetailsSerializer(exposuredetails, many=True).data    
-
-            details = []
-            for exposure in exposuredetails:
-                print("exposure ::",exposure, "\n" "exposure.inventorydetails_id ::",exposure.inventorydetails_id, "\n" "exposure.eventdetails ::",exposure.eventdetails.all(), "\n\n")
-                inventory_data = InventoryDetailsSerializer(exposure.inventorydetails_id).data 
-                event_data = EventDetailsSerializer(exposure.eventdetails.all(), many=True).data 
-                # print("event_data :: ",event_data)
-                details.append({
-                    "inventorydetails": inventory_data,
-                    "eventdetails": event_data,
-                })
-                event_data = inventory_data = None
-            data['details'] = details
-            
+            if exposuredetails is not None:
+                data['exposuredetails'] = ExposureDetailsSerializer(exposuredetails, many=True).data
+                details = []
+                for exposure in exposuredetails:
+                    inventory_data = InventoryDetailsSerializer(exposure.inventorydetails_id).data
+                    eventday = EventDay.objects.get(pk = inventory_data["eventday_id"])
+                    eventday_data = EventDaySerializer(eventday).data
+                    event_data = EventDetailsSerializer(exposure.eventdetails.all(), many=True).data
+                    details.append({
+                        "inventorydetails": inventory_data,
+                        "eventdetails": event_data,
+                        "eventday_data" : eventday_data
+                    })
+                data['details'] = details
 
             return Response(data)
         except Exception as e:
@@ -1596,26 +1594,6 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 print("New Amount ::: ", new_amount)
                 balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
 
-                # if customer_id is not None:
-                #     try:
-                #         balance = Balance.objects.get(customer_id=customer_id)
-                #     except:
-                #         balance = None
-                #     # print("BALANCE :: ",balance)
-                #     if balance is not None:
-                #         balance.amount = balance.amount + transaction_object.total_amount
-                #         balance.save()
-
-                # if staff_id is not None:
-                #         try:
-                #             balance = Balance.objects.get(staff_id=staff_id)
-                #         except:
-                #             balance = None
-                #         # print("BALANCE :: ",balance)
-                #         if balance is not None:
-                #             balance.amount = balance.amount + transaction_object.total_amount
-                #             balance.save()
-
             if transaction_object.type == 'payment_out':
                 linktrasactions = LinkTransaction.objects.filter(from_transaction_id=pk)
                 for link in linktrasactions:
@@ -1713,8 +1691,8 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     to_trasaction.save()
                     balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
                     
-                new_amount = transaction_object.total_amount - transaction_object.recived_or_paid_amount
-                balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
+                # new_amount = transaction_object.total_amount - transaction_object.recived_or_paid_amount
+                # balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
 
                 quotation_id = transaction_object.quotation_id
                 quotation = Quotation.objects.get(pk=quotation_id.id)
@@ -1724,12 +1702,20 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     inventorydetails = InventoryDetails.objects.filter(eventday_id=eventday.id)
                     for inventorydetail in inventorydetails:
                         exposuredetails = ExposureDetails.objects.filter(inventorydetails_id=inventorydetail.id)
+                        # for exposuredetail in exposuredetails:
+                        #     print("exposuredetails :: ", exposuredetail)
+                        #     print("exposuredetail.staff_id.id :: ", exposuredetail.staff_id.id)
+                        #     transaction = Transaction.objects.get(staff_id=exposuredetail.staff_id.id, parent_transaction=transaction_object.id)
+
 
                         for exposuredetail in exposuredetails:
                             transaction = Transaction.objects.get(staff_id=exposuredetail.staff_id.id, parent_transaction=transaction_object.id)
+                            new_amount = transaction.total_amount - transaction.recived_or_paid_amount
+                            balance_delete_amount(None, transaction.staff_id.id, 0 , new_amount, transaction.type)
                             balance = Balance.objects.get(staff_id=transaction.staff_id.id)
                             balance.amount = balance.amount + float(transaction.total_amount)
                             balance.save()
+                            transaction.delete()
                     eventday.delete()
                 quotation.delete()
 
