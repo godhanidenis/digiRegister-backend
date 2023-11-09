@@ -465,21 +465,25 @@ class QuotationViewSet(viewsets.ModelViewSet):
                         final_inventorydetails_data.append(inventorydetails_instance)
                     else:
                         return Response(inventorydetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                    
                     inventory = Inventory.objects.get(pk=inventorydetails_data['inventory_id'])
                     if inventory.type == 'service':
                         ### FOR EXPOSURE DETAILS DATA ###
                         exposuredetails = description.get('exposure', None)
+                        print("exposuredetails :: ",exposuredetails)
                         if exposuredetails is not None:
                             for exposuredetail in exposuredetails:
+                                c_final_eventdetails_data = list(final_eventdetails_data)
+                                print("c_final_eventdetails_data :: ", c_final_eventdetails_data)
                                 evnetdetials =[]
                                 allocations = exposuredetail['allocation']
-                                for i in range(len(final_eventdetails_data)):
-                                    single_eventdetails = final_eventdetails_data.pop(0)
+                                print("allocations :: ",allocations)
+                                for i in range(len(c_final_eventdetails_data)):
+                                    single_eventdetails = c_final_eventdetails_data.pop(0)
                                     for allocation in allocations:
                                         event_id = single_eventdetails.event_id.id
                                         if event_id == int(allocation):
                                             evnetdetials.append(single_eventdetails.id)
+                                print("evnetdetials :: ",evnetdetials)
                                 exposuredetails_data = {
                                     'staff_id':exposuredetail['staff_id'],
                                     'price':exposuredetail['price'],
@@ -714,10 +718,12 @@ class QuotationViewSet(viewsets.ModelViewSet):
                                     exposuredetails = description.get('exposure', None)
                                     if exposuredetails is not None:
                                         for exposuredetail in exposuredetails:
+                                            c_final_eventdetails_data = list(final_eventdetails_data)
+                                            print("c_final_eventdetails_data :: ", c_final_eventdetails_data)
                                             evnetdetials =[]
                                             allocations = exposuredetail['allocation']
-                                            for i in range(len(final_eventdetails_data)):
-                                                single_eventdetails = final_eventdetails_data.pop(0)
+                                            for i in range(len(c_final_eventdetails_data)):
+                                                single_eventdetails = c_final_eventdetails_data.pop(0)
                                                 for allocation in allocations:
                                                     event_id = single_eventdetails.event_id.id
                                                     if event_id == int(allocation):
@@ -846,10 +852,12 @@ class QuotationViewSet(viewsets.ModelViewSet):
                                 copy_exposuredetails = copy_description.get('exposure', None)
                                 if copy_exposuredetails is not None:
                                     for copy_exposuredetail in copy_exposuredetails:
+                                        c_final_eventdetails_data = list(copy_final_eventdetails_data)
+                                        print("c_final_eventdetails_data :: ", c_final_eventdetails_data)
                                         copy_evnetdetials =[]
                                         copy_allocations = copy_exposuredetail['allocation']
-                                        for i in range(len(copy_final_eventdetails_data)):
-                                            copy_single_eventdetails = copy_final_eventdetails_data.pop(0)
+                                        for i in range(len(c_final_eventdetails_data)):
+                                            copy_single_eventdetails = c_final_eventdetails_data.pop(0)
                                             for copy_allocation in copy_allocations:
                                                 copy_event_id = copy_single_eventdetails.event_id.id
                                                 if copy_event_id == int(copy_allocation):
