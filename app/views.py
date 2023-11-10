@@ -91,18 +91,16 @@ class UserViewSet(viewsets.ModelViewSet):
                 profile_pic = request.data['profile_pic']
 
                 if profile_pic == '':
-                    print("profile_pic is Null")
                     # DELETE OLD PIC FORM BUCKET #
                     if old_pic:
                         s3.delete_object(Bucket = bucket_name, 
                                         Key=old_pic)
                 else:
-                    print("profile_pic is not Null")
                     # DELETE OLD PIC FORM BUCKET #
                     if old_pic:
                         s3.delete_object(Bucket = bucket_name, 
                                         Key=old_pic)
-                    
+
                     file = request.data['profile_pic']
                     file_name = f"profile_pic/{uuid.uuid4().hex}.jpg"
 
@@ -114,20 +112,18 @@ class UserViewSet(viewsets.ModelViewSet):
             ## ADD USER SIGNATURE IN BUCKET ##
             if 'signature' in request.data:
                 signature = request.data['signature']
-                
+
                 if signature == '':
-                    print("Signature is Null")
                     # DELETE OLD SIGNATURE FORM BUCKET #
                     if old_signature:
                         s3.delete_object(Bucket = bucket_name, 
                                         Key=old_signature)
                 else:
-                    print("Signature is not Null")
                     # DELETE OLD SIGNATURE FORM BUCKET #
                     if old_signature:
                         s3.delete_object(Bucket = bucket_name, 
                                         Key=old_signature)
-                    
+
                     file = request.data['signature']
                     file_name = f"signature/{uuid.uuid4().hex}.jpg"
 
@@ -141,9 +137,9 @@ class UserViewSet(viewsets.ModelViewSet):
                 serializer.save()
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            
+
             return Response(serializer.data)
-        
+
         except Exception as e:
             logger.error(f"API: User Update - An error occurred: {str(e)}.\nRequest data: {request.data}", exc_info=True)
             return Response({"error": "An error occurred while updating the object."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -202,7 +198,7 @@ class CustomerViewSet(viewsets.ModelViewSet):
                             'total_amount': total_amount })
             
             return paginator.get_paginated_response(data)
-        
+
         except Exception as e:
             logger.error(f"API: Customer List - An error occurred: {str(e)}", exc_info=True)
             return Response({"error": "An error occurred while listing the object."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -249,7 +245,7 @@ class StaffViewSet(viewsets.ModelViewSet):
 
                 data.append({'staff': StaffSerializer(queryset).data, 
                             'total_amount': total_amount}) 
-                
+
             return Response(data)
         except Exception as e:
             logger.error(f"API: Staff List - An error occurred: {str(e)}", exc_info=True)
@@ -290,7 +286,7 @@ class StaffViewSet(viewsets.ModelViewSet):
 
                 response_data = {'staff': staffSerializer.data,
                                 'skills': StaffSkillSerializer(staff_skill_instances, many=True).data}
-                
+
                 return Response(response_data, status=status.HTTP_201_CREATED)
             else:
                 return Response(staffSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -311,7 +307,7 @@ class StaffViewSet(viewsets.ModelViewSet):
                 s_serializer.save()
             else:
                 return Response(s_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            
+
             ## DELETE SKILL FOR THAT STAFF ##
             if delete_skills is not None:
                 for delete_skill in delete_skills:
@@ -417,9 +413,8 @@ class QuotationViewSet(viewsets.ModelViewSet):
                 quotation_instance = quotationSerializer.save()
             else:
                 return Response(quotationSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            
+
             final_evnetday_data = []
-            final_eventdetails_data = []
             final_inventorydetails_data = []
             final_exposuredetails_data = []
 
@@ -435,7 +430,8 @@ class QuotationViewSet(viewsets.ModelViewSet):
                     final_evnetday_data.append(eventday_instance)
                 else:
                     return Response(eventdaySerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                
+
+                final_eventdetails_data = []
                 ### FOR ADD EVENT DETAILS DATA ###
                 eventdetails_datas = data['event_details']
                 for eventdetails_data in eventdetails_datas:
@@ -448,7 +444,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                         final_eventdetails_data.append(eventdetails_instance)
                     else:
                         return Response(eventdetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                
+
                 descriptions = data['descriptions']
                 for description in descriptions:
                     ### FOR INVENTORY DETAILS DATA ###
@@ -458,7 +454,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                         'qty':description.pop('qty'),
                         'profit':description.pop('profit'),
                         'eventday_id':eventday_instance.id}
-                    
+
                     inventorydetailsSerializer = InventoryDetailsSerializer(data=inventorydetails_data)
                     if inventorydetailsSerializer.is_valid():
                         inventorydetails_instance = inventorydetailsSerializer.save()
@@ -469,11 +465,10 @@ class QuotationViewSet(viewsets.ModelViewSet):
                     if inventory.type == 'service':
                         ### FOR EXPOSURE DETAILS DATA ###
                         exposuredetails = description.get('exposure', None)
-                        print("exposuredetails :: ",exposuredetails)
                         if exposuredetails is not None:
                             for exposuredetail in exposuredetails:
                                 c_final_eventdetails_data = list(final_eventdetails_data)
-                                print("c_final_eventdetails_data :: ", c_final_eventdetails_data)
+                                print("c_final_eventdetails_data :: ",c_final_eventdetails_data)
                                 evnetdetials =[]
                                 allocations = exposuredetail['allocation']
                                 print("allocations :: ",allocations)
@@ -483,7 +478,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                                         event_id = single_eventdetails.event_id.id
                                         if event_id == int(allocation):
                                             evnetdetials.append(single_eventdetails.id)
-                                print("evnetdetials :: ",evnetdetials)
+                                print("evnetdetials :: ", evnetdetials)
                                 exposuredetails_data = {
                                     'staff_id':exposuredetail['staff_id'],
                                     'price':exposuredetail['price'],
@@ -508,7 +503,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                 transaction_instance = transactionSerializer.save()
             else:
                 return Response(transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            
+
             if transaction['is_converted'] == 'true':
                 new_amount = transaction_instance.total_amount - transaction_instance.recived_or_paid_amount
                 balance_amount(quotation_instance.customer_id.id, None, 0 , new_amount, transaction_instance.type)
@@ -574,8 +569,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                     quotation_instance = q_serializer.save()
                 else:
                     return Response(q_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                
-                final_eventdetails_data = []
+
                 final_inventorydetails_data = []
                 final_exposuredetails_data = []
 
@@ -588,6 +582,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                             'event_date': data['event_date'],
                             'quotation_id':quotation_instance.id}
 
+                        
                         if eventdate_data['id'] == '':
                             # print(":::: NEW DAY ADDED ::::")
                             eventdate_data.pop('id')
@@ -597,6 +592,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                             else:
                                 return Response(n_eventdaySerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                             
+                            final_eventdetails_data = []
                             ### FOR ADD EVENT DETAILS DATA ###
                             eventdetails_datas = data['event_details']
                             for eventdetails_data in eventdetails_datas:
@@ -719,7 +715,6 @@ class QuotationViewSet(viewsets.ModelViewSet):
                                     if exposuredetails is not None:
                                         for exposuredetail in exposuredetails:
                                             c_final_eventdetails_data = list(final_eventdetails_data)
-                                            print("c_final_eventdetails_data :: ", c_final_eventdetails_data)
                                             evnetdetials =[]
                                             allocations = exposuredetail['allocation']
                                             for i in range(len(c_final_eventdetails_data)):
@@ -801,7 +796,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                     else:
                         return Response(copy_quotationSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                     
-                    copy_final_eventdetails_data = []
+                    
                     copy_final_inventorydetails_data = []
                     copy_final_exposuredetails_data = []
 
@@ -816,6 +811,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                         else:
                             return Response(copy_eventdaySerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                         
+                        copy_final_eventdetails_data = []
                         ### FOR ADD EVENT DETAILS DATA ###
                         copy_eventdetails_datas = copy_data['event_details']
                         for copy_eventdetails_data in copy_eventdetails_datas:
@@ -853,7 +849,6 @@ class QuotationViewSet(viewsets.ModelViewSet):
                                 if copy_exposuredetails is not None:
                                     for copy_exposuredetail in copy_exposuredetails:
                                         c_final_eventdetails_data = list(copy_final_eventdetails_data)
-                                        print("c_final_eventdetails_data :: ", c_final_eventdetails_data)
                                         copy_evnetdetials =[]
                                         copy_allocations = copy_exposuredetail['allocation']
                                         for i in range(len(c_final_eventdetails_data)):
@@ -900,7 +895,6 @@ class QuotationViewSet(viewsets.ModelViewSet):
                     ### ADD BILL FOR EXOISURE ###
 
                     updated_exposuredetails_data = remove_exposure(final_exposuredetails_data)
-                    print("updated_exposuredetails_data :: ",updated_exposuredetails_data)
 
                     finall_instance = []
                     for i in updated_exposuredetails_data:
@@ -931,8 +925,8 @@ class QuotationViewSet(viewsets.ModelViewSet):
                     quotation_instance = q_serializer.save()
                 else:
                     return Response(q_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                
-                final_eventdetails_data = []
+
+
                 final_inventorydetails_data = []
                 final_exposuredetails_data = []
 
@@ -946,6 +940,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                             'event_date': data['event_date'],
                             'quotation_id':quotation_instance.id}
 
+                        final_eventdetails_data = []
                         if eventdate_data['id'] == '':
                             eventdate_data.pop('id')
                             n_eventdaySerializer = EventDaySerializer(data=eventdate_data)
@@ -953,7 +948,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                                 eventday_instance = n_eventdaySerializer.save()
                             else:
                                 return Response(n_eventdaySerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                            
+
                             ### FOR ADD EVENT DETAILS DATA ###
                             eventdetails_datas = data['event_details']
                             for eventdetails_data in eventdetails_datas:
@@ -965,7 +960,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                                     final_eventdetails_data.append(eventdetails_instance)
                                 else:
                                     return Response(eventdetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                            
+
                             descriptions = data['descriptions']
                             for description in descriptions:
                                 ### FOR INVENTORY DETAILS DATA ###
@@ -1009,7 +1004,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                                                 final_exposuredetails_data.append(exposuredetails_instance)
                                             else:
                                                 return Response(exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)                    
-                                
+
                         else:
                             # print(":::: OLD DAY UPDATED ::::")
                             o_eventday = EventDay.objects.get(pk=eventdate_data['id'])
@@ -1018,7 +1013,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                                 o_eventdaySerializer.save()
                             else:
                                 return Response(o_eventdaySerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                                    
+
                             eventdetails_datas = data['event_details']
                             for eventdetails_data in eventdetails_datas:
                                 if eventdetails_data['id'] == '':
@@ -1039,7 +1034,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                                         final_eventdetails_data.append(eventdetails_instance)
                                     else:
                                         return Response(o_eventdetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                                    
+
                             descriptions = data['descriptions']
                             for description in descriptions:
                                 inventorydetails_data = {
@@ -1068,7 +1063,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                                         final_inventorydetails_data.append(inventorydetails_instance)
                                     else:
                                         return Response(o_inventorydetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                                    
+
                                 inventory = Inventory.objects.get(pk=inventorydetails_data['inventory_id'])
                                 if inventory.type == 'service':
                                     exposuredetails = description['exposure']
@@ -1087,7 +1082,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                                             'price':exposuredetail['price'],
                                             'inventorydetails_id':inventorydetails_instance.id,
                                             'eventdetails':evnetdetials}
-                                        
+
                                         if exposuredetails_data['id'] == '':
                                             # print("::: NEW EXPOSURE DETAILS :::")
                                             exposuredetails_data.pop('id')
@@ -1153,7 +1148,6 @@ class QuotationViewSet(viewsets.ModelViewSet):
                     link_transaction(transaction_data['id'], linktransaction_data, update_transaction.type)
 
                 updated_exposuredetails_data = remove_exposure(final_exposuredetails_data)
-                print("updated_exposuredetails_data :: ",updated_exposuredetails_data)
 
                 finall_instance = []
                 for i in updated_exposuredetails_data:
@@ -1243,7 +1237,7 @@ class InventoryDescriptionViewSet(viewsets.ModelViewSet):
                     all_instance.append(inventory_instance)
                 else:
                     return Response(inventorySerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                
+
                 inventorydescription_ids.append(inventory_instance.id)
 
             transaction_data['inventorydescription'] = inventorydescription_ids
@@ -1252,13 +1246,13 @@ class InventoryDescriptionViewSet(viewsets.ModelViewSet):
                 transaction_instance = transactionSerializer.save()
             else:
                 return Response(transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            
+
             customer_id = transaction_instance.customer_id.id if transaction_instance.customer_id is not None else None
             staff_id = transaction_instance.staff_id.id if transaction_instance.staff_id is not None else None
-            
+
             new_amount = transaction_instance.total_amount - transaction_instance.recived_or_paid_amount
             balance_amount(customer_id, staff_id, 0, new_amount, transaction_instance.type)
-            
+
             if linktransaction_data is not None:
                 link_transaction(transaction_instance.id, linktransaction_data, transaction_instance.type)
 
@@ -1584,7 +1578,6 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
 
                 to_linktrasactions = LinkTransaction.objects.filter(to_transaction_id=pk)
-                print("ALL LINKED TRANSACTION :: ", linktrasactions)
                 for to_link in to_linktrasactions:
                     from_transaction_id = to_link.from_transaction_id
                     new_amount = to_link.linked_amount
@@ -1596,11 +1589,9 @@ class TransactionViewSet(viewsets.ModelViewSet):
                         from_trasaction.recived_or_paid_amount = from_trasaction.recived_or_paid_amount - to_link.linked_amount
                     from_trasaction.save()
 
-                    print("New Amount ::: ", new_amount)
                     balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
 
                 new_amount = transaction_object.total_amount - transaction_object.used_amount
-                print("New Amount ::: ", new_amount)
                 balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
 
             if transaction_object.type == 'payment_out':
@@ -1672,7 +1663,6 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 balance_delete_amount(customer_id, staff_id, 0 , new_amount, transaction_object.type)
 
             if transaction_object.type == 'event_sale':
-                print("event_sale")
                 linktrasactions = LinkTransaction.objects.filter(to_transaction_id=pk)
                 for link in linktrasactions:
                     from_transaction_id = link.from_transaction_id
@@ -1716,17 +1706,8 @@ class TransactionViewSet(viewsets.ModelViewSet):
                             exposuredetail.delete()
                     eventday.delete()
                 
-                # print("transaction_object.id :: ",transaction_object.id)
-
                 exposure_transactions = Transaction.objects.filter(type='event_purchase', parent_transaction=transaction_object.id)
-                # print("exposure_transactions :: ",exposure_transactions)
                 for transaction in exposure_transactions:
-                    # print("transaction :: ", transaction)
-                    # print("transaction.total_amount :: ", transaction.total_amount)
-                    # print("transaction.recived_or_paid_amount :: ", transaction.recived_or_paid_amount)
-                    # print("transaction.staff_id.id :: ", transaction.staff_id.id)
-
-
                     new_amount = transaction.total_amount - transaction.recived_or_paid_amount
                     balance_delete_amount(None, transaction.staff_id.id, 0 , new_amount, transaction.type)
                     get_transaction = Transaction.objects.get(pk = transaction.id)
@@ -1904,14 +1885,10 @@ def EventDetail(request):
             user_id = request.data.get('user_id', None)
 
             eventdays = EventDay.objects.filter(event_date=today)
-            print("EventDays :: ", eventdays)
             data = []
 
             for eventday in eventdays:
-                print("EventDay :: ", eventday)
-                print("eventday.quotation_id :: ", eventday.quotation_id.id)
                 transaction = Transaction.objects.get(quotation_id=eventday.quotation_id.id)
-                print("Transaction :: ", transaction)
                 if transaction.type == 'event_sale' and transaction.user_id.id == user_id:
                     eventdetails = EventDetails.objects.filter(eventday_id=eventday.id)
                     for eventdetail in eventdetails:
@@ -2401,13 +2378,11 @@ def ConvertBucketURL(request):
 # logger.setLevel(logging.DEBUG)
 
 # f = logging.Formatter('%(asctime)s - %(levelname)s - %(name)s - %(message)s - %(lineno)d')
-
 # fh = logging.FileHandler('test.log')
 # fh.setFormatter(f)
-
 # logger.addHandler(fh)
-
 # logger.info('Test logging')
+
 
 ### TOTAL SALE
 @api_view(['POST'])
@@ -2422,7 +2397,6 @@ def TotalSale(request):
                 total_amount = Transaction.objects.filter(user_id=user_id, type__in=['sale', 'event_sale']).aggregate(Sum('total_amount'))['total_amount__sum']
             else:
                 total_amount = Transaction.objects.filter(user_id=user_id, created_on__range=[start_date, end_date], type__in=['sale', 'event_sale']).aggregate(Sum('total_amount'))['total_amount__sum']
-                # print('total_amount ::: ',total_amount)
             # logger.info('Successfully')
 
             return Response(total_amount)
@@ -2471,7 +2445,6 @@ def TotalAmount(request):
 
             total_recived = 0
             total_paied = 0
-
             customers = Customer.objects.filter(user_id=user_id)
             for customer in customers:
                 total_recived_amount = Transaction.objects.filter(customer_id=customer.id, type__in=['sale','event_sale','payment_out']).aggregate(Sum('total_amount'))['total_amount__sum']
