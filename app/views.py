@@ -229,6 +229,7 @@ class StaffViewSet(viewsets.ModelViewSet):
     serializer_class = StaffSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = {
+        'id':['exact'],
         'user_id__id':['exact'],
         'full_name':['icontains'],
         'mobile_no':['icontains'],
