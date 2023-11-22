@@ -1280,6 +1280,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
         'payment_type':['exact'],
         'status':['exact'],
         'is_converted':['exact'],
+        'invoice_number': ['icontains']
     }
 
     def get_queryset(self):
