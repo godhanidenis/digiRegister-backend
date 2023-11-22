@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import BaseUserManager, AbstractUser
+from datetime import datetime
+import uuid
 
 # Create your models here.
 
@@ -256,6 +258,27 @@ class Transaction(models.Model):
     status = models.CharField(null=True, blank=True)
     is_converted = models.BooleanField(default=False)
     parent_transaction = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='child_transactions')
+    invoice_number = models.CharField(max_length=20, blank=True, null=True)
+
+    def generate_invoice_number(self):
+        # Use current date and time for the timestamp component
+        timestamp_component = datetime.now().strftime("%Y%m%d%H%M")
+
+        # Generate a unique identifier (UUID)
+        unique_id = str(uuid.uuid4().hex)[:4]  # Extract the first 4 characters of the hexadecimal representation of the UUID
+
+        # Combine timestamp and unique_id to create the invoice bill
+        invoice_bill = f'IN-{timestamp_component}-{unique_id}'
+
+        return invoice_bill
+
+    def save(self, *args, **kwargs):
+        # Generate and set invoice number only if it's a new transaction
+        if not self.id:
+            self.invoice_number = self.generate_invoice_number()
+
+        super(Transaction, self).save(*args, **kwargs)
+
 
 class LinkTransaction(models.Model):
     from_transaction_id = models.ForeignKey(Transaction, related_name='from_transaction', null=True, blank=True, on_delete=models.CASCADE)
