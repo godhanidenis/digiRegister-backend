@@ -660,6 +660,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                             else:
                                 return Response(o_eventdaySerializer.errors, status=status.HTTP_400_BAD_REQUEST)
                                     
+                            final_eventdetails_data = []
                             eventdetails_datas = data['event_details']
                             for eventdetails_data in eventdetails_datas:
                                 if eventdetails_data['id'] == '':
