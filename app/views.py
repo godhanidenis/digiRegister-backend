@@ -1861,14 +1861,17 @@ def StaffStatus(request):
                     for event_detail in event_details:
                         details ={}
                         eventday = EventDay.objects.get(pk=event_detail.eventday_id.id)
-                        if eventday.event_date >= current_itc_date:
-                            # print("EVENT DATE IS GREATER THAN CURRENT DATE")
-                            details = {'event_date': eventday.event_date.strftime('%Y-%m-%d'),
-                                    'event_venue': event_detail.event_venue,
-                                    'start_time': event_detail.start_time.strftime('%H:%M:%S'),
-                                    'end_time': event_detail.end_time.strftime('%H:%M:%S')}
-                            
-                            detail['event_data'].append(details)
+                        quotation = Quotation.objects.get(pk=eventday.quotation_id.id)
+                        transaction = Transaction.objects.get(quotation_id__id=quotation.id)
+                        if transaction.type == "event_sale":
+                            if eventday.event_date >= current_itc_date:
+                                # print("EVENT DATE IS GREATER THAN CURRENT DATE")
+                                details = {'event_date': eventday.event_date.strftime('%Y-%m-%d'),
+                                        'event_venue': event_detail.event_venue,
+                                        'start_time': event_detail.start_time.strftime('%H:%M:%S'),
+                                        'end_time': event_detail.end_time.strftime('%H:%M:%S')}
+                                
+                                detail['event_data'].append(details)
                 data.append(detail)
 
             return Response(data)
