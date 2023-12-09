@@ -1794,7 +1794,7 @@ def TotalExpense(request):
     return Response({"error": error_msg}, status=400)
 
 
-### TOTAL RECIVED AMOUNT
+### TOTAL RECIVED AMOUNT OR PAID AMOUNT FOR Customer
 @api_view(['POST'])
 def TotalAmount(request):
     if request.method == 'POST':
@@ -1809,6 +1809,42 @@ def TotalAmount(request):
                 total_recived_amount = total_recived_amount if total_recived_amount is not None else 0
 
                 total_pay_amount = Transaction.objects.filter(customer_id=customer.id, type__in=['purchase','event_purchase','payment_in']).aggregate(Sum('total_amount'))['total_amount__sum']
+                total_pay_amount = total_pay_amount if total_pay_amount is not None else 0
+
+                total = total_recived_amount - total_pay_amount
+
+                if total > 0:
+                    total_recived = total_recived + total
+                elif total < 0:
+                    total_paied = total_paied + (-total)
+
+            data = {'total_recived' : total_recived,
+                    'total_paied' : total_paied}
+
+            return Response(data)
+        
+        except Exception as e:
+            logger.error(f"API: Total Amount - An error occurred: {str(e)}", exc_info=True)
+            return Response({"error": message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    return Response({"error": error_msg}, status=400)    
+
+
+### TOTAL RECIVED AMOUNT OR PAID AMOUNT FOR STAFF
+@api_view(['POST'])
+def SaffTotalAmount(request):
+    if request.method == 'POST':
+        try:
+            user_id = request.data.get('user_id', None)
+
+            total_recived = 0
+            total_paied = 0
+            staffs = Staff.objects.filter(user_id=user_id)
+            for staff in staffs:
+                total_recived_amount = Transaction.objects.filter(staff_id=staff.id, type__in=['sale','event_sale','payment_out']).aggregate(Sum('total_amount'))['total_amount__sum']
+                total_recived_amount = total_recived_amount if total_recived_amount is not None else 0
+
+                total_pay_amount = Transaction.objects.filter(staff_id=staff.id, type__in=['purchase','event_purchase','payment_in']).aggregate(Sum('total_amount'))['total_amount__sum']
                 total_pay_amount = total_pay_amount if total_pay_amount is not None else 0
 
                 total = total_recived_amount - total_pay_amount
@@ -1941,23 +1977,42 @@ def CompletionReport(request):
             for transaction in transactions:
                 quotation = Quotation.objects.get(pk=transaction.quotation_id.id)
                 eventdays = EventDay.objects.filter(quotation_id=quotation.id)
-
-                add_transaction = True
+                event_list = []
 
                 for eventday in eventdays:
                     inventorydetails = InventoryDetails.objects.filter(eventday_id=eventday.id)
+                    inventory_detail_list = []
 
                     for inventorydetail in inventorydetails:
                         exposuredetails = ExposureDetails.objects.filter(inventorydetails_id=inventorydetail.id)
 
-                        if len(exposuredetails) == 0:
-                            add_transaction = False
-                            break
+                        # Create a structure for the inventory detail
+                        if len(exposuredetails) != inventorydetail.qty:
+                            inventory_detail_data = {
+                                "inventory": InventoryDetailsSerializer(inventorydetail).data
+                            }
 
-                if not add_transaction:
-                    data.append(transaction)
+                            inventory_detail_list.append(inventory_detail_data)
 
-            return Response(TransactionSerializer(data, many=True).data)
+                    if len(inventory_detail_list) != 0:
+                        # Create a structure for the event
+                        event_data = {
+                            "eventday": EventDaySerializer(eventday).data,
+                            "inventorydetail": inventory_detail_list
+                        }
+
+                        event_list.append(event_data)
+
+                if len(event_list) != 0:
+                    # Create a structure for the response
+                    response_data = {
+                        "quotation_data": QuotationSerializer(quotation).data,
+                        "event": event_list
+                    }
+
+                    data.append(response_data)
+
+            return Response(data)
 
         except Exception as e:
             logger.error(f"API: Completion Report - An error occurred: {str(e)}", exc_info=True)

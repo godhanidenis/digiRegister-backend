@@ -49,7 +49,8 @@ urlpatterns =[
 
     path('totalsale/',views.TotalSale, name='totalsale'),
     path('totalexpense/',views.TotalExpense, name='totalexpense'),
-    path('totalamount/',views.TotalAmount, name='totalamount'),
+    path('totalamount/',views.TotalAmount, name='totalamount'),    
+    path('safftotalamount/',views.SaffTotalAmount, name='safftotalamount'),
     path('totalpurchase/',views.TotalPurchase, name='totalpurchase'),
     path('completionreport/',views.CompletionReport, name='completionreport'),
     path('conversationreport/',views.ConversationRateReport, name='conversationratereport'),
