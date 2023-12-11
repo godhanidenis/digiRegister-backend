@@ -1006,6 +1006,11 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 transaction_data = request.data.get('transaction_data', {})
                 linktransaction_data = request.data.get('linktransaction_data', None)
 
+                old_customer_id = transaction.customer_id.id if transaction.customer_id is not None else None
+                print("old_customer_id :: ", old_customer_id)
+                old_staff_id = transaction.staff_id.id if transaction.staff_id is not None else None
+                print("old_staff_id :: ", old_staff_id)
+
                 transactionSerializer = TransactionSerializer(transaction, data=transaction_data, partial=True)
                 if transactionSerializer.is_valid():
                     transaction_instance = transactionSerializer.save()
@@ -1015,10 +1020,30 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 data['tranasaction_data'] = TransactionSerializer(transaction_instance).data
 
                 customer_id = transaction_instance.customer_id.id if transaction_instance.customer_id is not None else None
+                print("customer_id ::", customer_id)
                 staff_id = transaction_instance.staff_id.id if transaction_instance.staff_id is not None else None
+                print("staff_id ::", staff_id)
 
-                new_amount = transaction_instance.total_amount - transaction_instance.used_amount
-                balance_amount(customer_id, staff_id, old_amount, new_amount, transaction_instance.type)
+                def selection_changes():
+                    ### Remove amount for old customer or old staff
+                    new_amount = transaction_instance.total_amount - transaction_instance.used_amount
+                    balance_amount(old_customer_id, old_staff_id, old_amount, 0, transaction_instance.type)
+
+                    ### Add amount for new staff or new customer
+                    new_amount = transaction_instance.total_amount - transaction_instance.used_amount
+                    balance_amount(customer_id, staff_id, 0, new_amount, transaction_instance.type)
+
+                if old_customer_id is not None and old_customer_id != customer_id:
+                    selection_changes()
+                
+                elif old_staff_id is not None and old_staff_id != staff_id:
+                    selection_changes()
+
+                else:
+                    ### Change balance amount if total amount is change
+                    new_amount = transaction_instance.total_amount - transaction_instance.used_amount
+                    balance_amount(customer_id, staff_id, old_amount, new_amount, transaction_instance.type)
+
 
                 if linktransaction_data is not None:
                     link_transaction(pk, linktransaction_data, transaction.type)
