@@ -1228,7 +1228,7 @@ def StaffStatus(request):
                         details ={}
                         eventday = EventDay.objects.get(pk=event_detail.eventday_id.id)
                         quotation = Quotation.objects.get(pk=eventday.quotation_id.id)
-                        # print("eventday.quotation_id.id :: ",eventday.quotation_id.id)
+                        # print("quotation.id :: ",quotation.id)
                         transaction = Transaction.objects.get(quotation_id__id=quotation.id)
                         if transaction.type == "event_sale":
                             if eventday.event_date >= current_itc_date:
@@ -1984,15 +1984,12 @@ def CompletionReport(request):
                     inventory_detail_list = []
 
                     for inventorydetail in inventorydetails:
-                        exposuredetails = ExposureDetails.objects.filter(inventorydetails_id=inventorydetail.id)
+                        if inventorydetail.inventory_id.type == 'service':
+                            exposuredetails = ExposureDetails.objects.filter(inventorydetails_id=inventorydetail.id)
 
-                        # Create a structure for the inventory detail
-                        if len(exposuredetails) != inventorydetail.qty:
-                            inventory_detail_data = {
-                                "inventory": InventoryDetailsSerializer(inventorydetail).data
-                            }
-
-                            inventory_detail_list.append(inventory_detail_data)
+                            # Create a structure for the inventory detail
+                            if len(exposuredetails) != inventorydetail.qty:
+                                inventory_detail_list.append(InventoryDetailsSerializer(inventorydetail).data)
 
                     if len(inventory_detail_list) != 0:
                         # Create a structure for the event
