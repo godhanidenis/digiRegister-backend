@@ -1,0 +1,508 @@
+[33mcommit 58d145ec45c68141b93dde20fdcef6a9b2d61046[m[33m ([m[1;31morigin/dev[m[33m, [m[1;32mdev[m[33m)[m
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Mon Dec 11 17:25:37 2023 +0530
+
+    Fix issue in trasaction update API
+
+[33mcommit 344819afe6117de65a64c67a736eea9684776425[m[33m ([m[1;31morigin/filters[m[33m, [m[1;32mfilters[m[33m)[m
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Mon Dec 11 10:20:45 2023 +0530
+
+    Fix deshboard APIs issue
+
+[33mcommit cb57018d671aab48f91838b94a2639dad982d279[m
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Sat Dec 9 17:55:54 2023 +0530
+
+    Fix issue in deshboard APIs
+
+[33mcommit 5bda992a0872cade25c6c011b98721fcd0a450a5[m[33m ([m[1;31morigin/logging[m[33m, [m[1;32mlogging[m[33m)[m
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Fri Dec 8 09:41:05 2023 +0530
+
+    Code Optimize
+
+[33mcommit 832f8c2336069a0202594bbf5c790b76be4c8ca3[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Fri Nov 24 10:16:44 2023 +0530
+
+    Fix issue in Staff Status API
+
+[33mcommit 001053401672b76b79926aad5990c1bef25a4c67[m
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Thu Nov 23 17:55:38 2023 +0530
+
+    Fix issue in quotation
+
+[33mcommit da81d2891cc0328dbecb6a9bbff852a234691c80[m
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Wed Nov 22 16:13:41 2023 +0530
+
+    Add filter for invoice number
+
+[33mcommit 97344e39478941371b00bd62598d8eac85d21a86[m
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Wed Nov 22 15:43:17 2023 +0530
+
+    Add Invoice Number in Trasaction Table
+
+[33mcommit eaff2d8e4005f37fac0dd3ea31db1c87151bbc17[m
+Merge: e8ce956 94ea222
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Mon Nov 20 12:48:19 2023 +0530
+
+    Merge branch 'dev'
+
+[33mcommit 94ea2226ea162aa88bd4209bae5b085dc93e3558[m
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Mon Nov 20 12:46:42 2023 +0530
+
+    Add filter for staff
+
+[33mcommit e8ce9566116285ed35504539a2c82d2ba8ab010c[m
+Merge: 89a315d a6d4a76
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Fri Nov 10 17:47:48 2023 +0530
+
+    Dev merge with main
+
+[33mcommit a6d4a761806fac0f5ddcd04b101353f472cd6577[m
+Merge: f12a9da e84e23b
+Author: godhanidenis <40867528+godhanidenis@users.noreply.github.com>
+Date:   Fri Nov 10 17:06:53 2023 +0530
+
+    Merge pull request #151 from godhanidenis/filters
+    
+    Fix issue in quotation create
+
+[33mcommit e84e23b609195aea3b617b82019132464f017b42[m
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Fri Nov 10 17:05:51 2023 +0530
+
+    Fix issue in quotation
+
+[33mcommit f12a9daa1488378346dba717301a31f0cb614287[m
+Merge: d2ad439 a4b7673
+Author: godhanidenis <40867528+godhanidenis@users.noreply.github.com>
+Date:   Thu Nov 9 17:51:21 2023 +0530
+
+    Merge pull request #150 from godhanidenis/filters
+    
+    Fix issue in transaction delete
+
+[33mcommit a4b7673b5f201980b9b5a54ffd9df02a7b03a037[m
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Thu Nov 9 17:50:27 2023 +0530
+
+    Fix issue in trasaction delete
+
+[33mcommit d2ad439fe17b9e54258b5f7d176881ae1bd807a6[m
+Merge: eb65265 012ffc4
+Author: godhanidenis <40867528+godhanidenis@users.noreply.github.com>
+Date:   Thu Nov 9 14:31:18 2023 +0530
+
+    Merge pull request #149 from godhanidenis/filters
+    
+    Fix issue in quotation create
+
+[33mcommit 012ffc40763d185a03612a98d90eca353dd87261[m
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Thu Nov 9 14:30:08 2023 +0530
+
+    Fix issue in quotation create
+
+[33mcommit eb652656f21fa8115a1a1e5c6111bcff470723c9[m
+Merge: 4875000 3de5e2c
+Author: godhanidenis <40867528+godhanidenis@users.noreply.github.com>
+Date:   Thu Nov 9 11:56:38 2023 +0530
+
+    Merge pull request #148 from godhanidenis/filters
+    
+    Changes in transaction retrieve response
+
+[33mcommit 3de5e2c1a0a3ee9abcccaa8da75118e7b98f7c63[m
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Thu Nov 9 11:55:59 2023 +0530
+
+    Changes in transaction retrieve responce
+
+[33mcommit 4875000857db5f92369220c5e6af75aab6cf6ed2[m
+Merge: 620de51 e62d7b6
+Author: godhanidenis <40867528+godhanidenis@users.noreply.github.com>
+Date:   Thu Nov 9 11:49:36 2023 +0530
+
+    Merge pull request #147 from godhanidenis/filters
+    
+    Changes in transaction retrieve response
+
+[33mcommit e62d7b63b3d7662d72042b1b91b0d16edd81704b[m
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Thu Nov 9 11:49:02 2023 +0530
+
+    Changes in transaction retrieve responce
+
+[33mcommit 620de51c137947cdd3bbea9f9b3fcd24f92f6ef2[m
+Merge: 11fc354 e804bfc
+Author: godhanidenis <40867528+godhanidenis@users.noreply.github.com>
+Date:   Thu Nov 9 11:25:25 2023 +0530
+
+    Merge pull request #146 from godhanidenis/filters
+    
+    Fix Issue in quotation and transaction.
+
+[33mcommit e804bfc8b3b52fe522a59ce94e3ae25f5823cd72[m
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Thu Nov 9 11:23:16 2023 +0530
+
+    Fix Issue in quotation and transaction.
+
+[33mcommit 349531cd5b68bcadc80e32d4a88653abd25fa40d[m
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Wed Nov 8 18:00:48 2023 +0530
+
+    Fix Quotation Delete Issue
+
+[33mcommit 11fc3540cfc3e206fc4edd47e604ed6cd3e9cea2[m
+Merge: d1faec4 a2ef4c4
+Author: godhanidenis <40867528+godhanidenis@users.noreply.github.com>
+Date:   Wed Nov 8 15:25:30 2023 +0530
+
+    Merge pull request #145 from godhanidenis/filters
+    
+    Filters
+
+[33mcommit a2ef4c4574b3f86708bc17d235bae19088463f0e[m
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Wed Nov 8 15:20:07 2023 +0530
+
+    Changes for exposure Bill
+
+[33mcommit 89a315d52049e4f0923b4568d54f7ba416f5acb6[m
+Merge: 1bb6780 d1faec4
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Tue Nov 7 10:26:47 2023 +0530
+
+    Merge dev with main
+
+[33mcommit 52a9815f20a4076077f94a52273d944c186ccc9b[m
+Merge: d1faec4 1bb6780
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Mon Nov 6 15:41:48 2023 +0530
+
+    Empty
+
+[33mcommit d1faec4c36fadda482681389924eaed5481159a0[m
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Sat Nov 4 15:16:42 2023 +0530
+
+    Add filter in customer
+
+[33mcommit 1bb67807c32a84ea0624a05380c2b5b605fa2a6b[m
+Merge: 44aeb01 8a302c5
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Tue Oct 31 17:09:00 2023 +0530
+
+    Merge branch 'dev' of https://github.com/godhanidenis/digiRegister-backend
+
+[33mcommit 8a302c5e44a57c0de4234a84f76985b72308ccaa[m
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Tue Oct 31 17:08:23 2023 +0530
+
+    Add filter for user api
+
+[33mcommit 44aeb012ec59679ac94eae34a1fdd47496522479[m
+Merge: 0654759 edfc88c
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Tue Oct 31 10:24:35 2023 +0530
+
+    Merge branch 'dev' of https://github.com/godhanidenis/digiRegister-backend
+
+[33mcommit edfc88c48116aed488a187359a4ce4c4e0fa4fa5[m
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Tue Oct 31 10:23:11 2023 +0530
+
+    Add pagination in User API
+
+[33mcommit 7bc2adb2acf707573451c7cd777c881aa71a3e07[m
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Tue Oct 31 10:17:18 2023 +0530
+
+    Add filter in User API
+
+[33mcommit 06547590a7e184ed45f245726066fdd8a31364a1[m
+Merge: e6b6096 077d977
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Thu Oct 26 15:23:12 2023 +0530
+
+    Fix issue in Completion Report
+
+[33mcommit 077d9779e13bf998ac39eac99a0fac0c674492c2[m
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Thu Oct 26 15:19:47 2023 +0530
+
+    Fix issue in Completion Report
+
+[33mcommit e6b609636acdf3c900a0d0e55a2eb8fe63643188[m
+Merge: dab10a8 d47f6ec
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Thu Oct 19 12:40:48 2023 +0530
+
+    Merge dev with main(Changes in log)
+
+[33mcommit d47f6ec0c5dc35d393a74f44200fb7602c6d24a6[m
+Merge: c0a6350 8518722
+Author: godhanidenis <40867528+godhanidenis@users.noreply.github.com>
+Date:   Thu Oct 19 12:37:50 2023 +0530
+
+    Merge pull request #144 from godhanidenis/logging
+    
+    Changes in log
+
+[33mcommit 8518722582c2460618d836a721e7bf8f5e0e4dc5[m
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Thu Oct 19 12:37:15 2023 +0530
+
+    Changes in log
+
+[33mcommit dab10a8d08e068b536563cad69b0111d87bbf3df[m
+Merge: a52dd89 c0a6350
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Thu Oct 19 10:27:19 2023 +0530
+
+    Merge Dev branch with main(Optimize Code and Logging)
+
+[33mcommit c0a635044692825e6db909ec6105dcc41865edc9[m
+Merge: 1f9d43b 584fe6c
+Author: godhanidenis <40867528+godhanidenis@users.noreply.github.com>
+Date:   Thu Oct 19 10:23:18 2023 +0530
+
+    Merge pull request #143 from godhanidenis/logging
+    
+    Add log
+
+[33mcommit 584fe6c924077a8431424a680b4f401c6fec8a7e[m
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Thu Oct 19 10:21:37 2023 +0530
+
+    Add log
+
+[33mcommit 1f9d43bed4d3f868b8ea219d33d0cfea05d65f52[m
+Merge: 5f9dcd7 e4500d7
+Author: godhanidenis <40867528+godhanidenis@users.noreply.github.com>
+Date:   Thu Oct 19 10:17:05 2023 +0530
+
+    Merge pull request #142 from godhanidenis/filters
+    
+    Optimize Code
+
+[33mcommit e4500d72337bf99a2aba1f3f1a439c0fb086e565[m
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Wed Oct 18 09:26:23 2023 +0530
+
+    Optimize Code
+
+[33mcommit a52dd891dbaf33b16effc3ab633ea6f9ac64d63c[m
+Merge: 74e47d5 5f9dcd7
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Mon Oct 16 13:59:01 2023 +0530
+
+    Merge branch 'dev' of https://github.com/godhanidenis/digiRegister-backend
+
+[33mcommit 5f9dcd7c3f270b8a3cefba25c47cbff457bda11a[m
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Mon Oct 16 13:55:51 2023 +0530
+
+    Fix issue in user update api
+
+[33mcommit 74e47d5cce96c5cdefe91d05e118b53167bf1511[m
+Merge: 7416b0d 1dcef17
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Mon Oct 16 13:44:16 2023 +0530
+
+    Fix issue for images upload
+
+[33mcommit 1dcef17baf0c5e94d00ff441e9feb794f15f3c0a[m
+Merge: 21c1dfa 8a671d2
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Mon Oct 16 13:36:29 2023 +0530
+
+    Fix issue for upload images
+
+[33mcommit 21c1dfa9d5b474ff0ec43900b0be945146c5774b[m
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Mon Oct 16 13:35:14 2023 +0530
+
+    Fix issue for upload images
+
+[33mcommit 7416b0d34554aaf6abf39860c4ba4ad90127716c[m
+Merge: 1d8899f 8a671d2
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Thu Oct 12 14:54:44 2023 +0530
+
+    Merge branch 'dev' of https://github.com/godhanidenis/digiRegister-backend
+
+[33mcommit 8a671d2702a692cbd19f75ffe4aac69487253c89[m
+Merge: 3377278 17c76ef
+Author: godhanidenis <40867528+godhanidenis@users.noreply.github.com>
+Date:   Thu Oct 12 14:40:00 2023 +0530
+
+    Merge pull request #141 from godhanidenis/balance_changes
+    
+    Changes in link transaction function
+
+[33mcommit 17c76ef2fc410633bf9ab428cfe7ab8b07d48335[m
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Thu Oct 12 14:39:30 2023 +0530
+
+    Changes in link transaction function
+
+[33mcommit 3377278324f5ff8a34e17221646b4b7623f7d386[m
+Merge: 91e23f8 634c1c0
+Author: godhanidenis <40867528+godhanidenis@users.noreply.github.com>
+Date:   Thu Oct 12 14:31:24 2023 +0530
+
+    Merge pull request #140 from godhanidenis/balance_changes
+    
+    Changes in link transaction function
+
+[33mcommit 634c1c0b4066d3afd71c8282909420aa922878c4[m
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Thu Oct 12 14:30:36 2023 +0530
+
+    Changes in link transaction function
+
+[33mcommit 91e23f81be926855f7467fc4dbba156a37cc1b96[m
+Merge: 9e9c632 10876a8
+Author: godhanidenis <40867528+godhanidenis@users.noreply.github.com>
+Date:   Thu Oct 12 14:18:34 2023 +0530
+
+    Merge pull request #139 from godhanidenis/balance_changes
+    
+    Fix issue in link transaction
+
+[33mcommit 10876a8b54bc3331897539898b378e6851567248[m
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Thu Oct 12 14:17:21 2023 +0530
+
+    Fix issue in link transaction
+
+[33mcommit 9e9c632210bdfa5230e72883cf56c90aaedef206[m
+Merge: 6b8712d 858dc48
+Author: godhanidenis <40867528+godhanidenis@users.noreply.github.com>
+Date:   Thu Oct 12 09:40:00 2023 +0530
+
+    Merge pull request #138 from godhanidenis/balance_changes
+    
+    Changes in linktransaction
+
+[33mcommit 858dc488f30195ecbc869924f57596f9ac981f1e[m
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Thu Oct 12 09:39:13 2023 +0530
+
+    Changes in linktransaction
+
+[33mcommit 1d8899fa8f443654b18cf7d811f5119c7f836104[m
+Merge: 0427085 6b8712d
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Wed Oct 11 18:02:01 2023 +0530
+
+    Merge branch 'dev' of https://github.com/godhanidenis/digiRegister-backend
+
+[33mcommit 6b8712ddc7a996eb24430d31ca8d2770a590d6f9[m
+Merge: 01cc255 631a9d0
+Author: godhanidenis <40867528+godhanidenis@users.noreply.github.com>
+Date:   Wed Oct 11 17:56:51 2023 +0530
+
+    Merge pull request #136 from godhanidenis/balance_changes
+    
+    Changes in link transaction function
+
+[33mcommit 631a9d06e342dd72ab4e7a0a0ab6139ca9f67fba[m
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Wed Oct 11 17:56:06 2023 +0530
+
+    Changes in link transaction function
+
+[33mcommit 01cc2551d7a414ac0669bea1de1da301e77b09e1[m
+Merge: 359cd1a 4f633aa
+Author: godhanidenis <40867528+godhanidenis@users.noreply.github.com>
+Date:   Wed Oct 11 11:55:46 2023 +0530
+
+    Merge pull request #135 from godhanidenis/balance_changes
+    
+    Fix issue in delete linktransaction
+
+[33mcommit 4f633aa598ae891fe0152cc90dc808815a2f5688[m
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Wed Oct 11 11:54:46 2023 +0530
+
+    Fix issue in delete linktransaction
+
+[33mcommit 359cd1a0017d4c18351d00843fcf75faca917231[m
+Merge: 3737bfd 9f41d30
+Author: godhanidenis <40867528+godhanidenis@users.noreply.github.com>
+Date:   Wed Oct 11 09:40:48 2023 +0530
+
+    Merge pull request #134 from godhanidenis/balance_changes
+    
+    Fix bug in unlink payment
+
+[33mcommit 9f41d3011e46a7c53638c07b1f1c2d38e09595ac[m
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Wed Oct 11 09:40:15 2023 +0530
+
+    Fix bug in unlink payment
+
+[33mcommit 3737bfd562380fc6a64edf0eba2703bc181bc805[m
+Merge: 3aa67e2 a3851a6
+Author: godhanidenis <40867528+godhanidenis@users.noreply.github.com>
+Date:   Wed Oct 11 09:28:33 2023 +0530
+
+    Merge pull request #133 from godhanidenis/balance_changes
+    
+    Change in transaction update API
+
+[33mcommit a3851a66008e42dd5f836883fe433394bc78d7e8[m
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Wed Oct 11 09:27:58 2023 +0530
+
+    Change in transaction update API
+
+[33mcommit 3aa67e27cbb2f25a5d5dacc4a8ca7da4fd362ec2[m
+Merge: 3778ab4 28e4de0
+Author: godhanidenis <40867528+godhanidenis@users.noreply.github.com>
+Date:   Tue Oct 10 16:20:41 2023 +0530
+
+    Merge pull request #132 from godhanidenis/balance_changes
+    
+    Fix issue in delete link transaction
+
+[33mcommit 28e4de02e0f27d044ce5227958b00206ab56b9b8[m
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Tue Oct 10 16:19:43 2023 +0530
+
+    Fix issue in delete link transaction
+
+[33mcommit 3778ab401b679eeb80504846a1dcb92dd8acbeee[m
+Merge: f0d084c c002811
+Author: godhanidenis <40867528+godhanidenis@users.noreply.github.com>
+Date:   Tue Oct 10 15:55:56 2023 +0530
+
+    Merge pull request #131 from godhanidenis/balance_changes
+    
+    Fix issue in the link transaction
+
+[33mcommit c0028111ac43c58ff5c2ab7a559fa6a4d99dda1d[m
+Author: meetv22 <127581475+meetv22@users.noreply.github.com>
+Date:   Tue Oct 10 15:55:08 2023 +0530
+
+    Fix issue in the link transaction
+
+[33mcommit f0d084c241466d7635b57a243d159c760561a5ce[m
+Merge: c55a137 ab33ac8
+Author: godhanidenis <40867528+godhanidenis@users.noreply.github.com>
+Date:   Tue Oct 10 15:44:44 2023 +0530
+
+    Merge pull request #130 from godhanidenis/balance_changes
+    
+    Changes in link transaction function
