@@ -558,6 +558,8 @@ class QuotationViewSet(viewsets.ModelViewSet):
             linktransaction_data = request.data.get('linktransaction_data', None)
 
             transaction = Transaction.objects.get(quotation_id = pk)
+            old_customer_id = transaction.customer_id.id
+            print("old_customer_id :: ", old_customer_id)
             old_amount = transaction.total_amount - transaction.recived_or_paid_amount
 
             ### NOT CONVERTED TRANSACTION ###
@@ -885,9 +887,21 @@ class QuotationViewSet(viewsets.ModelViewSet):
                         copy_transaction_instance = copy_transactionSerializer.save()
                     else:
                         return Response(copy_transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    
+                    new_customer_id = copy_transaction_instance.customer_id.id
+                    print("new_customer_id :: ",new_customer_id)
 
-                    new_amount = copy_transaction_instance.total_amount - copy_transaction_instance.recived_or_paid_amount
-                    balance_amount(copy_transaction_instance.customer_id.id, None, 0 , new_amount, copy_transaction_instance.type)
+                    if old_customer_id != new_customer_id:
+                        ### Remove amount for old customer 
+                        new_amount = copy_transaction_instance.total_amount - copy_transaction_instance.recived_or_paid_amount
+                        balance_amount(old_customer_id, None, old_amount, 0, copy_transaction_instance.type)
+
+                        ### Add amount for new customer
+                        new_amount = copy_transaction_instance.total_amount - copy_transaction_instance.recived_or_paid_amount
+                        balance_amount(new_customer_id, None, 0, new_amount, copy_transaction_instance.type)
+                    else:
+                        new_amount = copy_transaction_instance.total_amount - copy_transaction_instance.recived_or_paid_amount
+                        balance_amount(copy_transaction_instance.customer_id.id, None, 0 , new_amount, copy_transaction_instance.type)
 
                     ### LINK TRNASACTION 
                     linktransaction_data = request.data.get('linktransaction_data', None)
@@ -1141,9 +1155,21 @@ class QuotationViewSet(viewsets.ModelViewSet):
                         update_transaction = t_serializer.save()
                     else:
                         return Response(t_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                
+                    
+                    new_customer_id = update_transaction.customer_id.id
+                    print("new_customer_id :: ",new_customer_id)
+
                     new_amount = update_transaction.total_amount - update_transaction.recived_or_paid_amount
-                    balance_amount(update_transaction.customer_id.id, None, old_amount , new_amount, update_transaction.type)
+                    print("new_amount :: ",new_amount)
+
+                    if old_customer_id != new_customer_id:
+                        ### Remove amount for old customer
+                        balance_amount(old_customer_id, None, old_amount, 0, update_transaction.type)
+
+                        ### Add amount for new customer
+                        balance_amount(new_customer_id, None, 0, new_amount, update_transaction.type)
+                    else:
+                        balance_amount(update_transaction.customer_id.id, None, old_amount , new_amount, update_transaction.type)
 
                 ### LINK TRNASACTION 
                 if linktransaction_data is not None:
@@ -1367,6 +1393,12 @@ class TransactionViewSet(viewsets.ModelViewSet):
             key = request.data.get('key')
             transaction = Transaction.objects.get(pk=pk)
 
+            old_customer_id = transaction.customer_id.id if transaction.customer_id is not None else None
+            print("old_customer_id :: ", old_customer_id)
+            old_staff_id = transaction.staff_id.id if transaction.staff_id is not None else None
+            print("old_staff_id :: ", old_staff_id)
+
+
             if transaction.type in ('payment_in', 'payment_out'):
                 old_amount = transaction.total_amount - transaction.used_amount
             else:
@@ -1426,9 +1458,26 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     
                     customer_id = transaction_instance.customer_id.id if transaction_instance.customer_id is not None else None
                     staff_id = transaction_instance.staff_id.id if transaction_instance.staff_id is not None else None
+
+                    def selection_changes():
+                        ### Remove amount for old customer or old staff
+                        new_amount = transaction_instance.total_amount - transaction_instance.used_amount
+                        balance_amount(old_customer_id, old_staff_id, old_amount, 0, transaction_instance.type)
+
+                        ### Add amount for new staff or new customer
+                        new_amount = transaction_instance.total_amount - transaction_instance.used_amount
+                        balance_amount(customer_id, staff_id, 0, new_amount, transaction_instance.type)
+
+                    if old_customer_id is not None and old_customer_id != customer_id:
+                        selection_changes()
                     
-                    new_amount = transaction_instance.total_amount - transaction_instance.recived_or_paid_amount
-                    balance_amount(customer_id, staff_id, old_amount, new_amount, transaction_instance.type)
+                    elif old_staff_id is not None and old_staff_id != staff_id:
+                        selection_changes()
+
+                    else:
+                        ### Change balance amount if total amount is change
+                        new_amount = transaction_instance.total_amount - transaction_instance.used_amount
+                        balance_amount(customer_id, staff_id, old_amount, new_amount, transaction_instance.type)
 
                     if convert_status is not None:
                         if convert_status == 'true':
@@ -1459,9 +1508,26 @@ class TransactionViewSet(viewsets.ModelViewSet):
                             
                             customer_id = copy_trnasaction_instance.customer_id.id if copy_trnasaction_instance.customer_id is not None else None
                             staff_id = copy_trnasaction_instance.staff_id.id if copy_trnasaction_instance.staff_id is not None else None
+
+                            def selection_changes():
+                                ### Remove amount for old customer or old staff
+                                new_amount = copy_trnasaction_instance.total_amount - copy_trnasaction_instance.used_amount
+                                balance_amount(old_customer_id, old_staff_id, old_amount, 0, transaction.type)
+
+                                ### Add amount for new staff or new customer
+                                new_amount = copy_trnasaction_instance.total_amount - copy_trnasaction_instance.used_amount
+                                balance_amount(customer_id, staff_id, 0, new_amount, copy_trnasaction_instance.type)
+
+                            if old_customer_id is not None and old_customer_id != customer_id:
+                                selection_changes()
                             
-                            new_amount = copy_trnasaction_instance.total_amount - copy_trnasaction_instance.recived_or_paid_amount
-                            balance_amount(copy_trnasaction_instance.customer_id.id, None, 0 , new_amount, copy_trnasaction_instance.type)
+                            elif old_staff_id is not None and old_staff_id != staff_id:
+                                selection_changes()
+
+                            else:
+                                ### Change balance amount if total amount is change
+                                new_amount = copy_trnasaction_instance.total_amount - copy_trnasaction_instance.used_amount
+                                balance_amount(customer_id, staff_id, 0, new_amount, copy_trnasaction_instance.type)
 
                 else:
                     if delete_inventorys is not None:
@@ -1499,9 +1565,26 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     
                     customer_id = transaction_instance.customer_id.id if transaction_instance.customer_id is not None else None
                     staff_id = transaction_instance.staff_id.id if transaction_instance.staff_id is not None else None
+
+                    def selection_changes():
+                        ### Remove amount for old customer or old staff
+                        new_amount = transaction_instance.total_amount - transaction_instance.used_amount
+                        balance_amount(old_customer_id, old_staff_id, old_amount, 0, transaction_instance.type)
+
+                        ### Add amount for new staff or new customer
+                        new_amount = transaction_instance.total_amount - transaction_instance.used_amount
+                        balance_amount(customer_id, staff_id, 0, new_amount, transaction_instance.type)
+
+                    if old_customer_id is not None and old_customer_id != customer_id:
+                        selection_changes()
                     
-                    new_amount = transaction_instance.total_amount - transaction_instance.recived_or_paid_amount
-                    balance_amount(transaction_instance.customer_id.id, None, old_amount, new_amount, transaction_instance.type)
+                    elif old_staff_id is not None and old_staff_id != staff_id:
+                        selection_changes()
+
+                    else:
+                        ### Change balance amount if total amount is change
+                        new_amount = transaction_instance.total_amount - transaction_instance.used_amount
+                        balance_amount(customer_id, staff_id, old_amount, new_amount, transaction_instance.type)
 
                 if linktransaction_data is not None:
                     link_transaction(pk, linktransaction_data, transaction_instance.type)
@@ -1512,11 +1595,6 @@ class TransactionViewSet(viewsets.ModelViewSet):
             if key == 'transaction_update':
                 transaction_data = request.data.get('transaction_data')
                 linktransaction_data = request.data.get('linktransaction_data', None)
-
-                old_customer_id = transaction.customer_id.id if transaction.customer_id is not None else None
-                print("old_customer_id :: ", old_customer_id)
-                old_staff_id = transaction.staff_id.id if transaction.staff_id is not None else None
-                print("old_staff_id :: ", old_staff_id)
 
                 transactionSerializer = TransactionSerializer(transaction, data=transaction_data, partial=True)
                 if transactionSerializer.is_valid():
