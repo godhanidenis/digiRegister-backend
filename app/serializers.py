@@ -100,6 +100,12 @@ class ExposureDetailsSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class EventExpenseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EventExpense
+        fields = "__all__"
+
+
 class InventoryDescriptionSerializer(serializers.ModelSerializer):
     inventory = InventorySerializer(source='inventory_id', read_only=True)
     class Meta:
