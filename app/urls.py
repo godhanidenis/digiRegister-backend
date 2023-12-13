@@ -25,6 +25,7 @@ router.register(r'eventday',views.EventDayViewSet)
 router.register(r'inventorydetails',views.InventoryDetailsViewSet)
 router.register(r'eventdetails',views.EventDetailsViewSet)
 router.register(r'exposuredetails',views.ExposureDetailsViewSet)
+router.register(r'eventexpense',views.EventExpenseViewSet)
 
 router.register(r'linktransaction',views.LinkTransactionViewSet)
 router.register(r'inventorydescription',views.InventoryDescriptionViewSet)
@@ -59,4 +60,4 @@ urlpatterns =[
 
     # path('earningreport/',views.MonthylyEarningReport, name='monthylyearningreport'),
     # path('creationreport/',views.InvoiceCreationReport, name='invoicecreationreport'),
-]       
+]

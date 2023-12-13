@@ -68,7 +68,7 @@ def add_quotation_data(quotation_id, datas):
                 final_inventorydetails_data.append(inventorydetails_instance)
             else:
                 return Response(inventorydetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            
+
             inventory = Inventory.objects.get(pk=inventorydetails_data['inventory_id'])
             if inventory.type == 'service':
                 ### FOR EXPOSURE DETAILS DATA ###
@@ -90,7 +90,7 @@ def add_quotation_data(quotation_id, datas):
                             'eventdetails':evnetdetials,
                             'inventorydetails_id':inventorydetails_instance.id
                             }
-                        
+
                         exposuredetailsSerializer = ExposureDetailsSerializer(data=exposuredetails_data)
                         if exposuredetailsSerializer.is_valid():
                             exposuredetails_instance = exposuredetailsSerializer.save()
@@ -99,6 +99,27 @@ def add_quotation_data(quotation_id, datas):
                             return Response(exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     return final_exposuredetails_data
+
+
+### Function for Add Inventory Datas for Quotation
+def add_inventory_data(quotation_id, datas):
+    for data in datas:
+        data['quotation_id'] = quotation_id
+        inventorySerializer = InventoryDescriptionSerializer(data=data)
+        if inventorySerializer.is_valid():
+            inventorySerializer.save()
+        else:
+            return Response(inventorySerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+### Function for Add Event Expense Data for Quotation
+def add_expense_data(quotation_id, data):
+    data['quotation_id'] = quotation_id
+    expenseSerializer = EventExpenseSerializer(data=data)
+    if expenseSerializer.is_valid():
+        expenseSerializer.save()
+    else:
+        return Response(expenseSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 ### Function for Update Quotation Datas
@@ -179,7 +200,7 @@ def update_quotation_data(quotation_id, datas):
                                 final_exposuredetails_data.append(exposuredetails_instance)
                             else:
                                 return Response(exposuredetailsSerializer.errors, status=status.HTTP_400_BAD_REQUEST)                    
-                
+
         else:
             # print(":::: OLD DAY UPDATED ::::")
             o_eventday = EventDay.objects.get(pk=eventdate_data['id'])
@@ -303,6 +324,69 @@ def delete_details(delete_inventorys=None, delete_events=None, delete_eventdays=
         for delete_eventday in delete_eventdays:
             d_eventday = EventDay.objects.get(pk=delete_eventday)
             d_eventday.delete()
+
+
+### Function for Update Inventory Datas for Quotation
+def update_inventory_data(quotation_id, data):
+    inventories = data.get("inventories", None)
+    delete_inventories = data.get("delete_inventories", None)
+
+    if delete_inventories is not None:
+        for delete_inventory in delete_inventories:
+            d_inventory = InventoryDescription.objects.get(pk=delete_inventory)
+            d_inventory.delete()
+    
+    if inventories is not None:
+        for inventory in inventories:
+            if inventory['id'] == '':
+                inventory.pop('id')
+                inventory["quotation_id"] = quotation_id
+                n_inventory = InventoryDescriptionSerializer(data=inventory)
+                if n_inventory.is_valid():
+                    n_inventory.save()
+                else:
+                    return Response(n_inventory.errors, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                get_inventory = InventoryDescription.objects.get(id=inventory['id'])
+                o_inventory = InventoryDescriptionSerializer(get_inventory, data=inventory, partial=True)
+                if o_inventory.is_valid():
+                    o_inventory.save()
+                else:
+                    return Response(o_inventory.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+### Function for Update Event Expense Data for Quotation
+def update_expense_data(quotation_id, data):
+    
+    eventexpense = EventExpense.objects.get(pk=data['id'])
+    expenseSerializer = EventExpenseSerializer(eventexpense, data=data, partial=True)
+    if expenseSerializer.is_valid():
+        expenseSerializer.save()
+    else:
+        return Response(expenseSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+### Function for Add Inventory and Event Expense Data for Quotation
+def add_copy(quotation_id, data, eventexpense):
+    inventories = data.get("inventories", None)
+
+    if inventories is not None:
+        for inventory in inventories:
+            inventory.pop('id')
+            inventory['quotation_id'] = quotation_id
+            inventorySerializer = InventoryDescriptionSerializer(data=inventory)
+            if inventorySerializer.is_valid():
+                inventorySerializer.save()
+            else:
+                return Response(inventorySerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    if eventexpense is not None:
+        eventexpense['quotation_id'] = quotation_id
+        expenseSerializer = EventExpenseSerializer(data=eventexpense)
+        if expenseSerializer.is_valid():
+            expenseSerializer.save()
+        else:
+            return Response(expenseSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 ### Balance Serializer 
@@ -471,9 +555,19 @@ def quotation_get(quotation_id):
                 
             data["datas"].append(eventday_data)
 
-        #Get Transaction Details for That Quotation
+        # Get Transaction Details for That Quotation
         transaction_data = Transaction.objects.get(quotation_id=quotation.id)
         data['transaction_data'] = TransactionSerializer(transaction_data).data
+
+        # Get Inventory Details for That Quotation
+        inventory = InventoryDescription.objects.filter(quotation_id=quotation.id)
+        if len(inventory) != 0:
+            data['inventory_datas'] = InventoryDescriptionSerializer(inventory, many=True).data
+
+        # Get Event Expense for That Quotation
+        expense = EventExpense.objects.filter(quotation_id=quotation.id)
+        if len(inventory) != 0:
+            data['eventexpense_data'] = EventExpenseSerializer(expense, many=True).data
 
         return data
     except Exception as e:
