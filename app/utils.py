@@ -565,9 +565,12 @@ def quotation_get(quotation_id):
             data['inventory_datas'] = InventoryDescriptionSerializer(inventory, many=True).data
 
         # Get Event Expense for That Quotation
-        expense = EventExpense.objects.filter(quotation_id=quotation.id)
-        if len(inventory) != 0:
-            data['eventexpense_data'] = EventExpenseSerializer(expense, many=True).data
+        try:
+            expense = EventExpense.objects.get(quotation_id=quotation.id)
+            if len(inventory) != 0:
+                data['eventexpense_data'] = EventExpenseSerializer(expense).data
+        except:
+            pass
 
         return data
     except Exception as e:
