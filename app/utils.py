@@ -567,8 +567,7 @@ def quotation_get(quotation_id):
         # Get Event Expense for That Quotation
         try:
             expense = EventExpense.objects.get(quotation_id=quotation.id)
-            if len(inventory) != 0:
-                data['eventexpense_data'] = EventExpenseSerializer(expense).data
+            data['eventexpense_data'] = EventExpenseSerializer(expense).data
         except:
             pass
 
