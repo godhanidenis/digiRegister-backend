@@ -494,7 +494,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
             delete_eventdays = request.data.get('delete_eventday', None)
             transaction_data = request.data.get('transaction_data', None)
             linktransaction_data = request.data.get('linktransaction_data', None)
-            inventory_datas = request.data.get('inventory_data', None)
+            inventory_datas = request.data.get('inventory_datas', None)
             expense_data = request.data.get('expense_data', None)
 
             transaction = Transaction.objects.get(quotation_id = pk)
