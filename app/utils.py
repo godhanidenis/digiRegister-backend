@@ -357,13 +357,22 @@ def update_inventory_data(quotation_id, data):
 
 ### Function for Update Event Expense Data for Quotation
 def update_expense_data(quotation_id, data):
-    
-    eventexpense = EventExpense.objects.get(pk=data['id'])
-    expenseSerializer = EventExpenseSerializer(eventexpense, data=data, partial=True)
-    if expenseSerializer.is_valid():
-        expenseSerializer.save()
+    expense_id = data.get('id', None)
+
+    if expense_id is None:
+        data['quotation_id'] = quotation_id
+        expenseSerializer = EventExpenseSerializer(data=data)
+        if expenseSerializer.is_valid():
+            expenseSerializer.save()
+        else:
+            return Response(expenseSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
     else:
-        return Response(expenseSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        eventexpense = EventExpense.objects.get(pk=data['id'])
+        expenseSerializer = EventExpenseSerializer(eventexpense, data=data, partial=True)
+        if expenseSerializer.is_valid():
+            expenseSerializer.save()
+        else:
+            return Response(expenseSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 ### Function for Add Inventory and Event Expense Data for Quotation
