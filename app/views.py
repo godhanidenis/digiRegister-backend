@@ -528,11 +528,11 @@ class QuotationViewSet(viewsets.ModelViewSet):
 
                 ### Update Inventory Data
                 if inventory_datas is not None:
-                    update_quotation_data(quotation_instance.id, inventory_datas)
+                    update_inventory_data(quotation_instance.id, inventory_datas)
 
                 ### Update Event Expense Data
                 if expense_data is not None:
-                    update_quotation_data(quotation_instance.id, expense_data)
+                    update_expense_data(quotation_instance.id, expense_data)
 
                 ## UPDATE TRANSACTON DETAILS ###
                 if transaction_data is not None:
