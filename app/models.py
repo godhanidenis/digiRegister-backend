@@ -207,7 +207,14 @@ class ExposureDetails(models.Model):
     price = models.FloatField(max_length=10, default=0.0)
 
 
+class EventExpense(models.Model):
+    quotation_id = models.ForeignKey(Quotation, null=True, blank=True, on_delete=models.CASCADE)
+    item_name = models.TextField(null=True, blank=True, max_length=2000)
+    price = models.FloatField(max_length=10, default=0.0)
+
+
 class InventoryDescription(models.Model):
+    quotation_id = models.ForeignKey(Quotation, null=True, blank=True, on_delete=models.CASCADE)
     inventory_id = models.ForeignKey(Inventory, null=True, blank=True, on_delete=models.CASCADE)
     qty = models.IntegerField(default=0)
     price = models.FloatField(max_length=10, default=0.0)

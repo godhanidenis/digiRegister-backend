@@ -409,6 +409,9 @@ class QuotationViewSet(viewsets.ModelViewSet):
             datas = request.data['datas']
             transaction = request.data['transaction_data']
             linktransaction_data = request.data.get('linktransaction_data', None)
+            inventory_datas = request.data.get('inventory_data', None)
+            expense_data = request.data.get('expense_data', None)
+            print("expense_data ::", expense_data)
 
             ### FOR ADD QUOTATION DATA ###
             quotationSerializer = QuotationSerializer(data=quotation)
@@ -417,8 +420,16 @@ class QuotationViewSet(viewsets.ModelViewSet):
             else:
                 return Response(quotationSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            # Add Quotation Data 
+            ### Add Quotation Data 
             final_exposuredetails_data = add_quotation_data(quotation_instance.id, datas)
+
+            ### Add Inventory Data
+            if inventory_datas is not None:
+                add_inventory_data(quotation_instance.id, inventory_datas)
+
+            ### Add Expense Data
+            if len(expense_data) != 0:
+                add_expense_data(quotation_instance.id, expense_data)
 
             ### FOR ADD TRANSACTION DATA ###
             if transaction['is_converted'] == 'true':
@@ -433,7 +444,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
             else:
                 return Response(transactionSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            #Change Balance Amount 
+            # Change Balance Amount 
             if transaction['is_converted'] == 'true':
                 new_amount = transaction_instance.total_amount - transaction_instance.recived_or_paid_amount
                 balance_amount(quotation_instance.customer_id.id, None, 0 , new_amount, transaction_instance.type)
@@ -484,6 +495,8 @@ class QuotationViewSet(viewsets.ModelViewSet):
             delete_eventdays = request.data.get('delete_eventday', None)
             transaction_data = request.data.get('transaction_data', None)
             linktransaction_data = request.data.get('linktransaction_data', None)
+            inventory_datas = request.data.get('inventory_datas', None)
+            expense_data = request.data.get('expense_data', None)
 
             transaction = Transaction.objects.get(quotation_id = pk)
             old_customer_id = transaction.customer_id.id
@@ -514,6 +527,14 @@ class QuotationViewSet(viewsets.ModelViewSet):
                 ### Function for deleting inventorys, events and event days ###
                 delete_details(delete_inventorys, delete_events, delete_eventdays)
 
+                ### Update Inventory Data
+                if inventory_datas is not None:
+                    update_inventory_data(quotation_instance.id, inventory_datas)
+
+                ### Update Event Expense Data
+                if expense_data is not None:
+                    update_expense_data(quotation_instance.id, expense_data)
+
                 ## UPDATE TRANSACTON DETAILS ###
                 if transaction_data is not None:
                     if convert_status == 'true':
@@ -536,8 +557,10 @@ class QuotationViewSet(viewsets.ModelViewSet):
                     else:
                         return Response(copy_quotationSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
                     final_exposuredetails_data = add_quotation_data(copy_quotation_instance.id, copy_datas)
+
+                    ### Add Inventory and Event Expense Data for Copy Quotation 
+                    add_copy(copy_quotation_instance.id, inventory_datas, expense_data)
 
                     ### TRANSACTION COPY ###
                     # print("ADD TRANSACTION COPY")
@@ -621,6 +644,14 @@ class QuotationViewSet(viewsets.ModelViewSet):
 
                 ### Function for deleting inventorys, events and event days ###
                 delete_details(delete_inventorys, delete_events, delete_eventdays)
+                
+                ### Update Inventory Data
+                if inventory_datas is not None:
+                    update_inventory_data(quotation_instance.id, inventory_datas)
+
+                ### Update Event Expense Data
+                if expense_data is not None:
+                    update_expense_data(quotation_instance.id, expense_data)
 
                 ## UPDATE TRANSACTON DETAILS ###
                 if transaction_data is not None:
@@ -716,6 +747,11 @@ class EventDetailsViewSet(viewsets.ModelViewSet):
 class ExposureDetailsViewSet(viewsets.ModelViewSet):
     queryset = ExposureDetails.objects.all().order_by('-id').distinct()
     serializer_class = ExposureDetailsSerializer
+
+
+class EventExpenseViewSet(viewsets.ModelViewSet):
+    queryset = EventExpense.objects.all().order_by('-id').distinct()
+    serializer_class = EventExpenseSerializer
 
 
 class InventoryDescriptionViewSet(viewsets.ModelViewSet):

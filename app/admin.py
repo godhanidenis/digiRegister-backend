@@ -68,6 +68,11 @@ class ExposureDetailsAdmin(admin.ModelAdmin):
 admin.site.register(ExposureDetails, ExposureDetailsAdmin)
 
 
+class EventExpenseAdmin(admin.ModelAdmin):
+    list_display = ['quotation_id', 'price']
+admin.site.register(EventExpense, EventExpenseAdmin)
+
+
 class InventoryDescriptionAdmin(admin.ModelAdmin):
     list_display = ['inventory_id', 'qty', 'price']
 admin.site.register(InventoryDescription, InventoryDescriptionAdmin)
