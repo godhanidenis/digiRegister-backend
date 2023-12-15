@@ -411,6 +411,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
             linktransaction_data = request.data.get('linktransaction_data', None)
             inventory_datas = request.data.get('inventory_data', None)
             expense_data = request.data.get('expense_data', None)
+            print("expense_data ::", expense_data)
 
             ### FOR ADD QUOTATION DATA ###
             quotationSerializer = QuotationSerializer(data=quotation)
@@ -427,7 +428,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
                 add_inventory_data(quotation_instance.id, inventory_datas)
 
             ### Add Expense Data
-            if expense_data is not None:
+            if len(expense_data) != 0:
                 add_expense_data(quotation_instance.id, expense_data)
 
             ### FOR ADD TRANSACTION DATA ###

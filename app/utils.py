@@ -361,9 +361,6 @@ def update_expense_data(quotation_id, data):
     item_data = data.get('item_data', None)
     price = data.get('price', None)
 
-    if item_data is None and price is None:
-        pass
-
     if expense_id is None:
         data['quotation_id'] = quotation_id
         expenseSerializer = EventExpenseSerializer(data=data)
