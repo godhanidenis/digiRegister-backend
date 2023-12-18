@@ -120,3 +120,24 @@ class RegisterView(APIView):
 
                 return Response({"message": "User Created Successfully !!!"}, status=status.HTTP_201_CREATED)
             
+
+class ForgotPasswordView(APIView):
+
+    def patch(self, request):
+        print("ID :: ",request.data['id'])
+        print("PASSWORD :: ",request.data['password'])
+        try:
+            # user = User.objects.get(mobile_no__exact = request.data['mobile_no'])
+            user = User.objects.get(pk = request.data['id'])
+            print("USER :: ", user)
+        except:
+            return Response("Please provide User ID!",status=status.HTTP_401_UNAUTHORIZED)
+        
+        if not user:
+                return Response("User not exist with us!",status=status.HTTP_400_BAD_REQUEST)
+        else:
+            user.set_password(request.data['password'])
+            user.save()
+
+            user_data=UserSerializer(user).data
+            return Response(user_data)
