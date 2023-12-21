@@ -480,6 +480,9 @@ class QuotationViewSet(viewsets.ModelViewSet):
 
             return Response(quotation_get(quotation_instance.id))
         except Exception as e:
+            quotation = Quotation.objects.get(pk=quotation_instance.id)
+            quotation.delete()
+            
             logger.error(f"API: Quotation Create - An error occurred: {str(e)}.\nRequest data: {request.data}", exc_info=True)
             return Response({"error": create_msg}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -725,6 +728,14 @@ class QuotationViewSet(viewsets.ModelViewSet):
 
             return Response({"quotation_data":QuotationSerializer(quotation_instance).data,})
         except Exception as e:
+            if copy_quotation_instance is not None:
+                copy_quotation = Quotation.objects.get(pk=copy_quotation_instance.id)
+                copy_quotation.delete()
+
+                transaction = Transaction.objects.get(quotation_id__id=quotation_instance.id)
+                transaction.is_converted = False
+                transaction.save()
+
             logger.error(f"API: Quotation Update - An error occurred: {str(e)}.\nRequest data: {request.data}", exc_info=True)
             return Response({"error": update_msg}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -1368,7 +1379,11 @@ def StaffStatus(request):
                         eventday = EventDay.objects.get(pk=event_detail.eventday_id.id)
                         quotation = Quotation.objects.get(pk=eventday.quotation_id.id)
                         # print("quotation.id :: ",quotation.id)
-                        transaction = Transaction.objects.get(quotation_id__id=quotation.id)
+                        try:
+                            transaction = Transaction.objects.get(quotation_id__id=quotation.id)
+                        except:
+                            pass
+                        
                         if transaction.type == "event_sale":
                             if eventday.event_date >= current_itc_date:
                                 # print("EVENT DATE IS GREATER THAN CURRENT DATE")
