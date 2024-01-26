@@ -1048,11 +1048,11 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
                             def selection_changes():
                                 ### Remove amount for old customer or old staff
-                                new_amount = copy_trnasaction_instance.total_amount - copy_trnasaction_instance.used_amount
+                                new_amount = copy_trnasaction_instance.total_amount - copy_trnasaction_instance.recived_or_paid_amount
                                 balance_amount(old_customer_id, old_staff_id, old_amount, 0, transaction.type)
 
                                 ### Add amount for new staff or new customer
-                                new_amount = copy_trnasaction_instance.total_amount - copy_trnasaction_instance.used_amount
+                                new_amount = copy_trnasaction_instance.total_amount - copy_trnasaction_instance.recived_or_paid_amount
                                 balance_amount(customer_id, staff_id, 0, new_amount, copy_trnasaction_instance.type)
 
                             if old_customer_id is not None and old_customer_id != customer_id:
@@ -1063,7 +1063,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
                             else:
                                 ### Change balance amount if total amount is change
-                                new_amount = copy_trnasaction_instance.total_amount - copy_trnasaction_instance.used_amount
+                                new_amount = copy_trnasaction_instance.total_amount - copy_trnasaction_instance.recived_or_paid_amount
                                 balance_amount(customer_id, staff_id, 0, new_amount, copy_trnasaction_instance.type)
 
                 else:
@@ -1107,11 +1107,11 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
                     def selection_changes():
                         ### Remove amount for old customer or old staff
-                        new_amount = transaction_instance.total_amount - transaction_instance.used_amount
+                        new_amount = transaction_instance.total_amount - transaction_instance.recived_or_paid_amount
                         balance_amount(old_customer_id, old_staff_id, old_amount, 0, transaction_instance.type)
 
                         ### Add amount for new staff or new customer
-                        new_amount = transaction_instance.total_amount - transaction_instance.used_amount
+                        new_amount = transaction_instance.total_amount - transaction_instance.recived_or_paid_amount
                         balance_amount(customer_id, staff_id, 0, new_amount, transaction_instance.type)
 
                     if old_customer_id is not None and old_customer_id != customer_id:
@@ -1122,7 +1122,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
                     else:
                         ### Change balance amount if total amount is change
-                        new_amount = transaction_instance.total_amount - transaction_instance.used_amount
+                        new_amount = transaction_instance.total_amount - transaction_instance.recived_or_paid_amount
                         balance_amount(customer_id, staff_id, old_amount, new_amount, transaction_instance.type)
 
                 if linktransaction_data is not None:
@@ -1415,52 +1415,28 @@ def EventDetail(request):
             data = []
 
             for eventday in eventdays:
-                transaction = Transaction.objects.get(quotation_id=eventday.quotation_id.id)
-                
-                if transaction.type == 'event_sale' and transaction.user_id.id == user_id:
-                    eventdetails = EventDetails.objects.filter(eventday_id=eventday.id)
+                try:
+                    transaction = Transaction.objects.get(quotation_id=eventday.quotation_id.id)
                     
-                    for eventdetail in eventdetails:
-                        event_detail_data = {
-                            'eventdetail_id': eventdetail.event_id.id,
-                            'event_name': eventdetail.event_id.event_name,
-                            'event_venue': eventdetail.event_venue,
-                            'start_time': eventdetail.start_time,
-                            'end_time': eventdetail.end_time
-                        }
+                    if transaction.type == 'event_sale' and transaction.user_id.id == user_id:
+                        eventdetails = EventDetails.objects.filter(eventday_id=eventday.id)
+                        
+                        for eventdetail in eventdetails:
+                            event_detail_data = {
+                                'eventdetail_id': eventdetail.event_id.id,
+                                'event_name': eventdetail.event_id.event_name,
+                                'event_venue': eventdetail.event_venue,
+                                'start_time': eventdetail.start_time,
+                                'end_time': eventdetail.end_time
+                            }
 
-                        exposuredetails = ExposureDetails.objects.filter(eventdetails__id=eventdetail.id)
-                        if len(exposuredetails) == 0:
-                            exposuredetail_data = {
-                                    'staff_name': '',
-                                    'staff_mobile_no': '',
-                                    'event_detail': [event_detail_data]}
-                            
-                            customer_name = eventday.quotation_id.customer_id.full_name
-                            customer_mobile_no = eventday.quotation_id.customer_id.mobile_no
-
-                            # Find the customer data in the existing list or create a new entry
-                            customer_entry = next((entry for entry in data if entry['customer_name'] == customer_name and entry['customer_mobile_no'] == customer_mobile_no), None)
-
-                            if customer_entry:
-                                staff_entry = next((staff for staff in customer_entry['exposuredetails_data'] if staff['staff_name'] == exposuredetail_data['staff_name'] and staff['staff_mobile_no'] == exposuredetail_data['staff_mobile_no']), None)
-
-                                if staff_entry:
-                                    staff_entry['event_detail'].append(event_detail_data)
-                                else:
-                                    customer_entry['exposuredetails_data'].append(exposuredetail_data)
-                            else:
-                                data.append({
-                                    'customer_name': customer_name,
-                                    'customer_mobile_no': customer_mobile_no,
-                                    'exposuredetails_data': [exposuredetail_data]})
-                        else:
-                            for exposuredetail in exposuredetails:
+                            exposuredetails = ExposureDetails.objects.filter(eventdetails__id=eventdetail.id)
+                            if len(exposuredetails) == 0:
                                 exposuredetail_data = {
-                                    'staff_name': exposuredetail.staff_id.full_name,
-                                    'staff_mobile_no': exposuredetail.staff_id.mobile_no,
-                                    'event_detail': [event_detail_data]}
-
+                                        'staff_name': '',
+                                        'staff_mobile_no': '',
+                                        'event_detail': [event_detail_data]}
+                                
                                 customer_name = eventday.quotation_id.customer_id.full_name
                                 customer_mobile_no = eventday.quotation_id.customer_id.mobile_no
 
@@ -1479,7 +1455,34 @@ def EventDetail(request):
                                         'customer_name': customer_name,
                                         'customer_mobile_no': customer_mobile_no,
                                         'exposuredetails_data': [exposuredetail_data]})
+                            else:
+                                for exposuredetail in exposuredetails:
+                                    exposuredetail_data = {
+                                        'staff_name': exposuredetail.staff_id.full_name,
+                                        'staff_mobile_no': exposuredetail.staff_id.mobile_no,
+                                        'event_detail': [event_detail_data]}
 
+                                    customer_name = eventday.quotation_id.customer_id.full_name
+                                    customer_mobile_no = eventday.quotation_id.customer_id.mobile_no
+
+                                    # Find the customer data in the existing list or create a new entry
+                                    customer_entry = next((entry for entry in data if entry['customer_name'] == customer_name and entry['customer_mobile_no'] == customer_mobile_no), None)
+
+                                    if customer_entry:
+                                        staff_entry = next((staff for staff in customer_entry['exposuredetails_data'] if staff['staff_name'] == exposuredetail_data['staff_name'] and staff['staff_mobile_no'] == exposuredetail_data['staff_mobile_no']), None)
+
+                                        if staff_entry:
+                                            staff_entry['event_detail'].append(event_detail_data)
+                                        else:
+                                            customer_entry['exposuredetails_data'].append(exposuredetail_data)
+                                    else:
+                                        data.append({
+                                            'customer_name': customer_name,
+                                            'customer_mobile_no': customer_mobile_no,
+                                            'exposuredetails_data': [exposuredetail_data]})
+                except:
+                    pass
+                
             return Response(data)
         
         except Exception as e:
