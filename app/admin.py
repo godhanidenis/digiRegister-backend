@@ -91,3 +91,8 @@ admin.site.register(LinkTransaction, LinkTransactionAdmin)
 class BalanceAdmin(admin.ModelAdmin):
     list_display = ['amount', 'staff_id', 'customer_id']
 admin.site.register(Balance, BalanceAdmin)
+
+
+class CashAndBankAdmin(admin.ModelAdmin):
+    list_display = ['type', 'amount', 'date']
+admin.site.register(CashAndBank, CashAndBankAdmin)

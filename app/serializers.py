@@ -139,3 +139,9 @@ class BalanceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Balance
         fields = "__all__"
+
+
+class CashAndBankSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CashAndBank
+        fields = "__all__"

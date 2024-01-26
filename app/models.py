@@ -298,3 +298,14 @@ class Balance(models.Model):
     staff_id = models.ForeignKey(Staff, null=True, blank=True, on_delete=models.CASCADE)
     customer_id = models.ForeignKey(Customer, null=True, blank=True, on_delete=models.CASCADE)
     amount = models.FloatField(null=True, blank=True)
+
+
+class CashAndBank(models.Model):
+    TYPE_CHOICES = (
+        ("cash","CASH"),
+        ("bank","BANK"),
+    )
+    user_id = models.ForeignKey(User,null=True, blank=True, on_delete=models.CASCADE)
+    type = models.CharField(max_length=15, choices=TYPE_CHOICES, default="cash")
+    amount = models.FloatField(max_length=10, default=0.0)
+    date = models.DateField(null=True, blank=True)
