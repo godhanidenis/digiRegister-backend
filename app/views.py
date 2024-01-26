@@ -997,11 +997,11 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
                     def selection_changes():
                         ### Remove amount for old customer or old staff
-                        new_amount = transaction_instance.total_amount - transaction_instance.used_amount
+                        new_amount = transaction_instance.total_amount - transaction_instance.recived_or_paid_amount
                         balance_amount(old_customer_id, old_staff_id, old_amount, 0, transaction_instance.type)
 
                         ### Add amount for new staff or new customer
-                        new_amount = transaction_instance.total_amount - transaction_instance.used_amount
+                        new_amount = transaction_instance.total_amount - transaction_instance.recived_or_paid_amount
                         balance_amount(customer_id, staff_id, 0, new_amount, transaction_instance.type)
 
                     if old_customer_id is not None and old_customer_id != customer_id:
@@ -1012,7 +1012,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
                     else:
                         ### Change balance amount if total amount is change
-                        new_amount = transaction_instance.total_amount - transaction_instance.used_amount
+                        new_amount = transaction_instance.total_amount - transaction_instance.recived_or_paid_amount
                         balance_amount(customer_id, staff_id, old_amount, new_amount, transaction_instance.type)
 
                     ### CONVERTED TRANSACTION ###
@@ -1482,7 +1482,7 @@ def EventDetail(request):
                                             'exposuredetails_data': [exposuredetail_data]})
                 except:
                     pass
-                
+
             return Response(data)
         
         except Exception as e:
