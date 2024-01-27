@@ -2196,14 +2196,20 @@ def AmountStatus(request):
             cash_obj = None
             bank_obj = None
 
+            cash = 0
+            bank = 0
+
             try:
                 cash_obj = CashAndBank.objects.get(user_id=user, type="cash")
-                bank_obj = CashAndBank.objects.get(user_id=user, type="bank")
+                cash = cash_obj.amount if cash_obj is not None else 0
             except CashAndBank.DoesNotExist:
                 pass
 
-            cash = cash_obj.amount if cash_obj is not None else 0
-            bank = bank_obj.amount if bank_obj is not None else 0
+            try:
+                bank_obj = CashAndBank.objects.get(user_id=user, type="bank")
+                bank = bank_obj.amount if bank_obj is not None else 0
+            except CashAndBank.DoesNotExist:
+                pass
 
             def get_total_amount(queryset):
                 amount = queryset.aggregate(Sum('total_amount'))['total_amount__sum']
