@@ -1502,6 +1502,16 @@ class BalanceViewSet(viewsets.ModelViewSet):
     serializer_class = BalanceSerializer
 
 
+class CashAndBankViewSet(viewsets.ModelViewSet):
+    queryset = CashAndBank.objects.all().order_by('-id').distinct()
+    serializer_class = CashAndBankSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+        'user_id__id':['exact'],
+        'type':['in'],
+    }
+
+
 class AmountReportViewSet(viewsets.ModelViewSet):
     queryset = Quotation.objects.all().order_by('-id').distinct()
     serializer_class = QuotationSerializer
@@ -2178,10 +2188,22 @@ def CompletionReport(request):
 
 ### Cash & Bank 
 @api_view(['POST'])
-def CashAndBank(request):
+def AmountStatus(request):
     if request.method == 'POST':
         try:
             user = request.data.get('user_id')
+
+            cash_obj = None
+            bank_obj = None
+
+            try:
+                cash_obj = CashAndBank.objects.get(user_id=user, type="cash")
+                bank_obj = CashAndBank.objects.get(user_id=user, type="bank")
+            except CashAndBank.DoesNotExist:
+                pass
+
+            cash = cash_obj.amount if cash_obj is not None else 0
+            bank = bank_obj.amount if bank_obj is not None else 0
 
             def get_total_amount(queryset):
                 amount = queryset.aggregate(Sum('total_amount'))['total_amount__sum']
@@ -2215,11 +2237,20 @@ def CashAndBank(request):
             upi_sale = get_advance_amount(Transaction.objects.filter(user_id=user, payment_type='upi', type__in=['sale','event_sale']))
             upi_purchase = get_advance_amount(Transaction.objects.filter(user_id=user, payment_type='upi', type__in=['purchase','event_purchase']))
 
-            data = {'total_cash' : (cash_payment_in + cash_sale) - (cash_payment_out + cash_purchase),
-                    'total_cheque' : {'received' : (cheque_payment_in + cheque_sale),
-                                    'paid' : (cheque_payment_out + cheque_purchase)},
-                    'total_net_banking' : (net_banking_payment_in + net_banking_sale) - (net_banking_payment_out + net_banking_purchase),
-                    'total_upi' : (upi_payment_in + upi_sale) - (upi_payment_out + upi_purchase)}
+            total_cash = cash + ((cash_payment_in + cash_sale) - (cash_payment_out + cash_purchase))
+            cheque_received = cheque_payment_in + cheque_sale
+            cheque_paid = cheque_payment_out + cheque_purchase
+            total_net_banking = (net_banking_payment_in + net_banking_sale) - (net_banking_payment_out + net_banking_purchase)
+            total_upi = (upi_payment_in + upi_sale) - (upi_payment_out + upi_purchase)
+
+            total_bank = bank + (cheque_received - cheque_paid) + total_net_banking + total_upi
+
+            data = {'total_cash' : total_cash,
+                    'total_bank' : total_bank,
+                    'total_cheque' : {'received' : cheque_received,
+                                    'paid' : cheque_paid},
+                    'total_net_banking' : total_net_banking,
+                    'total_upi' : total_upi}
 
             return Response(data)
         

@@ -30,6 +30,8 @@ router.register(r'eventexpense',views.EventExpenseViewSet)
 router.register(r'linktransaction',views.LinkTransactionViewSet)
 router.register(r'inventorydescription',views.InventoryDescriptionViewSet)
 router.register(r'balance',views.BalanceViewSet)
+router.register(r'cashandbank',views.CashAndBankViewSet)
+
 
 router.register(r'amountreport',views.AmountReportViewSet)
 
@@ -56,7 +58,7 @@ urlpatterns =[
     path('completionreport/',views.CompletionReport, name='completionreport'),
     path('conversationreport/',views.ConversationRateReport, name='conversationratereport'),
     path('statusreport/',views.InvoiceStatusReport, name='invoicestatusreport'),
-    path('cashandbank/',views.CashAndBank, name='cashandbank'),
+    path('amountstatus/',views.AmountStatus, name='amountstatus'),
 
     # path('earningreport/',views.MonthylyEarningReport, name='monthylyearningreport'),
     # path('creationreport/',views.InvoiceCreationReport, name='invoicecreationreport'),
