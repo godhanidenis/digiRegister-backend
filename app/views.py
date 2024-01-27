@@ -1505,6 +1505,11 @@ class BalanceViewSet(viewsets.ModelViewSet):
 class CashAndBankViewSet(viewsets.ModelViewSet):
     queryset = CashAndBank.objects.all().order_by('-id').distinct()
     serializer_class = CashAndBankSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+        'user_id__id':['exact'],
+        'type':['in'],
+    }
 
 
 class AmountReportViewSet(viewsets.ModelViewSet):
